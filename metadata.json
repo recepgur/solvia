@@ -1,7 +1,7 @@
 {
   "name": "Solivo",
   "symbol": "SLVO",
-  "uri": "https://example.com/metadata.json",
-  "seller_fee_basis_points": 0,
+  "uri": "https://raw.githubusercontent.com/recepgur/solvia/main/metadata.json",
+  "seller_fee_basis_points": 50,
   "creators": null
 }
