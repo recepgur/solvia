@@ -1,7 +1,27 @@
 {
-  "name": "Solivo",
+  "name": "Solvio",
   "symbol": "SLVO",
-  "uri": "https://raw.githubusercontent.com/recepgur/solvia/main/metadata.json",
-  "seller_fee_basis_points": 50,
-  "creators": null
+  "description": "Solvio is a decentralized token built on the Solana blockchain, designed for communication and utility purposes.",
+  "image": "https://i.imgyukle.com/2024/12/16/CsfxwM.png",
+  "seller_fee_basis_points": 0,
+  "external_url": "https://solvio.network",
+  "attributes": [
+    { "trait_type": "Category", "value": "DComm" },
+    { "trait_type": "Utility", "value": "Token" }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://i.imgyukle.com/2024/12/16/CsfxwM.png",
+        "type": "image/png"
+      }
+    ],
+    "creators": [
+      {
+        "address": "CzNeEEPiGXutW2kx2HQyy3peD7763iEiYYEMxxbKyYX2",
+        "share": 100
+      }
+    ],
+    "category": "token"
+  }
 }
