@@ -3,14 +3,9 @@ import json
 from typing import List, Dict
 
 class TargetValidator:
-    def __init__(self, whitelist_file: str = None):
-        if whitelist_file is None:
-            # Use os.path for cross-platform compatibility
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.whitelist_file = os.path.normpath(os.path.join(current_dir, "target_whitelist.json"))
-        else:
-            # Normalize path for cross-platform compatibility
-            self.whitelist_file = os.path.normpath(whitelist_file)
+    def __init__(self, whitelist_file: str = "/home/ubuntu/target_whitelist.json"):
+        # Normalize path for cross-platform compatibility
+        self.whitelist_file = os.path.normpath(whitelist_file)
             
         self.whitelist = self._load_whitelist()
 
