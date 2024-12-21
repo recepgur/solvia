@@ -1,0 +1,65 @@
+.App {
+  text-align: center;
+  padding: 2rem;
+}
+
+.App-header {
+  margin-bottom: 2rem;
+}
+
+.input-section {
+  margin-bottom: 2rem;
+}
+
+.input-section input {
+  padding: 0.5rem;
+  margin-right: 1rem;
+  min-width: 300px;
+}
+
+.analysis-section {
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.exploit-section {
+  margin: 2rem 0;
+}
+
+.exploit-section textarea {
+  width: 100%;
+  min-height: 150px;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+}
+
+.exploit-code-section {
+  margin: 2rem 0;
+  text-align: left;
+}
+
+pre {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.error-section {
+  color: red;
+  margin: 1rem 0;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

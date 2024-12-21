@@ -14,7 +14,7 @@ function App() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:5000/api/analyze', {
+      const response = await fetch('https://solvia-backend.devin.dev/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ function App() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:5000/api/generate-exploit', {
+      const response = await fetch('https://solvia-backend.devin.dev/api/generate-exploit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
