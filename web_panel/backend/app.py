@@ -43,6 +43,7 @@ generator.enable_stealth_features({
 network_collector = NetworkPatternCollector()
 server_collector = ServerPenetrationCollector()
 agent_collector = AgentDeploymentCollector()
+validator = TargetValidator()
 
 # Load patterns
 network_collector.load_network_patterns()
@@ -57,6 +58,12 @@ def analyze_target():
     
     if not target:
         return jsonify({'error': 'No target specified'}), 400
+        
+    # Validate target
+    validation_result = validator.validate_target(target)
+    if not validation_result["allowed"]:
+        logger.warning(f"Target validation failed: {target}")
+        return jsonify({'error': 'Target not in whitelist'}), 400
     
     # Collect patterns
     network_patterns = network_collector.get_patterns_dataset()
@@ -107,6 +114,13 @@ def generate_exploit():
     
     if not vulnerability_info or 'target' not in vulnerability_info:
         return jsonify({'error': 'No target or vulnerability information provided'}), 400
+        
+    # Validate target
+    target = vulnerability_info['target']
+    validation_result = validator.validate_target(target)
+    if not validation_result["allowed"]:
+        logger.warning(f"Target validation failed for exploit generation: {target}")
+        return jsonify({'error': 'Target not in whitelist'}), 400
     
     # Extract advanced options
     advanced_options = {}
