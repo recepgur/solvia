@@ -1,11 +1,12 @@
 import re
+import os
 import json
 import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 
 class TargetValidator:
-    def __init__(self, whitelist_file: str = "/home/ubuntu/target_whitelist.json"):
+    def __init__(self, whitelist_file: str = None):
         """Initialize target validator with whitelist file"""
         # Setup logging without basicConfig to avoid conflicts
         self.logger = logging.getLogger('SecurityValidator')
@@ -14,6 +15,11 @@ class TargetValidator:
             handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
+        
+        # Use relative path if no whitelist file specified
+        if whitelist_file is None:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            whitelist_file = os.path.join(base_dir, "target_whitelist.json")
             
         self.whitelist_file = whitelist_file
         self.whitelist = self._load_whitelist()

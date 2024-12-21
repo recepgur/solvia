@@ -8,13 +8,16 @@ from network_pattern_collector import NetworkPatternCollector
 from server_penetration_collector import ServerPenetrationCollector
 from agent_deployment_collector import AgentDeploymentCollector
 from exploit_generation_model import ExploitGenerator
+from target_validator import TargetValidator
 
 app = Flask(__name__)
 CORS(app)
 
 # Set up logging
 import logging
-logging.basicConfig(level=logging.DEBUG)
+log_dir = os.path.dirname(os.path.abspath(__file__))
+log_path = os.path.join(log_dir, 'web_panel.log')
+logging.basicConfig(filename=log_path, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Initialize exploit generator with templates and advanced features
