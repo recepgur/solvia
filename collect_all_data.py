@@ -2,6 +2,10 @@ import pandas as pd
 from exploit_db_collector import ExploitDBCollector
 from metasploit_collector import MetasploitCollector
 from mitre_collector import MITRECollector
+from cve_collector import CVECollector
+from snyk_collector import SnykCollector
+from github_advisory_collector import GitHubAdvisoryCollector
+from cisa_collector import CISACollector
 import time
 from datetime import datetime
 
@@ -10,33 +14,75 @@ def collect_all_datasets():
     print("Starting data collection from all sources...")
     
     # Initialize collectors
-    exploit_collector = ExploitDBCollector()
-    metasploit_collector = MetasploitCollector()
-    mitre_collector = MITRECollector()
+    collectors = {
+        'CVE': CVECollector(),
+        'Exploit-DB': ExploitDBCollector(),
+        'Metasploit': MetasploitCollector(),
+        'MITRE': MITRECollector(),
+        'Snyk': SnykCollector(),
+        'GitHub': GitHubAdvisoryCollector(),
+        'CISA': CISACollector()
+    }
+    
+    total_entries = 0
+    total_size_mb = 0
     
     # Collect data from each source
-    print("\n=== Collecting Exploit-DB data ===")
-    exploit_count = exploit_collector.fetch_exploits()
-    exploit_collector.save_to_csv()
-    
-    print("\n=== Collecting Metasploit data ===")
-    metasploit_count = metasploit_collector.fetch_modules()
-    metasploit_collector.save_to_csv()
-    
-    print("\n=== Collecting MITRE ATT&CK data ===")
-    mitre_count = mitre_collector.fetch_tactics()
-    mitre_collector.save_to_csv()
+    for name, collector in collectors.items():
+        print(f"\n=== Collecting {name} data ===")
+        
+        try:
+            if name == 'CVE':
+                collector.collect_historical_cves()
+                stats = collector.get_collection_stats()
+                count = stats['total_cves']
+                size_mb = stats['total_size_mb']
+            elif name == 'Exploit-DB':
+                count = collector.fetch_exploits()
+                collector.save_to_csv()
+                size_mb = 0  # Will be calculated later
+            elif name == 'Metasploit':
+                count = collector.fetch_modules()
+                collector.save_to_csv()
+                size_mb = 0  # Will be calculated later
+            elif name == 'MITRE':
+                count = collector.fetch_tactics()
+                collector.save_to_csv()
+                size_mb = 0  # Will be calculated later
+            elif name == 'Snyk':
+                collector.collect_vulnerabilities()
+                stats = collector.get_collection_stats()
+                count = stats['total_vulnerabilities']
+                size_mb = stats['total_size_mb']
+            elif name == 'GitHub':
+                collector.collect_advisories()
+                stats = collector.get_collection_stats()
+                count = stats['total_advisories']
+                size_mb = stats['total_size_mb']
+            elif name == 'CISA':
+                collector.collect_vulnerabilities()
+                stats = collector.get_collection_stats()
+                count = stats['total_vulnerabilities']
+                size_mb = stats['total_size_mb']
+                
+            total_entries += count
+            total_size_mb += size_mb
+            print(f"Collected {count} entries, Size: {size_mb:.2f} MB")
+            
+        except Exception as e:
+            print(f"Error collecting {name} data: {str(e)}")
+            continue
     
     # Print summary
     print("\n=== Collection Summary ===")
-    print(f"Exploit-DB entries: {exploit_count}")
-    print(f"Metasploit modules: {metasploit_count}")
-    print(f"MITRE ATT&CK entries: {mitre_count}")
-    print(f"Total entries: {exploit_count + metasploit_count + mitre_count}")
+    print(f"Total entries collected: {total_entries}")
+    print(f"Total data size: {total_size_mb:.2f} MB")
     
-    # Save collection timestamp
+    # Save collection timestamp and stats
     with open('last_collection.txt', 'w') as f:
-        f.write(datetime.now().isoformat())
+        f.write(f"""Timestamp: {datetime.now().isoformat()}
+Total Entries: {total_entries}
+Total Size: {total_size_mb:.2f} MB""")
 
 if __name__ == "__main__":
     collect_all_datasets()
