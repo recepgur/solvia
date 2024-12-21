@@ -11,7 +11,9 @@ class TargetValidator:
         # Setup logging without basicConfig to avoid conflicts
         self.logger = logging.getLogger('SecurityValidator')
         if not self.logger.handlers:
-            handler = logging.FileHandler('security_validation.log')
+            log_dir = os.path.dirname(os.path.abspath(__file__))
+            log_path = os.path.join(log_dir, 'security_validation.log')
+            handler = logging.FileHandler(log_path)
             handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
