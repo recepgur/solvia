@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System
+.DS_Store
+.bash_history
+.bash_logout
+.bash_profile
+.bashrc
+.cache/
+.config/
+.local/
+.npm/
+.nvm/
+.pyenv/
+.rustup/
+.cargo/
+.ssh/
+.pki/
+.sudo_as_admin_successful
+.tmux.conf
+
+# Project specific
+*.csv
+*.json
+*.pth
+screenshots/
+full_outputs/
+.browser_data_dir/
+project.zip
+last_collection.txt

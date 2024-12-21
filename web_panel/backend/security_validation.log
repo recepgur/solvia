@@ -1,0 +1,87 @@
+2024-12-21 14:25:08,954 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-12-21 14:25:08,955 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-21 14:25:08,955 - INFO -  * Restarting with stat
+2024-12-21 14:25:14,419 - WARNING -  * Debugger is active!
+2024-12-21 14:25:14,424 - INFO -  * Debugger PIN: 527-332-715
+2024-12-21 14:25:39,240 - INFO - 127.0.0.1 - - [21/Dec/2024 14:25:39] "GET /api/status HTTP/1.1" 200 -
+2024-12-21 14:25:39,241 - INFO - 127.0.0.1 - - [21/Dec/2024 14:25:39] "GET /api/status HTTP/1.1" 200 -
+2024-12-21 14:26:01,197 - INFO - 127.0.0.1 - - [21/Dec/2024 14:26:01] "POST /api/analyze HTTP/1.1" 200 -
+2024-12-21 14:26:17,011 - ERROR - No target specified in vulnerability info
+2024-12-21 14:26:17,012 - INFO - 127.0.0.1 - - [21/Dec/2024 14:26:17] "[31m[1mPOST /api/generate_exploit HTTP/1.1[0m" 400 -
+2024-12-21 14:27:19,540 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-12-21 14:27:19,540 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-21 14:27:19,541 - INFO -  * Restarting with stat
+2024-12-21 14:27:24,049 - WARNING -  * Debugger is active!
+2024-12-21 14:27:24,052 - INFO -  * Debugger PIN: 527-332-715
+2024-12-21 14:28:56,089 - INFO -  * Detected change in '/home/ubuntu/web_panel/backend/app.py', reloading
+2024-12-21 14:28:56,673 - INFO -  * Restarting with stat
+2024-12-21 14:29:01,647 - WARNING -  * Debugger is active!
+2024-12-21 14:29:01,650 - INFO -  * Debugger PIN: 527-332-715
+2024-12-21 14:29:01,666 - INFO - 127.0.0.1 - - [21/Dec/2024 14:29:01] "GET /api/status HTTP/1.1" 200 -
+2024-12-21 14:29:01,668 - INFO - 127.0.0.1 - - [21/Dec/2024 14:29:01] "GET /api/status HTTP/1.1" 200 -
+2024-12-21 14:29:32,624 - INFO - 127.0.0.1 - - [21/Dec/2024 14:29:32] "POST /api/analyze HTTP/1.1" 200 -
+2024-12-21 14:29:49,168 - WARNING - Target http://test-server.local not found in whitelist
+2024-12-21 14:29:49,168 - WARNING - Target validation: http://test-server.local - Allowed: False - Context: {"type": "network", "severity": "high"}
+2024-12-21 14:29:49,169 - WARNING - Target not in whitelist: http://test-server.local
+2024-12-21 14:29:49,169 - INFO - 127.0.0.1 - - [21/Dec/2024 14:29:49] "[31m[1mPOST /api/generate_exploit HTTP/1.1[0m" 400 -
+2024-12-21 14:30:56,978 - INFO -  * Detected change in '/home/ubuntu/exploit_generation_model.py', reloading
+2024-12-21 14:30:57,608 - INFO -  * Restarting with stat
+2024-12-21 14:31:02,072 - WARNING -  * Debugger is active!
+2024-12-21 14:31:02,074 - INFO -  * Debugger PIN: 527-332-715
+2024-12-21 14:31:11,281 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-12-21 14:31:11,281 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-21 14:31:11,282 - INFO -  * Restarting with stat
+2024-12-21 14:31:15,969 - WARNING -  * Debugger is active!
+2024-12-21 14:31:15,972 - INFO -  * Debugger PIN: 527-332-715
+2024-12-21 14:31:40,801 - WARNING - Target http://test-server.local not found in whitelist
+2024-12-21 14:31:40,802 - WARNING - Target validation: http://test-server.local - Allowed: False - Context: {"type": "network", "severity": "high"}
+2024-12-21 14:31:40,802 - WARNING - Target not in whitelist: http://test-server.local
+2024-12-21 14:31:40,803 - INFO - 127.0.0.1 - - [21/Dec/2024 14:31:40] "[31m[1mPOST /api/generate_exploit HTTP/1.1[0m" 400 -
+2024-12-21 14:32:04,554 - INFO -  * Detected change in '/home/ubuntu/web_panel/backend/app.py', reloading
+2024-12-21 14:32:05,210 - INFO -  * Restarting with stat
+2024-12-21 14:37:52,974 - INFO - Checking target: http://test-server.local
+2024-12-21 14:37:52,974 - INFO - Current whitelist targets: []
+2024-12-21 14:37:52,974 - INFO - Current whitelist domains: []
+2024-12-21 14:37:52,975 - INFO - Extracted domain from target: test-server.local
+2024-12-21 14:37:52,975 - WARNING - Target http://test-server.local not found in whitelist (no matches)
+2024-12-21 14:37:52,975 - WARNING - Target validation: http://test-server.local - Allowed: False - Context: {"type": "network", "severity": "high"}
+2024-12-21 14:39:46,059 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:39:46,059 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:39:46,059 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:39:46,060 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:39:50,655 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:39:50,655 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:39:50,656 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:39:50,656 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:43:30,571 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:43:30,571 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:43:30,571 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:43:30,571 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:47:25,250 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:47:25,250 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:47:25,250 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:47:25,251 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:48:03,602 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:48:03,602 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:48:03,602 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:48:03,602 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:50:25,337 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:50:25,337 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:50:25,338 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:50:25,338 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:51:58,588 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:51:58,588 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:51:58,588 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:51:58,588 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:53:19,882 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:53:19,882 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:53:19,882 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 14:53:19,882 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local'], 'allowed_domains': ['test-server.local'], 'last_updated': '2024-01-01T00:00:00Z'}
+2024-12-21 14:55:52,812 - INFO - Checking target: http://test-server.local
+2024-12-21 14:55:52,813 - INFO - Current whitelist targets: ['http://test-server.local']
+2024-12-21 14:55:52,813 - INFO - Current whitelist domains: ['test-server.local']
+2024-12-21 14:55:52,813 - INFO - Target http://test-server.local found in whitelist (direct match)
+2024-12-21 14:55:52,813 - INFO - Target validation: http://test-server.local - Allowed: True - Context: {"type": "network", "severity": "high"}
