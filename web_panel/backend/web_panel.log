@@ -1,0 +1,157 @@
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): huggingface.co:443
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/tokenizer_config.json HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815040003408 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+DEBUG:filelock:Lock 139815040003408 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/tokenizer_config.json HTTP/11" 200 26
+DEBUG:filelock:Attempting to release lock 139815040003408 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+DEBUG:filelock:Lock 139815040003408 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815451950064 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/10c66461e4c109db5a2196bff4bb59be30396ed8.lock
+DEBUG:filelock:Lock 139815451950064 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/10c66461e4c109db5a2196bff4bb59be30396ed8.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/config.json HTTP/11" 200 665
+DEBUG:filelock:Attempting to release lock 139815451950064 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/10c66461e4c109db5a2196bff4bb59be30396ed8.lock
+DEBUG:filelock:Lock 139815451950064 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/10c66461e4c109db5a2196bff4bb59be30396ed8.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/vocab.json HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815022539984 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/1f1d9aaca301414e7f6c9396df506798ff4eb9a6.lock
+DEBUG:filelock:Lock 139815022539984 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/1f1d9aaca301414e7f6c9396df506798ff4eb9a6.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/vocab.json HTTP/11" 200 1042301
+DEBUG:filelock:Attempting to release lock 139815022539984 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/1f1d9aaca301414e7f6c9396df506798ff4eb9a6.lock
+DEBUG:filelock:Lock 139815022539984 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/1f1d9aaca301414e7f6c9396df506798ff4eb9a6.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/merges.txt HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815033779456 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+DEBUG:filelock:Lock 139815033779456 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/merges.txt HTTP/11" 200 456318
+DEBUG:filelock:Attempting to release lock 139815033779456 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+DEBUG:filelock:Lock 139815033779456 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/tokenizer.json HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815033779456 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/4b988bccc9dc5adacd403c00b4704976196548f8.lock
+DEBUG:filelock:Lock 139815033779456 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/4b988bccc9dc5adacd403c00b4704976196548f8.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/tokenizer.json HTTP/11" 200 1355256
+DEBUG:filelock:Attempting to release lock 139815033779456 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/4b988bccc9dc5adacd403c00b4704976196548f8.lock
+DEBUG:filelock:Lock 139815033779456 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/4b988bccc9dc5adacd403c00b4704976196548f8.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/added_tokens.json HTTP/11" 404 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/special_tokens_map.json HTTP/11" 404 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/chat_template.jinja HTTP/11" 404 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/model.safetensors HTTP/11" 302 0
+DEBUG:filelock:Attempting to acquire lock 139815022298752 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707.lock
+DEBUG:filelock:Lock 139815022298752 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707.lock
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): cdn-lfs.hf.co:443
+DEBUG:urllib3.connectionpool:https://cdn-lfs.hf.co:443 "GET /gpt2/248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707?response-content-disposition=inline%3B+filename*%3DUTF-8%27%27model.safetensors%3B+filename%3D%22model.safetensors%22%3B&Expires=1735061096&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTczNTA2MTA5Nn19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2RuLWxmcy5oZi5jby9ncHQyLzI0OGRmYzM5MTE4NjllYzQ5M2M3NmU2NWJmMmZjZjdmNjE1ODI4YjAyNTRjMTJiNDczMTgyZjBmODFkM2E3MDc~cmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj0qIn1dfQ__&Signature=AR-tU4-xZ3X-zKiRH1Jd-9ZiqjvUTjbgjy4X-p1Sg59BNioVfvabqkXlNaG8VYMFdUndijV2jTJehfN9~MWXd29di1pXtSLKwBiTXbMjnqFuwd7jrqg-TojY8iL7QMlVY~2Xst2n-ZSesixF7KBQXJsSjQ8latYeC8qCi-MkpyIKN0XV3v3xgTwyTC7mmN7pqUspdSaR9L~ozxywyKiSK6Nkv2AJ1Pd-z5-2GDeLoic6fsNU~Jd7Z3NL-7eQ2JtgIyBflAZJVgXDG~2VZQ9aTAaHM6FJ9IWUV27lR3CNn70k1uR3ZMcHdtndcbiZ1P9g3U95q8wg8qB-yCBa-Xs3UA__&Key-Pair-Id=K3RPWS32NSSJCE HTTP/11" 200 548105171
+DEBUG:filelock:Attempting to release lock 139815022298752 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707.lock
+DEBUG:filelock:Lock 139815022298752 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/11" 200 0
+DEBUG:filelock:Attempting to acquire lock 139815012473104 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/3dc481ecc3b2c47a06ab4e20dba9d7f4b447bdf3.lock
+DEBUG:filelock:Lock 139815012473104 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/3dc481ecc3b2c47a06ab4e20dba9d7f4b447bdf3.lock
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "GET /gpt2/resolve/main/generation_config.json HTTP/11" 200 124
+DEBUG:filelock:Attempting to release lock 139815012473104 on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/3dc481ecc3b2c47a06ab4e20dba9d7f4b447bdf3.lock
+DEBUG:filelock:Lock 139815012473104 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--gpt2/3dc481ecc3b2c47a06ab4e20dba9d7f4b447bdf3.lock
+INFO:ExploitGenerator:Loading tokenizer from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/tokenizer_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/tokenizer_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Tokenizer loaded successfully
+INFO:ExploitGenerator:Loading model from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/generation_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Model loaded successfully
+INFO:ExploitGenerator:Model set to evaluation mode
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): huggingface.co:443
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/tokenizer_config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Loading tokenizer from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/tokenizer_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/tokenizer_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Tokenizer loaded successfully
+INFO:ExploitGenerator:Loading model from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/generation_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Model loaded successfully
+INFO:ExploitGenerator:Model set to evaluation mode
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:ExploitGenerator:Stealth feature anti_forensics set to True
+INFO:ExploitGenerator:Stealth feature sandbox_detection set to True
+INFO:ExploitGenerator:Stealth feature kernel_stealth set to True
+INFO:ExploitGenerator:Stealth feature memory_protection set to True
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): huggingface.co:443
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/tokenizer_config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Loading tokenizer from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/tokenizer_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/tokenizer_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Tokenizer loaded successfully
+INFO:ExploitGenerator:Loading model from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/generation_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Model loaded successfully
+INFO:ExploitGenerator:Model set to evaluation mode
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:ExploitGenerator:Stealth feature anti_forensics set to True
+INFO:ExploitGenerator:Stealth feature sandbox_detection set to True
+INFO:ExploitGenerator:Stealth feature kernel_stealth set to True
+INFO:ExploitGenerator:Stealth feature memory_protection set to True
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 527-332-715
+INFO:SecurityValidator:Checking target: example.com
+INFO:SecurityValidator:Current whitelist targets: ['http://test-server.local', 'example.com']
+INFO:SecurityValidator:Current whitelist domains: ['test-server.local', 'example.com']
+INFO:SecurityValidator:Target example.com found in whitelist (direct match)
+INFO:SecurityValidator:Target validation: example.com - Allowed: True - Context: {}
+INFO:werkzeug:127.0.0.1 - - [21/Dec/2024 17:26:37] "POST /api/analyze HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Dec/2024 17:26:37] "[31m[1mPOST /api/generate_exploit HTTP/1.1[0m" 400 -
+INFO:werkzeug: * Detected change in '/home/ubuntu/collect_all_data.py', reloading
+INFO:werkzeug: * Restarting with stat
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): huggingface.co:443
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/tokenizer_config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Loading tokenizer from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/tokenizer_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/tokenizer_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Tokenizer loaded successfully
+INFO:ExploitGenerator:Loading model from EleutherAI/gpt-neo-125M
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/config.json HTTP/11" 200 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125M/resolve/main/generation_config.json HTTP/11" 307 0
+DEBUG:urllib3.connectionpool:https://huggingface.co:443 "HEAD /EleutherAI/gpt-neo-125m/resolve/main/generation_config.json HTTP/11" 200 0
+INFO:ExploitGenerator:Model loaded successfully
+INFO:ExploitGenerator:Model set to evaluation mode
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+INFO:ExploitGenerator:Stealth feature anti_forensics set to True
+INFO:ExploitGenerator:Stealth feature sandbox_detection set to True
+INFO:ExploitGenerator:Stealth feature kernel_stealth set to True
+INFO:ExploitGenerator:Stealth feature memory_protection set to True
+INFO:SecurityValidator:Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+INFO:SecurityValidator:Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 527-332-715
+INFO:werkzeug: * Detected change in '/home/ubuntu/web_panel/backend/app.py', reloading
+INFO:werkzeug: * Restarting with stat

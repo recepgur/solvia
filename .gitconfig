@@ -1,0 +1,9 @@
+[core]
+	pager = cat | head -n 10000
+[merge]
+	conflictstyle = diff3
+[credential]
+	helper = store --file /opt/.devin/.devin-integration-git-credentials
+[user]
+	name = Devin AI
+	email = 158243242+devin-ai-integration[bot]@users.noreply.github.com

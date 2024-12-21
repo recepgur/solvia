@@ -1,0 +1,27 @@
+2024-12-21 17:25:02,207 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:25:02,207 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:25:02,207 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:25:02,207 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:01,598 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:01,598 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:01,598 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:01,598 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:01,600 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:01,600 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:10,171 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:10,171 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:10,171 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:10,171 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:10,175 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:26:10,175 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:26:37,954 - INFO - Checking target: example.com
+2024-12-21 17:26:37,954 - INFO - Current whitelist targets: ['http://test-server.local', 'example.com']
+2024-12-21 17:26:37,954 - INFO - Current whitelist domains: ['test-server.local', 'example.com']
+2024-12-21 17:26:37,954 - INFO - Target example.com found in whitelist (direct match)
+2024-12-21 17:26:37,954 - INFO - Target validation: example.com - Allowed: True - Context: {}
+2024-12-21 17:27:58,937 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:27:58,937 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:27:58,937 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:27:58,937 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}
+2024-12-21 17:27:58,940 - INFO - Initialized TargetValidator with whitelist file: /home/ubuntu/target_whitelist.json
+2024-12-21 17:27:58,940 - INFO - Current whitelist: {'allowed_targets': ['http://test-server.local', 'example.com'], 'allowed_domains': ['test-server.local', 'example.com'], 'last_updated': '2024-01-21T12:00:00Z'}

@@ -1,16 +1,16 @@
-import requests
 import json
-import sys
 import os
+import sys
+
+import requests
+
 
 def test_endpoints():
     base_url = "http://localhost:5000"
-    
+
     # Test /api/analyze endpoint
     print("\nTesting /api/analyze endpoint...")
-    analyze_payload = {
-        "target": "example.com"
-    }
+    analyze_payload = {"target": "example.com"}
     try:
         response = requests.post(f"{base_url}/api/analyze", json=analyze_payload)
         print(f"Status Code: {response.status_code}")
@@ -24,15 +24,18 @@ def test_endpoints():
         "vulnerability_info": {
             "target": "example.com",
             "type": "test",
-            "details": "test vulnerability"
+            "details": "test vulnerability",
         }
     }
     try:
-        response = requests.post(f"{base_url}/api/generate_exploit", json=exploit_payload)
+        response = requests.post(
+            f"{base_url}/api/generate_exploit", json=exploit_payload
+        )
         print(f"Status Code: {response.status_code}")
         print(f"Response: {json.dumps(response.json(), indent=2)}")
     except Exception as e:
         print(f"Error testing /api/generate_exploit: {str(e)}")
+
 
 if __name__ == "__main__":
     print("Starting endpoint tests...")
