@@ -18,7 +18,7 @@ export function Messaging() {
   const t = (key: TranslationKey) => translations[language][key];
 
   // Simulated blockchain message validation with multiple stages
-  const validateMessageWithSolana = async (text: string): Promise<boolean> => {
+  const validateMessageWithSolana = async (_text: string): Promise<boolean> => {
     setIsProcessing(true);
     
     try {

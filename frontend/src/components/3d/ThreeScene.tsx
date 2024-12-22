@@ -1,13 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import {
-  PerspectiveCamera,
   OrbitControls,
   Sphere,
-  Trail,
   Float,
-  Text3D,
-  useTexture,
   Points,
   PointMaterial,
   MeshDistortMaterial
@@ -126,10 +122,12 @@ function ValidationParticles({ active = false }) {
           positions[i3 + 2] *= 0.99;
           break;
         case 3: // Confirmation
-          const angle = (i / 300) * Math.PI * 2;
-          positions[i3] = Math.cos(angle + time) * (3 + Math.sin(time * 2));
-          positions[i3 + 1] = Math.sin(angle + time) * (3 + Math.sin(time * 2));
-          positions[i3 + 2] = Math.cos(time * 3) * 2;
+          {
+            const angle = (i / 300) * Math.PI * 2;
+            positions[i3] = Math.cos(angle + time) * (3 + Math.sin(time * 2));
+            positions[i3 + 1] = Math.sin(angle + time) * (3 + Math.sin(time * 2));
+            positions[i3 + 2] = Math.cos(time * 3) * 2;
+          }
           break;
       }
     }
