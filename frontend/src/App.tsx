@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from './components/Layout';
+import { useNetworkStore } from './stores/networkStore';
 import { VideoCall } from './components/VideoCall';
 import { NFTProfile } from './components/NFTProfile';
 import { PrivateRooms } from './components/PrivateRooms';
@@ -22,8 +23,10 @@ function App() {
   const [selectedGroup, setSelectedGroup] = useState<string>();
   const { groups, createGroup, leaveGroup, sendMessage } = useGroups();
   const selectedGroupData = selectedGroup ? groups.find((g: Group) => g.id === selectedGroup) : undefined;
-  const endpoint = process.env.VITE_SOLANA_NETWORK || clusterApiUrl('devnet');
-  const wallets = [new PhantomWalletAdapter()];
+  // Support multiple networks while maintaining decentralization
+  const { network } = useNetworkStore();
+  const endpoint = useMemo(() => network || clusterApiUrl('mainnet-beta'), [network]);
+  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
 
   const renderView = () => {
     switch (activeView) {
