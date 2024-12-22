@@ -353,7 +353,7 @@ export function Messaging() {
         <div className="absolute bottom-20 right-4 z-50 shadow-xl rounded-lg overflow-hidden">
           <Picker
             data={data}
-            onEmojiSelect={(emoji: any) => {
+            onEmojiSelect={(emoji: { native: string }) => {
               addReaction(selectedMessage.id, emoji.native);
               setSelectedMessage(null);
               setShowEmojiPicker(false);

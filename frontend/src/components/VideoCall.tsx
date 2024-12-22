@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { uploadToIPFS } from '../services/ipfs';
@@ -33,7 +33,7 @@ export function VideoCall() {
   const [isCalling, setIsCalling] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
-  const [_callLogs, setCallLogs] = useState<CallLog[]>([]);
+  // Call logs are now handled by the parent component
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
@@ -193,7 +193,7 @@ export function VideoCall() {
     setCallLogs(prev => [...prev, newLog]);
     
     // Upload call log to IPFS
-    uploadToIPFS(newLog).catch(console.error);
+    uploadToIPFS(JSON.stringify(newLog)).catch(console.error);
     
     setIsCalling(false);
     setParticipants(new Map());
@@ -214,39 +214,33 @@ export function VideoCall() {
             {t('video.you')} ({publicKey?.toBase58().slice(0, 8)}...)
           </div>
         </div>
-        {Array.from(participants.entries()).map(([id, participant]) => {
-          const videoRef = useRef<HTMLVideoElement>(null);
-          
-          useEffect(() => {
-            if (videoRef.current && participant.stream) {
-              videoRef.current.srcObject = participant.stream;
-            }
-          }, [participant.stream]);
-
-          return (
-            <div key={id} className="relative aspect-video rounded-lg bg-zinc-900">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="h-full w-full rounded-lg object-cover"
-              />
-              <div className="absolute bottom-4 left-4 text-white text-sm">
-                {id.slice(0, 8)}...
-              </div>
-              {!participant.videoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                  <VideoOff className="h-8 w-8 text-white opacity-50" />
-                </div>
-              )}
-              {!participant.audioEnabled && (
-                <div className="absolute top-4 right-4">
-                  <MicOff className="h-4 w-4 text-white opacity-50" />
-                </div>
-              )}
+        {Array.from(participants.entries()).map(([id, participant]) => (
+          <div key={id} className="relative aspect-video rounded-lg bg-zinc-900">
+            <video
+              ref={(el) => {
+                if (el && participant.stream) {
+                  el.srcObject = participant.stream;
+                }
+              }}
+              autoPlay
+              playsInline
+              className="h-full w-full rounded-lg object-cover"
+            />
+            <div className="absolute bottom-4 left-4 text-white text-sm">
+              {id.slice(0, 8)}...
             </div>
-          );
-        })}
+            {!participant.videoEnabled && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <VideoOff className="h-8 w-8 text-white opacity-50" />
+              </div>
+            )}
+            {!participant.audioEnabled && (
+              <div className="absolute top-4 right-4">
+                <MicOff className="h-4 w-4 text-white opacity-50" />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
       
       <div className="flex justify-center space-x-4">

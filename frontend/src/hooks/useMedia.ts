@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { uploadToIPFS } from '../services/ipfs';
 
 interface MediaUploadResult {
@@ -12,9 +12,11 @@ export function useMedia() {
   const [isUploading, setIsUploading] = useState(false);
   const { publicKey } = useWallet();
   // Multiple RPC endpoints for decentralization
+  // Support all Solana networks
   const RPC_ENDPOINTS = [
-    'https://api.mainnet-beta.solana.com',
-    'https://solana-api.projectserum.com',
+    process.env.VITE_SOLANA_NETWORK || clusterApiUrl('mainnet-beta'),
+    clusterApiUrl('devnet'),
+    clusterApiUrl('testnet'),
     'https://rpc.ankr.com/solana'
   ];
 

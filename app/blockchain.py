@@ -244,4 +244,46 @@ class SolanaManager:
             print(f"Error clearing message queue: {str(e)}")
             return False
 
+    async def store_file_metadata(self, owner_address: str, cid: str, file_size: int, encryption_info: str) -> bool:
+        """Store file metadata on Solana blockchain using PDA
+        
+        Args:
+            owner_address: The public key of the file owner
+            cid: IPFS Content Identifier of the encrypted file
+            file_size: Size of the file in bytes
+            encryption_info: JSON string containing encryption metadata
+            
+        Returns:
+            bool: True if metadata was stored successfully
+        """
+        try:
+            # Create PDA for file metadata
+            seed = f"file_{owner_address}".encode()
+            file_pda = PublicKey.find_program_address([seed], SYS_PROGRAM_ID)[0]
+            
+            # Pack metadata: size (4 bytes) + cid length (2 bytes) + cid + encryption info length (2 bytes) + encryption info
+            metadata_struct = struct.pack("<IH", file_size, len(cid)) + \
+                            cid.encode() + \
+                            struct.pack("<H", len(encryption_info)) + \
+                            encryption_info.encode()
+            
+            # Create instruction to store metadata
+            store_ix = TransactionInstruction(
+                program_id=SYS_PROGRAM_ID,
+                keys=[
+                    {"pubkey": file_pda, "is_signer": False, "is_writable": True},
+                    {"pubkey": SYSVAR_RENT_PUBKEY, "is_signer": False, "is_writable": False}
+                ],
+                data=metadata_struct
+            )
+            
+            # Create and send transaction
+            tx = Transaction().add(store_ix)
+            await self._client.send_transaction(tx)
+            return True
+            
+        except Exception as e:
+            print(f"Error storing file metadata: {str(e)}")
+            return False
+
 solana = SolanaManager()

@@ -3,16 +3,16 @@ import { useState } from 'react';
 import { Camera, Paperclip, Mic, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useKeyManagement } from '../hooks/useKeyManagement';
-import { encryptMessage, type EncryptedData } from '../utils/crypto';
+import { encryptMessage } from '../utils/crypto';
 
 interface MessageInputProps {
   onSendMessage: (text: string, encrypted: string) => Promise<void>;
   onAttachFile: () => void;
   onStartRecording: () => void;
-  recipientAddress: string;
+  // Recipient address handled internally by onSendMessage
 }
 
-export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, recipientAddress }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: MessageInputProps) {
   const { keyPair } = useKeyManagement();
   const [message, setMessage] = useState('');
   const { t } = useLanguage();

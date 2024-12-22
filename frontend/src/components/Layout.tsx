@@ -73,11 +73,11 @@ export function Layout({ children, onViewChange }: LayoutProps) {
         />
 
         {/* View toggle */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800">
+        <div className="flex border-b border-[var(--border-light)]">
           <button
             onClick={() => setView('chats')}
             className={`flex-1 py-4 text-center ${
-              view === 'chats' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+              view === 'chats' ? 'border-b-2 border-[var(--primary-accent)] text-[var(--primary-accent)]' : 'text-[var(--text-secondary)]'
             }`}
           >
             {t('messages')}
@@ -85,7 +85,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           <button
             onClick={() => setView('status')}
             className={`flex-1 py-4 text-center ${
-              view === 'status' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+              view === 'status' ? 'border-b-2 border-[var(--primary-accent)] text-[var(--primary-accent)]' : ''
             }`}
           >
             {t('status.updates')}
