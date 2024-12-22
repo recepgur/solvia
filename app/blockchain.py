@@ -1,19 +1,40 @@
 import aiohttp
 import json
-from .config import settings
+import base58
+from typing import Optional, List
+from solana.rpc.async_api import AsyncClient
+from solana.publickey import PublicKey
+from solana.system_program import SYS_PROGRAM_ID, create_account, transfer
+from solana.transaction import Transaction, TransactionInstruction
+from solana.sysvar import SYSVAR_RENT_PUBKEY
+import asyncio
+import struct
+
+SOLVIO_TOKEN_MINT = "7bsVvXbR3524sgms6zjCF2BN3vHxuLePfb5CrqrPt4MQ"
+FEE_AMOUNT = 1_000_000_000  # 1 SOLV token (9 decimals)
 
 class SolanaManager:
-    def __init__(self):
-        self.endpoint = settings.SOLANA_NETWORK_URL
-        self.token_address = settings.SOLVIO_TOKEN_ADDRESS
+    def __init__(self, endpoint: Optional[str] = None):
+        self.endpoint = endpoint or "https://api.mainnet-beta.solana.com"
+        self.token_address = SOLVIO_TOKEN_MINT
+        self._client = AsyncClient(self.endpoint, commitment="confirmed")
+        
+    async def update_endpoint(self, new_endpoint: str) -> None:
+        """Update RPC endpoint and recreate client"""
+        self.endpoint = new_endpoint
+        await self._client.close()
+        self._client = AsyncClient(self.endpoint, commitment="confirmed")
         
     async def _make_rpc_call(self, method: str, params: list) -> dict:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                self.endpoint,
-                json={"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
-            ) as response:
-                return await response.json()
+        """Make RPC call using AsyncClient for better reliability"""
+        try:
+            response = await self._client._provider.make_request(method, params)
+            if "error" in response:
+                raise Exception(f"RPC error: {response['error']}")
+            return response
+        except Exception as e:
+            print(f"RPC call error: {str(e)}")
+            raise
     
     async def verify_signature(self, message: str, signature_str: str, public_key_str: str) -> bool:
         try:
@@ -26,26 +47,40 @@ class SolanaManager:
             print(f"Signature verification error: {str(e)}")
             return False
     
-    async def verify_token_balance(self, wallet_address: str, required_amount: float) -> bool:
+    async def verify_token_balance(self, wallet_address: str) -> bool:
+        """Verify if wallet has paid the one-time fee"""
         try:
-            # Get token account by owner
-            result = await self._make_rpc_call(
-                "getTokenAccountsByOwner",
-                [
-                    wallet_address,
-                    {"mint": self.token_address},
-                    {"encoding": "jsonParsed"}
-                ]
+            # Get fee vault PDA
+            fee_vault = PublicKey.find_program_address(
+                [b"fee_vault", PublicKey(self.token_address).to_bytes()],
+                SYS_PROGRAM_ID
+            )[0]
+            
+            # Check for previous payment
+            signatures = await self._client.get_signatures_for_address(fee_vault)
+            if signatures.value:
+                for sig in signatures.value:
+                    tx = await self._client.get_transaction(sig.signature)
+                    if tx and tx.value:
+                        for ix in tx.value.transaction.message.instructions:
+                            if ix.program_id == self.token_address and ix.data[0] == 3:  # Transfer instruction
+                                return True
+            
+            # If no previous payment, check token balance
+            accounts = await self._client.get_token_accounts_by_owner(
+                PublicKey(wallet_address),
+                {"mint": PublicKey(self.token_address)}
             )
             
-            accounts = result.get("result", {}).get("value", [])
-            total_balance = 0
-            
-            for account in accounts:
-                info = account.get("account", {}).get("data", {}).get("parsed", {}).get("info", {})
-                total_balance += float(info.get("tokenAmount", {}).get("amount", 0))
-            
-            return total_balance >= required_amount
+            if not accounts.value:
+                return False
+                
+            for account in accounts.value:
+                info = account.account.data["parsed"]["info"]
+                if int(info["tokenAmount"]["amount"]) >= FEE_AMOUNT: 
+                    return True
+                    
+            return False
         except Exception as e:
             print(f"Balance check error: {str(e)}")
             return False
@@ -105,5 +140,108 @@ class SolanaManager:
         except Exception as e:
             print(f"NFT metadata retrieval error: {str(e)}")
             return None
+
+    async def create_message_queue_pda(self, wallet_address: str) -> PublicKey:
+        """Create a PDA to store queued messages for a wallet"""
+        try:
+            queue_seed = f"msg_queue_{wallet_address}".encode()
+            queue_pda = PublicKey.find_program_address(
+                [queue_seed],
+                SYS_PROGRAM_ID
+            )[0]
+            return queue_pda
+        except Exception as e:
+            print(f"Error creating message queue PDA: {str(e)}")
+            raise
+
+    async def store_queued_message(self, recipient: str, encrypted_message: str, sender: str) -> bool:
+        """Store an encrypted message in recipient's queue PDA"""
+        try:
+            queue_pda = await self.create_message_queue_pda(recipient)
+            
+            # Create message data structure
+            message_data = struct.pack(
+                "<32s32sQ256s",
+                bytes.fromhex(sender),
+                bytes.fromhex(recipient),
+                int(asyncio.get_event_loop().time() * 1000),  # timestamp
+                encrypted_message.encode()
+            )
+            
+            # Create instruction to store message
+            store_ix = TransactionInstruction(
+                program_id=SYS_PROGRAM_ID,
+                keys=[
+                    {"pubkey": queue_pda, "is_signer": False, "is_writable": True},
+                    {"pubkey": SYSVAR_RENT_PUBKEY, "is_signer": False, "is_writable": False}
+                ],
+                data=message_data
+            )
+            
+            tx = Transaction().add(store_ix)
+            await self._client.send_transaction(tx)
+            return True
+            
+        except Exception as e:
+            print(f"Error storing queued message: {str(e)}")
+            return False
+            
+    async def get_queued_messages(self, wallet_address: str) -> List[dict]:
+        """Get all queued messages for a wallet"""
+        try:
+            queue_pda = await self.create_message_queue_pda(wallet_address)
+            account_info = await self._client.get_account_info(queue_pda)
+            
+            if not account_info.value:
+                return []
+                
+            messages = []
+            data = account_info.value.data
+            
+            # Parse message data
+            offset = 0
+            while offset < len(data):
+                sender = data[offset:offset+32].hex()
+                recipient = data[offset+32:offset+64].hex()
+                timestamp = struct.unpack("<Q", data[offset+64:offset+72])[0]
+                msg_len = struct.unpack("<H", data[offset+72:offset+74])[0]
+                encrypted_content = data[offset+74:offset+74+msg_len].decode()
+                
+                messages.append({
+                    "sender": sender,
+                    "recipient": recipient,
+                    "timestamp": timestamp,
+                    "content": encrypted_content
+                })
+                
+                offset += 74 + msg_len
+                
+            return messages
+            
+        except Exception as e:
+            print(f"Error getting queued messages: {str(e)}")
+            return []
+            
+    async def clear_message_queue(self, wallet_address: str) -> bool:
+        """Clear all queued messages for a wallet after delivery"""
+        try:
+            queue_pda = await self.create_message_queue_pda(wallet_address)
+            
+            # Create instruction to clear queue
+            clear_ix = TransactionInstruction(
+                program_id=SYS_PROGRAM_ID,
+                keys=[
+                    {"pubkey": queue_pda, "is_signer": False, "is_writable": True}
+                ],
+                data=struct.pack("<B", 0)  # Clear operation code
+            )
+            
+            tx = Transaction().add(clear_ix)
+            await self._client.send_transaction(tx)
+            return True
+            
+        except Exception as e:
+            print(f"Error clearing message queue: {str(e)}")
+            return False
 
 solana = SolanaManager()
