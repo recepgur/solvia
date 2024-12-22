@@ -14,26 +14,43 @@ const clients = IPFS_GATEWAYS.map(gateway => create(gateway));
 
 // Note: CID storage on chain is now handled directly by the services that need it
 
-export async function uploadToIPFS(data: string | Record<string, unknown> | Buffer): Promise<string> {
-  const cid = await uploadToIPFSRaw(data);
-  // Store CID on chain if it's a string (encrypted data)
-  if (typeof data === 'string') {
+export async function uploadToIPFS(data: File | string | Record<string, unknown> | Buffer): Promise<string> {
+  let cid: string;
+  
+  if (data instanceof File) {
+    // Use dedicated file upload function for File type
+    cid = await uploadFile(data);
+  } else {
+    // Handle other types with raw upload
+    cid = await uploadToIPFSRaw(data);
+  }
+
+  // Store CID on chain if it's a string (encrypted data) and wallet is connected
+  if (typeof data === 'string' && window.solana?.publicKey) {
     try {
-      await solana.storeCID(data, cid);
+      await solana.storeCID(window.solana.publicKey.toBase58(), cid);
     } catch (error) {
       console.error('Failed to store CID on chain:', error);
     }
   }
+
+  // Validate CID format
+  if (!/^Qm[1-9A-HJ-NP-Za-km-z]{44}$/.test(cid)) {
+    throw new Error('Invalid IPFS CID format');
+  }
+
   return cid;
 }
 
 async function uploadToIPFSRaw(data: string | Record<string, unknown> | Buffer): Promise<string> {
   let lastError;
-  // Try each IPFS client until one succeeds
+  // Try each IPFS client until one succeeds - maintaining complete decentralization
   for (const client of clients) {
     try {
       const result = await client.add(
-        typeof data === 'string' ? data : JSON.stringify(data)
+        typeof data === 'string' ? data : 
+        Buffer.isBuffer(data) ? data : 
+        JSON.stringify(data)
       );
       return result.path;
     } catch (error) {

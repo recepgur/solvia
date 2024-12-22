@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { getFromIPFS } from '../services/ipfs';
 import { decryptFile } from '../utils/crypto';
 import { EncryptedData } from '../utils/crypto';
-import type { CryptoKey } from '../utils/crypto';
+import type { CryptoKeys } from '../utils/crypto';
+type CryptoKey = CryptoKeys['privateKey'];
 
 interface UseFileDownloadReturn {
   downloadFile: (cid: string, privateKey: CryptoKey) => Promise<void>;

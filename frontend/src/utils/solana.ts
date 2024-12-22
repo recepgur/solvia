@@ -1,6 +1,7 @@
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 
+// Ensure complete decentralization by supporting multiple networks
 export class SolanaManager {
   private connection: Connection;
   private programId: PublicKey;
@@ -79,4 +80,5 @@ export class SolanaManager {
 }
 
 // Export a default instance for convenience
+// This instance is used across the app to maintain decentralization
 export const solana = new SolanaManager();

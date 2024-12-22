@@ -118,9 +118,16 @@ export function Layout({ children, onViewChange }: LayoutProps) {
         </div>
         <div className="sticky bottom-0 p-4 bg-[var(--app-background)]">
           <MessageInput 
-            onSendMessage={(text) => console.log('Send:', text)}
-            onAttachFile={() => console.log('Attach file')}
-            onStartRecording={() => console.log('Start recording')}
+            onSendMessage={async (text, encrypted) => {
+              console.log('Send:', text, 'Encrypted:', encrypted);
+              return Promise.resolve();
+            }}
+            onAttachFile={() => {
+              console.log('Attach file');
+            }}
+            onStartRecording={() => {
+              console.log('Start recording');
+            }}
           />
         </div>
       </div>

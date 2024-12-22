@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
-import { uploadToIPFS } from '../services/ipfs';
+import { uploadFile } from '../services/ipfs';
 
 interface MediaUploadResult {
   hash: string;
@@ -55,8 +55,8 @@ export function useMedia() {
         throw new Error('error.token.required');
       }
 
-      // Upload to IPFS and validate hash
-      const hash = await uploadToIPFS(file);
+      // Upload to IPFS using the dedicated file upload function
+      const hash = await uploadFile(file);
       if (!/^Qm[1-9A-HJ-NP-Za-km-z]{44}$/.test(hash)) {
         throw new Error('error.ipfs.invalid');
       }

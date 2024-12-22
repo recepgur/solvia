@@ -115,8 +115,13 @@ export const useGroups = (): GroupHookReturn => {
     }
 
     try {
-      // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      // Get and parse current group data from IPFS
+      const rawData = await getFromIPFS(groupId);
+      const groupData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      
+      if (!Array.isArray(groupData.members)) {
+        groupData.members = [];
+      }
 
       // Add member to group
       groupData.members.push({
@@ -150,8 +155,13 @@ export const useGroups = (): GroupHookReturn => {
     if (!group) throw new Error('Group not found');
 
     try {
-      // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      // Get and parse current group data from IPFS
+      const rawData = await getFromIPFS(groupId);
+      const groupData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      
+      if (!Array.isArray(groupData.members)) {
+        throw new Error('Invalid group data: members array not found');
+      }
 
       // Remove member from group
       groupData.members = groupData.members.filter(
@@ -189,8 +199,13 @@ export const useGroups = (): GroupHookReturn => {
         reply_to: replyTo,
       };
 
-      // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      // Get and parse current group data from IPFS
+      const rawData = await getFromIPFS(groupId);
+      const groupData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      
+      if (!Array.isArray(groupData.messages)) {
+        groupData.messages = [];
+      }
 
       // Add message to group
       groupData.messages.push(message);
@@ -227,7 +242,20 @@ export const useGroups = (): GroupHookReturn => {
         
         const loadedGroups = await Promise.all(
           groupCids.map(async (cid): Promise<Group> => {
-            const groupData = await getFromIPFS(cid);
+            const rawData = await getFromIPFS(cid);
+            const groupData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData as Record<string, unknown>;
+            
+            // Validate required fields
+            if (typeof groupData.name !== 'string' ||
+                (groupData.description !== undefined && typeof groupData.description !== 'string') ||
+                typeof groupData.created_at !== 'string' ||
+                typeof groupData.created_by !== 'string' ||
+                (groupData.required_nft !== undefined && typeof groupData.required_nft !== 'string') ||
+                !Array.isArray(groupData.members) ||
+                !Array.isArray(groupData.messages)) {
+              throw new Error(`Invalid group data structure for group ${cid}`);
+            }
+            
             return {
               id: cid,
               name: groupData.name,
@@ -235,8 +263,8 @@ export const useGroups = (): GroupHookReturn => {
               created_at: groupData.created_at,
               created_by: groupData.created_by,
               required_nft: groupData.required_nft,
-              members: groupData.members || [],
-              messages: groupData.messages || []
+              members: groupData.members,
+              messages: groupData.messages
             };
           })
         );

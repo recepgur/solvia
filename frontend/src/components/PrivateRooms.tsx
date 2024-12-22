@@ -8,17 +8,7 @@ import { useTokenVerification } from '../hooks/useTokenVerification';
 import { useLanguage } from '../contexts/LanguageContext';
 import { uploadToIPFS, getFromIPFS } from '../services/ipfs';
 
-interface Room {
-  id: string;
-  name: string;
-  maxParticipants: number;
-  currentParticipants: number;
-  isPremium: boolean;
-  ipfsCid?: string;
-  creator: string;
-  attachmentTypes: string[];
-  createdAt: number;
-}
+import type { Room } from '../types/room.d';
 
 export function PrivateRooms() {
   const [rooms, setRooms] = React.useState<Room[]>([]);
@@ -26,7 +16,8 @@ export function PrivateRooms() {
   const [joiningRoom, setJoiningRoom] = React.useState<string | null>(null);
   const { publicKey } = useWallet();
   const { t } = useLanguage();
-  const { hasToken, isLoading } = useTokenVerification();
+  const { hasPaid, isLoading } = useTokenVerification();
+  const hasToken = hasPaid; // Maintain consistent naming throughout component
 
   // WebSocket message handler for room updates
   React.useEffect(() => {
@@ -110,7 +101,43 @@ export function PrivateRooms() {
       // Get latest room data from IPFS if available
       if (room.ipfsCid) {
         const updatedRoomData = await getFromIPFS(room.ipfsCid);
-        const parsedRoomData = JSON.parse(updatedRoomData);
+        
+        // Parse and validate room data with proper type handling
+        const parseRoom = (data: string | Record<string, unknown>): Room => {
+          const parsed = typeof data === 'string' ? JSON.parse(data) as Record<string, unknown> : data;
+          
+          // Validate required fields with type checking
+          if (typeof parsed.id !== 'string' ||
+              typeof parsed.name !== 'string' ||
+              typeof parsed.maxParticipants !== 'number' ||
+              typeof parsed.currentParticipants !== 'number' ||
+              typeof parsed.isPremium !== 'boolean' ||
+              typeof parsed.creator !== 'string' ||
+              !Array.isArray(parsed.attachmentTypes) ||
+              typeof parsed.createdAt !== 'number') {
+            throw new Error('Invalid room data format');
+          }
+          
+          return {
+            id: parsed.id,
+            name: parsed.name,
+            maxParticipants: parsed.maxParticipants,
+            currentParticipants: parsed.currentParticipants,
+            isPremium: parsed.isPremium,
+            creator: parsed.creator,
+            attachmentTypes: parsed.attachmentTypes as string[],
+            createdAt: parsed.createdAt,
+            ipfsCid: typeof parsed.ipfsCid === 'string' ? parsed.ipfsCid : undefined
+          };
+        };
+
+        // Parse and validate room data
+        const parsedRoomData = parseRoom(updatedRoomData);
+
+        if (!parsedRoomData || typeof parsedRoomData !== 'object' || !('id' in parsedRoomData)) {
+          throw new Error('Invalid room data format');
+        }
+        
         if (parsedRoomData.currentParticipants >= parsedRoomData.maxParticipants) {
           alert(t('error.room.full'));
           return;

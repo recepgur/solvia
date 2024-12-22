@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { uploadToIPFS } from '../services/ipfs';
@@ -33,7 +33,7 @@ export function VideoCall() {
   const [isCalling, setIsCalling] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
-  // Call logs are now handled by the parent component
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
@@ -190,7 +190,7 @@ export function VideoCall() {
       participants: Array.from(participants.keys()),
       duration: Date.now() - callStartTime
     };
-    setCallLogs(prev => [...prev, newLog]);
+    setCallLogs((prev: CallLog[]) => [...prev, newLog]);
     
     // Upload call log to IPFS
     uploadToIPFS(JSON.stringify(newLog)).catch(console.error);
@@ -242,6 +242,21 @@ export function VideoCall() {
           </div>
         ))}
       </div>
+      
+      {callLogs.length > 0 && (
+        <div className="p-4 bg-zinc-100 dark:bg-zinc-900 rounded-lg">
+          <h3 className="text-sm font-medium mb-2">{t('call.history')}</h3>
+          <div className="space-y-2">
+            {callLogs.map((log, index) => (
+              <div key={index} className="flex justify-between text-sm">
+                <span>{log.type === 'outgoing' ? '→' : '←'} {log.participants.join(', ')}</span>
+                <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                {log.duration && <span>{Math.round(log.duration / 1000)}s</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="flex justify-center space-x-4">
         <Button

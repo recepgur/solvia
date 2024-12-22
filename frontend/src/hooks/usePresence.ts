@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 // Web3 imports for future blockchain integration
 import { uploadToIPFS } from '../services/ipfs';
+import type { PresenceData } from '../types/presence.d';
 
-interface PresenceData {
-  address: string;
-  lastSeen: number;
-  status: 'online' | 'offline';
-}
+// Using PresenceData interface from types/presence.d.ts
 
 export function usePresence() {
   const [onlineUsers, setOnlineUsers] = useState<PresenceData[]>([]);
@@ -27,7 +24,7 @@ export function usePresence() {
         };
 
         // Store presence data on IPFS
-        await uploadToIPFS(presenceData);
+        await uploadToIPFS(JSON.stringify(presenceData));
         
         // Broadcast presence update through WebSocket
         if (window.solvioWs && window.solvioWs.readyState === WebSocket.OPEN) {
