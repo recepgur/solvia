@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { useNetworkStore } from '../stores/networkStore';
 import { uploadFile } from '../services/ipfs';
 
 interface MediaUploadResult {
@@ -11,14 +12,8 @@ interface MediaUploadResult {
 export function useMedia() {
   const [isUploading, setIsUploading] = useState(false);
   const { publicKey } = useWallet();
-  // Multiple RPC endpoints for decentralization
-  // Support all Solana networks
-  const RPC_ENDPOINTS = [
-    process.env.VITE_SOLANA_NETWORK || clusterApiUrl('mainnet-beta'),
-    clusterApiUrl('devnet'),
-    clusterApiUrl('testnet'),
-    'https://rpc.ankr.com/solana'
-  ];
+  // Use network store for consistent RPC endpoint management
+  const { getCurrentEndpoint } = useNetworkStore();
 
   const verifySolvioToken = async (): Promise<boolean> => {
     if (!publicKey) {
@@ -27,11 +22,15 @@ export function useMedia() {
     }
 
     let lastError: Error | null = null;
-    // Try each RPC endpoint until one succeeds
-    for (const endpoint of RPC_ENDPOINTS) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 3;
+    
+    while (attempts < MAX_ATTEMPTS) {
+      const currentEndpoint = getCurrentEndpoint();
       try {
-        console.log(`Attempting token verification with endpoint: ${endpoint}`);
-        const connection = new Connection(endpoint);
+        console.log(`Attempting token verification with endpoint: ${currentEndpoint}`);
+        const connection = new Connection(currentEndpoint);
+        attempts++;
         
         // Validate mint address
         const mintAddress = '7bsVvXbR3524sgms6zjCF2BN3vHxuLePfb5CrqrPt4MQ';
@@ -58,7 +57,7 @@ export function useMedia() {
           return true;
         }
       } catch (error) {
-        console.warn(`Error with RPC endpoint ${endpoint}:`, error);
+        console.warn(`Error with RPC endpoint ${currentEndpoint}:`, error);
         lastError = error as Error;
         continue;
       }

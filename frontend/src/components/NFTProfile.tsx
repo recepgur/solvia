@@ -3,7 +3,8 @@ import { Upload } from 'lucide-react';
 import { Button } from './ui/button';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Connection, clusterApiUrl } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
+import { useNetworkStore } from '../stores/networkStore';
 import { Metaplex, walletAdapterIdentity, Nft, Sft, NftWithToken, SftWithToken } from '@metaplex-foundation/js';
 
 export function NFTProfile() {
@@ -14,8 +15,9 @@ export function NFTProfile() {
   // Store NFT address in ref to avoid re-renders
   const nftAddressRef = useRef<string>('');
 
-  // Use environment-configured network for complete decentralization
-  const connection = new Connection(process.env.VITE_SOLANA_NETWORK || clusterApiUrl('mainnet-beta'));
+  // Use network store for decentralized RPC endpoint management
+  const { getCurrentEndpoint } = useNetworkStore();
+  const connection = new Connection(getCurrentEndpoint());
   const metaplex = new Metaplex(connection).use(walletAdapterIdentity(useWallet()));
 
   const fetchNFTs = async () => {

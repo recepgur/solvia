@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Mic, MicOff, Users } from 'lucide-react';
 import { Connection } from '@solana/web3.js';
+import { useNetworkStore } from '../stores/networkStore';
 import { Metaplex, walletAdapterIdentity, Nft, Sft, Metadata } from '@metaplex-foundation/js';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -44,7 +45,8 @@ export function VoiceRooms() {
   
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
   
-  const connection = new Connection(process.env.VITE_SOLANA_NETWORK || 'https://api.devnet.solana.com');
+  const { getCurrentEndpoint } = useNetworkStore();
+  const connection = new Connection(getCurrentEndpoint());
   const metaplex = new Metaplex(connection).use(walletAdapterIdentity(useWallet()));
 
   // WebRTC configuration for peer connections

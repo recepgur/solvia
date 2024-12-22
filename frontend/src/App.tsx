@@ -30,40 +30,114 @@ function App() {
   const { network } = useNetworkStore();
   const endpoint = useMemo(() => {
     try {
-      // Validate and convert network string to Cluster type
+      // Enhanced network validation with detailed logging
       const validateNetwork = (net: string | null): 'devnet' | 'testnet' | 'mainnet-beta' => {
+        console.log('Validating network configuration:', {
+          providedNetwork: net,
+          availableNetworks: ['devnet', 'testnet', 'mainnet-beta']
+        });
+
         switch (net) {
           case 'devnet':
           case 'testnet':
           case 'mainnet-beta':
             return net;
           default:
-            console.log('Invalid or missing network, defaulting to devnet');
+            console.warn('Geçersiz veya eksik ağ yapılandırması, devnet kullanılıyor', {
+              providedNetwork: net
+            });
             return 'devnet';
         }
       };
 
       const selectedNetwork = validateNetwork(network);
-      console.log('Initializing Solana connection with network:', selectedNetwork);
-      return clusterApiUrl(selectedNetwork);
+      console.log('Solana bağlantısı başlatılıyor:', {
+        network: selectedNetwork,
+        rpcEndpoint: clusterApiUrl(selectedNetwork)
+      });
+
+      // Test endpoint connectivity
+      const endpoint = clusterApiUrl(selectedNetwork);
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getHealth'
+        })
+      }).catch(error => {
+        console.error('RPC endpoint connectivity test failed:', {
+          endpoint,
+          error: error.message
+        });
+      });
+
+      return endpoint;
     } catch (err) {
-      console.error('Error initializing Solana endpoint:', err);
+      console.error('Solana endpoint başlatma hatası:', {
+        error: err instanceof Error ? err.message : String(err),
+        fallbackNetwork: 'devnet',
+        fallbackEndpoint: clusterApiUrl('devnet')
+      });
       return clusterApiUrl('devnet');
     }
   }, [network]);
   const wallets = useMemo(() => {
     try {
-      console.log('Initializing wallet adapter...');
-      const adapter = new PhantomWalletAdapter();
-      console.log('Wallet adapter initialized successfully');
-      return [adapter];
+      console.log('Phantom cüzdan adaptörü başlatılıyor...');
+      try {
+        const adapter = new PhantomWalletAdapter();
+        if (!adapter) {
+          console.error('Phantom cüzdan adaptörü oluşturulamadı');
+          throw new Error('Phantom cüzdan adaptörü başlatılamadı');
+        }
+        console.log('Cüzdan adaptörü başarıyla başlatıldı:', adapter);
+        return [adapter];
+      } catch (initError) {
+        console.error('Cüzdan başlatma hatası:', initError);
+        throw initError;
+      }
     } catch (error) {
       console.error('Failed to initialize wallet adapter:', error instanceof Error ? error.message : String(error));
-      throw error;
+      return []; // Return empty array instead of throwing to prevent white screen
     }
   }, []);
 
+  // Add connection status tracking
   const { publicKey, connected, connecting } = useWallet();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  // Monitor wallet connection status with enhanced logging
+  useEffect(() => {
+    console.log('Wallet connection state changed:', {
+      connecting,
+      connected,
+      publicKey: publicKey?.toString(),
+      previousError: connectionError
+    });
+
+    if (connecting) {
+      console.log('Wallet is in connecting state...');
+      setConnectionError(null);
+      return;
+    }
+
+    if (!connected && !connecting) {
+      console.log('Wallet not connected and not connecting');
+      setConnectionError('Lütfen devam etmek için cüzdanınızı bağlayın');
+      return;
+    }
+
+    if (connected && !publicKey) {
+      console.warn('Abnormal state: Connected but no public key');
+      setConnectionError('Cüzdan bağlı fakat public key alınamadı. Lütfen tekrar bağlanmayı deneyin.');
+      return;
+    }
+
+    console.log('Wallet connection successful:', publicKey?.toString());
+    setConnectionError(null);
+  }, [connected, connecting, publicKey, connectionError]);
   
   // Token verification for one-time fee
   const { hasPaid, isLoading: isVerifying, error: verificationError, payFee } = useTokenVerification();
@@ -228,24 +302,24 @@ function App() {
           fallback={
             <div className="flex items-center justify-center h-screen">
               <div className="text-center p-8 max-w-md mx-auto bg-white rounded-lg shadow-lg">
-                <h2 className="text-2xl font-bold mb-4">Wallet Connection Error</h2>
-                <p className="mb-4">Failed to initialize wallet connection. Please try again.</p>
+                <h2 className="text-2xl font-bold mb-4">Solana Cüzdan Bağlantısı</h2>
+                <p className="mb-4">{connectionError || 'Cüzdan bağlantısı başlatılamadı. Lütfen tekrar deneyin.'}</p>
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">
-                    Make sure you have a Solana wallet installed and properly configured.
+                    Lütfen Solana cüzdanınızın yüklü ve doğru yapılandırılmış olduğundan emin olun.
                   </p>
                   <div className="flex justify-center space-x-4">
                     <button
                       onClick={() => window.location.reload()}
                       className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                     >
-                      Reload Page
+                      Sayfayı Yenile
                     </button>
                     <button
                       onClick={() => window.open('https://phantom.app', '_blank')}
                       className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
                     >
-                      Get Phantom Wallet
+                      Phantom Cüzdan Kur
                     </button>
                   </div>
                 </div>
@@ -266,8 +340,8 @@ function App() {
             ) : !hasPaid ? (
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center p-8 max-w-md mx-auto bg-white rounded-lg shadow-lg">
-                  <h2 className="text-2xl font-bold mb-4">Welcome to Solvio</h2>
-                  <p className="mb-6">To access the application, a one-time fee of 1 SOLV token is required.</p>
+                  <h2 className="text-2xl font-bold mb-4">Solvio'ya Hoş Geldiniz</h2>
+                  <p className="mb-6">Uygulamaya erişmek için bir kerelik 1 SOLV token gereklidir.</p>
                   {verificationError && (
                     <p className="text-red-500 mb-4">{verificationError}</p>
                   )}
@@ -283,7 +357,7 @@ function App() {
                       onClick={handleFeePayment}
                       className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                     >
-                      Pay Access Fee
+                      Erişim Ücreti Öde
                     </button>
                   )}
                 </div>

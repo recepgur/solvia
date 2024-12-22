@@ -21,8 +21,22 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error);
-    console.error('Error info:', errorInfo);
+    console.error('=== Error Boundary Caught Error ===');
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
+    
+    // Log additional context for wallet-related errors
+    if (error.message.includes('wallet') || error.message.includes('adapter')) {
+      console.error('Wallet-related error detected. Current environment:', {
+        network: import.meta.env.VITE_SOLANA_NETWORK,
+        hasPhantom: typeof window !== 'undefined' && 'solana' in window,
+        userAgent: navigator.userAgent
+      });
+    }
   }
 
   public render() {

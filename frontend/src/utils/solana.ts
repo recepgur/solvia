@@ -7,9 +7,19 @@ export class SolanaManager {
   private programId: PublicKey;
 
   constructor() {
-    // Initialize with default endpoint
-    this.connection = new Connection('https://api.mainnet-beta.solana.com');
-    this.programId = new PublicKey(process.env.SOLANA_PROGRAM_ID || '');
+    // Initialize with default endpoint from environment
+    const network = import.meta.env.VITE_SOLANA_NETWORK || 'devnet';
+    const endpoints = (import.meta.env.VITE_SOLANA_RPC_ENDPOINTS || '').split(',');
+    const defaultEndpoint = endpoints[0] || 'https://api.devnet.solana.com';
+    
+    console.log('Initializing SolanaManager with:', {
+      network,
+      defaultEndpoint,
+      availableEndpoints: endpoints
+    });
+    
+    this.connection = new Connection(defaultEndpoint);
+    this.programId = new PublicKey(import.meta.env.VITE_SOLANA_PROGRAM_ID || '');
   }
 
   /**
