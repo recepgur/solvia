@@ -68,47 +68,95 @@ function App() {
   // Token verification for one-time fee
   const { hasPaid, isLoading: isVerifying, error: verificationError, payFee } = useTokenVerification();
 
-  // Log wallet and verification state
+  // Enhanced wallet connection state logging and error handling
   useEffect(() => {
-    console.log('Wallet and verification state:', {
-      publicKey: publicKey?.toString(),
-      connected,
-      connecting,
-      hasPaid,
-      isVerifying,
-      verificationError: verificationError ? String(verificationError) : undefined,
-      endpoint,
-    });
+    try {
+      if (connecting) {
+        console.log('Wallet is connecting...');
+        return;
+      }
+
+      if (!connected) {
+        console.log('Wallet not connected');
+        return;
+      }
+
+      if (!publicKey) {
+        console.warn('Connected but no public key available');
+        return;
+      }
+
+      console.log('Wallet and verification state:', {
+        publicKey: publicKey.toString(),
+        connected,
+        connecting: false,
+        hasPaid,
+        isVerifying,
+        verificationError: verificationError ? String(verificationError) : undefined,
+        endpoint,
+      });
+    } catch (error) {
+      console.error('Error in wallet state management:', error);
+    }
   }, [publicKey, connected, connecting, hasPaid, isVerifying, verificationError, endpoint]);
   
-  // Debug wallet and verification state
+  // Enhanced debug logging and error handling for wallet and verification state
   useEffect(() => {
-    console.log('Environment variables:', {
-      network: import.meta.env.VITE_SOLANA_NETWORK,
-      tokenAddress: import.meta.env.VITE_SOLVIO_TOKEN_ADDRESS,
-      feeVault: import.meta.env.VITE_FEE_VAULT,
-    });
-    
-    console.log('Wallet state:', {
-      publicKey: publicKey?.toString(),
-      hasPaid,
-      isVerifying,
-      verificationError,
-      connected: !!publicKey,
-      endpoint,
-    });
+    try {
+      // Validate environment configuration
+      const envConfig = {
+        network: import.meta.env.VITE_SOLANA_NETWORK,
+        tokenAddress: import.meta.env.VITE_SOLVIO_TOKEN_ADDRESS,
+        feeVault: import.meta.env.VITE_FEE_VAULT,
+      };
 
-    if (verificationError) {
-      console.error('Verification error details:', verificationError);
+      if (!envConfig.network || !envConfig.tokenAddress || !envConfig.feeVault) {
+        console.error('Missing required environment configuration:', 
+          Object.entries(envConfig)
+            .filter(([, value]) => !value)
+            .map(([key]) => key)
+        );
+        return;
+      }
+
+      console.log('Environment configuration validated:', envConfig);
+      
+      // Enhanced wallet state logging
+      const walletState = {
+        publicKey: publicKey?.toString() ?? 'Not available',
+        hasPaid,
+        isVerifying,
+        verificationError: verificationError ? String(verificationError) : undefined,
+        connected: connected && !!publicKey,
+        endpoint,
+      };
+
+      console.log('Current wallet state:', walletState);
+
+      if (verificationError) {
+        console.error('Token verification error:', verificationError);
+      }
+    } catch (error) {
+      console.error('Error in wallet verification state management:', error);
     }
-  }, [publicKey, hasPaid, isVerifying, verificationError, endpoint]);
+  }, [publicKey, hasPaid, isVerifying, verificationError, endpoint, connected]);
   
-  // Handle fee payment
+  // Enhanced fee payment handler with proper wallet checks
   const handleFeePayment = async () => {
     try {
+      if (!connected || !publicKey) {
+        console.error('Cannot process payment: Wallet not properly connected');
+        return;
+      }
+
+      if (connecting) {
+        console.log('Wallet is still connecting, please wait...');
+        return;
+      }
+
       await payFee();
     } catch (error) {
-      console.error('Failed to pay access fee:', error);
+      console.error('Failed to pay access fee:', error instanceof Error ? error.message : String(error));
     }
   };
 

@@ -19,10 +19,14 @@ export function NFTProfile() {
   const metaplex = new Metaplex(connection).use(walletAdapterIdentity(useWallet()));
 
   const fetchNFTs = async () => {
-    if (!publicKey) return;
+    if (!connected || !publicKey) {
+      console.warn('Wallet not connected, skipping NFT fetch');
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('Fetching NFTs for wallet:', publicKey.toString());
       const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
       
       for (const nft of nfts) {

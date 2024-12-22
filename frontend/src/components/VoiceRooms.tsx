@@ -130,10 +130,14 @@ export function VoiceRooms() {
   }, [localStream]);
 
   const createRoom = async () => {
-    if (!connected || !publicKey) return;
+    if (!connected || !publicKey) {
+      console.warn('Wallet not connected, cannot create room');
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log('Verifying NFT ownership for wallet:', publicKey.toString());
       // Verify NFT ownership
       const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
       const ownsNft = nfts.some((nft: Nft | Sft | Metadata) => 
@@ -171,10 +175,14 @@ export function VoiceRooms() {
   };
 
   const joinRoom = async (room: VoiceRoom) => {
-    if (!connected || !publicKey) return;
+    if (!connected || !publicKey) {
+      console.warn('Wallet not connected, cannot join room');
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log('Verifying NFT ownership for room access:', publicKey.toString());
       // Verify NFT ownership
       const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
       const hasRequiredNFT = nfts.some((nft: Nft | Sft | Metadata) => 
@@ -288,6 +296,19 @@ export function VoiceRooms() {
       setIsAudioEnabled(!isAudioEnabled);
     }
   };
+
+  // Early return if wallet is not connected
+  if (!connected || !publicKey) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">{t('wallet.connect.required')}</h2>
+          <p className="mb-4">{t('wallet.connect.description')}</p>
+          <WalletMultiButton />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
