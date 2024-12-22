@@ -70,6 +70,14 @@ const VerificationParticles = () => (
   </div>
 );
 
+// Solana message validation types
+interface SolanaValidation {
+  signature?: string;
+  blockTime?: number;
+  slot?: number;
+  confirmations?: number;
+}
+
 // Types for messages
 interface Message {
   id: string;
@@ -78,6 +86,31 @@ interface Message {
   sender: string;
   verified: boolean;
   transactionHash?: string;
+  validation?: SolanaValidation;
+  error?: string;
+}
+
+// Placeholder for Solana message validation
+async function validateMessageWithSolana(message: string): Promise<SolanaValidation> {
+  // TODO: Implement actual Solana validation when packages are available
+  console.log('Validating message with Solana:', message);
+  
+  // Simulate blockchain validation
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  return {
+    signature: `solana:${Date.now().toString(16)}`,
+    blockTime: Date.now(),
+    slot: Math.floor(Math.random() * 1000000),
+    confirmations: 1
+  };
+}
+
+// Placeholder for checking SOLV token holdings
+async function checkSolvTokenHoldings(address: string): Promise<boolean> {
+  // TODO: Implement actual token check when packages are available
+  console.log('Checking SOLV token holdings for:', address);
+  return true;
 }
 
 export function Messaging() {
@@ -95,28 +128,54 @@ export function Messaging() {
     setIsProcessing(true);
     
     try {
+      // TODO: Get actual wallet address when Solana packages are available
+      const userAddress = 'CzNeEPiGXutW2kx2HQyy3peD7763iEiYYEMxxbKyYX2';
+      
+      // Check if user holds SOLV tokens
+      const hasTokens = await checkSolvTokenHoldings(userAddress);
+      if (!hasTokens) {
+        const errorMsg = 'Error: SOLV token holdings required for messaging';
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: inputText,
+          timestamp: Date.now(),
+          sender: userAddress,
+          verified: false,
+          error: errorMsg
+        }]);
+        setInputText('');
+        setIsProcessing(false);
+        return;
+      }
+      
       // Create new message with verification status
       const newMessage: Message = {
         id: Date.now().toString(),
         text: inputText,
         timestamp: Date.now(),
-        sender: 'User', // TODO: Replace with actual wallet address
+        sender: userAddress,
         verified: false,
         transactionHash: undefined,
+        validation: undefined,
       };
 
       // Add unverified message immediately
       setMessages(prev => [...prev, newMessage]);
       setInputText('');
 
-      // Simulate DComm blockchain verification
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate DComm and Solana blockchain verification
+      const validation = await validateMessageWithSolana(inputText);
       
-      // Update message to verified status
+      // Update message with validation results
       setMessages(prev => 
         prev.map(msg => 
           msg.id === newMessage.id 
-            ? { ...msg, verified: true, transactionHash: `solana:${Date.now().toString(16)}` }
+            ? { 
+                ...msg, 
+                verified: true, 
+                transactionHash: validation.signature,
+                validation: validation
+              }
             : msg
         )
       );
@@ -197,16 +256,34 @@ export function Messaging() {
                         }}
                         transition={{ duration: 0.5 }}
                       />
-                      <Badge
-                        variant="outline"
-                        className={`absolute -top-2 right-2 ${
-                          msg.verified
-                            ? 'text-green-400 border-green-400'
-                            : 'text-blue-400 border-blue-400'
-                        }`}
-                      >
-                        {msg.verified ? t.verified : t.verifying}
-                      </Badge>
+                      <div className="absolute -top-2 right-2 flex gap-2">
+                        <Badge
+                          variant="outline"
+                          className={`${
+                            msg.verified
+                              ? 'text-green-400 border-green-400'
+                              : 'text-blue-400 border-blue-400'
+                          }`}
+                        >
+                          {msg.verified ? t.verified : t.verifying}
+                        </Badge>
+                        {msg.validation && (
+                          <Badge
+                            variant="outline"
+                            className="text-purple-400 border-purple-400"
+                            title={`Slot: ${msg.validation.slot}\nConfirmations: ${msg.validation.confirmations}`}
+                          >
+                            #{msg.validation.slot}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Error Display */}
+                      {msg.error && (
+                        <div className="mt-2 text-sm text-red-400">
+                          {msg.error}
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </div>
