@@ -1,5 +1,6 @@
 # Metaplex Foundation Project Directory
-This repository is a directory of the projects that the Metaplex Foundation works on. 
+[TR] Bu depo, Metaplex Foundation'ın üzerinde çalıştığı projelerin bir dizinidir.
+[EN] This repository is a directory of the projects that the Metaplex Foundation works on. 
 
 To learn more, visit our documentation at https://docs.metaplex.com.
 
@@ -95,4 +96,4 @@ The following repositories are no longer maintained by the Metaplex Foundation.
   
 - **The Program Graveyard** - [GitHub](https://github.com/metaplex-foundation/the-graveyard)
   
-  The Rust programs that are we no longer maintain. 
+  The Rust programs that are we no longer maintain.    
