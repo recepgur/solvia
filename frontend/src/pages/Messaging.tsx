@@ -18,6 +18,8 @@ export function Messaging() {
   const t = (key: TranslationKey) => translations[language][key];
 
   // Simulated blockchain message validation with multiple stages
+  // TODO: Implement actual Solana blockchain validation using the text parameter
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const validateMessageWithSolana = async (_text: string): Promise<boolean> => {
     setIsProcessing(true);
     
