@@ -19,14 +19,33 @@ export function NFTProfile() {
   const metaplex = new Metaplex(connection).use(walletAdapterIdentity(useWallet()));
 
   const fetchNFTs = async () => {
-    if (!connected || !publicKey) {
+    if (!connected) {
       console.warn('Wallet not connected, skipping NFT fetch');
       return;
     }
     
+    if (!publicKey) {
+      console.warn('No public key available, skipping NFT fetch');
+      return;
+    }
+
     try {
       setLoading(true);
       console.log('Fetching NFTs for wallet:', publicKey.toString());
+      
+      // Validate connection before proceeding
+      if (!connection) {
+        throw new Error('No Solana connection available');
+      }
+      
+      // Verify connection is responsive
+      try {
+        await connection.getLatestBlockhash();
+      } catch (err) {
+        console.error('Failed to verify Solana connection:', err);
+        throw new Error('Failed to connect to Solana network');
+      }
+      
       const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
       
       for (const nft of nfts) {

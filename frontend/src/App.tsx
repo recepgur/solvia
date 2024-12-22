@@ -230,12 +230,25 @@ function App() {
               <div className="text-center p-8 max-w-md mx-auto bg-white rounded-lg shadow-lg">
                 <h2 className="text-2xl font-bold mb-4">Wallet Connection Error</h2>
                 <p className="mb-4">Failed to initialize wallet connection. Please try again.</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Reload Page
-                </button>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Make sure you have a Solana wallet installed and properly configured.
+                  </p>
+                  <div className="flex justify-center space-x-4">
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Reload Page
+                    </button>
+                    <button
+                      onClick={() => window.open('https://phantom.app', '_blank')}
+                      className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                    >
+                      Get Phantom Wallet
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           }
