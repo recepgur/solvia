@@ -73,12 +73,15 @@ function SolvToken() {
   );
 }
 
-// Message validation particles
+// Message validation particles with stages
 function ValidationParticles({ active = false }) {
   const particlesRef = useRef<THREE.Points>(null!);
+  const [stage, setStage] = React.useState(0);
+  
+  // Different particle configurations for each stage
   const positions = React.useMemo(() => {
-    const pos = new Float32Array(200 * 3);
-    for (let i = 0; i < 200; i++) {
+    const pos = new Float32Array(300 * 3);
+    for (let i = 0; i < 300; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 10;
       pos[i * 3 + 1] = (Math.random() - 0.5) * 10;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 10;
@@ -86,13 +89,49 @@ function ValidationParticles({ active = false }) {
     return pos;
   }, []);
 
+  // Progress through validation stages
+  React.useEffect(() => {
+    if (active) {
+      setStage(1);
+      const timer1 = setTimeout(() => setStage(2), 800);
+      const timer2 = setTimeout(() => setStage(3), 1400);
+      const timer3 = setTimeout(() => setStage(0), 2000);
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    } else {
+      setStage(0);
+    }
+  }, [active]);
+
   useFrame((state) => {
     if (!active) return;
     const time = state.clock.getElapsedTime();
-    for (let i = 0; i < 200; i++) {
+    const positions = particlesRef.current.geometry.attributes.position.array;
+    
+    for (let i = 0; i < 300; i++) {
       const i3 = i * 3;
-      particlesRef.current.geometry.attributes.position.array[i3] += Math.sin(time + i) * 0.01;
-      particlesRef.current.geometry.attributes.position.array[i3 + 1] += Math.cos(time + i) * 0.01;
+      
+      // Different animation patterns for each stage
+      switch (stage) {
+        case 1: // Initial validation
+          positions[i3] += Math.sin(time + i) * 0.01;
+          positions[i3 + 1] += Math.cos(time + i) * 0.01;
+          break;
+        case 2: // Transaction simulation
+          positions[i3] *= 0.99;
+          positions[i3 + 1] *= 0.99;
+          positions[i3 + 2] *= 0.99;
+          break;
+        case 3: // Confirmation
+          const angle = (i / 300) * Math.PI * 2;
+          positions[i3] = Math.cos(angle + time) * (3 + Math.sin(time * 2));
+          positions[i3 + 1] = Math.sin(angle + time) * (3 + Math.sin(time * 2));
+          positions[i3 + 2] = Math.cos(time * 3) * 2;
+          break;
+      }
     }
     particlesRef.current.geometry.attributes.position.needsUpdate = true;
   });
@@ -108,8 +147,8 @@ function ValidationParticles({ active = false }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.1}
-        color="#00ffff"
+        size={0.15}
+        color={stage === 3 ? "#00ff88" : "#00ffff"}
         transparent
         opacity={active ? 1 : 0}
         blending={THREE.AdditiveBlending}
