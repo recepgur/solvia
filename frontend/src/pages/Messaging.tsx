@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ThreeScene } from '../../components/3d/ThreeScene';
+import { translations, Language, TranslationKey } from '../i18n/translations';
 
 interface Message {
   id: string;
@@ -12,6 +13,9 @@ export function Messaging() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
+  
+  const t = (key: TranslationKey) => translations[language][key];
 
   // Simulated blockchain message validation with multiple stages
   const validateMessageWithSolana = async (text: string): Promise<boolean> => {
@@ -72,14 +76,25 @@ export function Messaging() {
       </div>
 
       {/* Messaging Interface */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
-            DCOOM Messaging
-          </h1>
+      <div className="container mx-auto px-4 py-8 max-h-screen overflow-hidden">
+        <div className="max-w-2xl mx-auto flex flex-col h-full">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+              {t('title')}
+            </h1>
+            <button
+              onClick={() => setLanguage(lang => lang === 'en' ? 'tr' : 'en')}
+              className="px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50 hover:border-blue-400/50 hover:bg-gray-700/50 transition-all duration-200"
+            >
+              {language === 'en' ? '🇹🇷 Türkçe' : '🇬🇧 English'}
+            </button>
+          </div>
+          <p className="text-lg text-center text-gray-400 mb-8">
+            {t('subtitle')}
+          </p>
           
           {/* Messages List */}
-          <div className="space-y-4 mb-8 h-[60vh] overflow-y-auto">
+          <div className="space-y-4 mb-8 flex-1 min-h-0 overflow-y-auto">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -95,7 +110,7 @@ export function Messaging() {
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </span>
                   {message.verified && (
-                    <span className="text-cyan-400">✓ Verified on Solana</span>
+                    <span className="text-cyan-400">{t('verified')}</span>
                   )}
                 </div>
               </div>
@@ -108,7 +123,7 @@ export function Messaging() {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('placeholder')}
               className="w-full p-4 rounded-lg bg-gray-800/50 border border-gray-700/50 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 transition-all duration-200 backdrop-blur-sm"
               disabled={isProcessing}
             />
@@ -121,7 +136,7 @@ export function Messaging() {
                   : 'bg-blue-500 hover:bg-blue-600 text-white'
               } transition-all duration-200`}
             >
-              {isProcessing ? 'Verifying...' : 'Send'}
+              {isProcessing ? t('verifying') : t('send')}
             </button>
           </form>
         </div>
