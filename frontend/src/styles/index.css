@@ -6,25 +6,27 @@
 
 @layer base {
   :root {
-    --app-background: #F0F2F5;
-    --whatsapp-green: #25D366;
-    --whatsapp-teal: #00a884;
-    --chat-background: #efeae2;
-    --bubble-out: #dcf8c6;
-    --bubble-in: #ffffff;
-    --border-light: #e9edef;
-    --text-primary: #111b21;
-    --text-secondary: #667781;
+    --app-background: #F8F9FD;
+    --primary-accent: #6B4FBB;    /* Deep purple for blockchain theme */
+    --secondary-accent: #38A1DB;  /* Bright blue for modern feel */
+    --chat-background: #FFFFFF;
+    --bubble-out: #EDE9F8;       /* Light purple for sent messages */
+    --bubble-in: #F0F7FC;        /* Light blue for received messages */
+    --border-light: #E2E8F0;
+    --text-primary: #2D3748;
+    --text-secondary: #4A5568;
   }
   
   .dark {
-    --app-background: #111B21;
-    --chat-background: #0b141a;
-    --bubble-out: #005c4b;
-    --bubble-in: #202c33;
-    --border-light: #2f3b43;
-    --text-primary: #e9edef;
-    --text-secondary: #8696a0;
+    --app-background: #1A1B23;    /* Dark navy background */
+    --chat-background: #242632;   /* Slightly lighter navy */
+    --bubble-out: #4A3B8C;       /* Darker purple for sent messages */
+    --bubble-in: #2C4B6E;        /* Darker blue for received messages */
+    --border-light: #2D3748;
+    --text-primary: #F7FAFC;
+    --text-secondary: #A0AEC0;
+    --primary-accent: #8A6FE8;   /* Brighter purple for dark mode */
+    --secondary-accent: #4DB5FF;  /* Brighter blue for dark mode */
   }
 }
 
@@ -33,18 +35,37 @@ body {
 }
 
 .app-header {
-  @apply bg-[#25D366] text-white px-4 py-3 flex items-center justify-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  @apply bg-[var(--primary-accent)] text-white px-4 py-3 flex items-center justify-between;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .chat-header {
-  @apply bg-[#25D366] text-white px-4 py-3 flex items-center gap-3;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  @apply bg-[var(--primary-accent)] text-white px-4 py-3 flex items-center gap-3;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .chat-background {
   background-color: var(--chat-background);
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(0,0,0,0.08)' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='rgba(107,79,187,0.03)'%3E%3Cpath d='M25 25h10v10H25zM65 25h10v10H65zM45 45h10v10H45zM25 65h10v10H25zM65 65h10v10H65z'/%3E%3Cpath d='M15 15h70v70H15z' fill='none' stroke='rgba(56,161,219,0.02)' stroke-width='2'/%3E%3Cpath d='M35 35l30 30M65 35L35 65' stroke='rgba(107,79,187,0.02)' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 40px 40px;
+  background-repeat: repeat;
+  position: relative;
+}
+
+.chat-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, 
+    var(--chat-background) 0%,
+    transparent 5%,
+    transparent 95%,
+    var(--chat-background) 100%
+  );
+  pointer-events: none;
 }
 
 .message-input {
@@ -60,10 +81,36 @@ body {
   @apply p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
 }
 
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .chat-bubble-out {
-  @apply bg-[var(--bubble-out)] rounded-2xl rounded-tr-sm px-3 py-2 shadow-sm;
+  @apply bg-gradient-to-br from-[var(--bubble-out)] to-[var(--bubble-out)/90] rounded-2xl rounded-tr-sm px-3 py-2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(107,79,187,0.1);
+  animation: slideIn 0.3s ease-out;
+  backdrop-filter: blur(8px);
 }
 
 .chat-bubble-in {
-  @apply bg-[var(--bubble-in)] rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm;
+  @apply bg-gradient-to-br from-[var(--bubble-in)] to-[var(--bubble-in)/90] rounded-2xl rounded-tl-sm px-3 py-2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(56,161,219,0.1);
+  animation: slideInLeft 0.3s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+/* Modern hover effects */
+.hover-effect {
+  @apply transition-all duration-200;
+}
+
+.hover-effect:hover {
+  @apply transform scale-[1.02];
+  filter: brightness(1.05);
 }
