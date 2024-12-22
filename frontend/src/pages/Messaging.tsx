@@ -229,10 +229,35 @@ export function Messaging() {
                   {messages.map((msg) => (
                     <motion.div
                       key={msg.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="relative bg-gray-700/30 rounded-lg p-4 backdrop-blur-sm border border-gray-600/30"
+                      initial={{ opacity: 0, x: -20, rotateX: -10, scale: 0.95 }}
+                      animate={{ 
+                        opacity: 1, 
+                        x: 0, 
+                        rotateX: 0, 
+                        scale: 1,
+                        filter: [
+                          "drop-shadow(0 0 0px rgba(59, 130, 246, 0))",
+                          "drop-shadow(0 0 10px rgba(59, 130, 246, 0.3))",
+                          "drop-shadow(0 0 0px rgba(59, 130, 246, 0))"
+                        ]
+                      }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20, rotateX: 10 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 100,
+                        damping: 15,
+                        mass: 1
+                      }}
+                      style={{ 
+                        perspective: "1000px",
+                        transformStyle: "preserve-3d"
+                      }}
+                      whileHover={{
+                        scale: 1.02,
+                        rotateX: 2,
+                        transition: { duration: 0.2 }
+                      }}
+                      className="relative bg-gray-700/30 rounded-lg p-4 backdrop-blur-sm border border-gray-600/30 shadow-lg"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <Badge variant="secondary" className="text-sm">
@@ -257,16 +282,29 @@ export function Messaging() {
                         transition={{ duration: 0.5 }}
                       />
                       <div className="absolute -top-2 right-2 flex gap-2">
-                        <Badge
-                          variant="outline"
-                          className={`${
-                            msg.verified
-                              ? 'text-green-400 border-green-400'
-                              : 'text-blue-400 border-blue-400'
-                          }`}
+                        <motion.div
+                          animate={{
+                            filter: msg.verified
+                              ? "drop-shadow(0 0 8px rgba(74, 222, 128, 0.3))"
+                              : "drop-shadow(0 0 8px rgba(59, 130, 246, 0.3))",
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatType: "reverse"
+                          }}
                         >
-                          {msg.verified ? t.verified : t.verifying}
-                        </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              msg.verified
+                                ? 'text-green-400 border-green-400'
+                                : 'text-blue-400 border-blue-400'
+                            } transition-all duration-300`}
+                          >
+                            {msg.verified ? t.verified : t.verifying}
+                          </Badge>
+                        </motion.div>
                         {msg.validation && (
                           <Badge
                             variant="outline"
@@ -307,18 +345,40 @@ export function Messaging() {
                 <Button
                   onClick={sendMessage}
                   disabled={isProcessing}
-                  className="relative overflow-hidden min-w-[120px]"
+                  className="relative overflow-hidden min-w-[120px] group"
                   variant="default"
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500"
-                    style={{ opacity: 0.8 }}
-                    whileHover={{ scale: 1.1 }}
+                    className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:via-purple-600 group-hover:to-blue-600"
+                    style={{ opacity: 0.8, backgroundSize: "200% 100%" }}
+                    animate={{
+                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                    }}
+                    transition={{
+                      duration: 5,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                    whileHover={{ 
+                      scale: 1.1,
+                      filter: "brightness(1.2) drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))"
+                    }}
                     whileTap={{ scale: 0.9 }}
                   />
-                  <span className="relative">
+                  <motion.span 
+                    className="relative"
+                    animate={isProcessing ? {
+                      scale: [1, 1.1, 1],
+                      opacity: [1, 0.7, 1]
+                    } : {}}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
                     {isProcessing ? t.sending : t.send}
-                  </span>
+                  </motion.span>
                 </Button>
               </div>
             </CardContent>
