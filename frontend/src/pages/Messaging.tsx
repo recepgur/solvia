@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThreeScene } from '../../components/3d/ThreeScene';
+import { ThreeScene } from '../components/3d/ThreeScene';
 import { translations, Language, TranslationKey } from '../i18n/translations';
 
 interface Message {
