@@ -17,7 +17,7 @@ export function ReadReceipt({ message }: ReadReceiptProps) {
   return (
     <div className="flex items-center space-x-0.5">
       {isOnline(message.sender) && (
-        <Wifi className="h-3 w-3 text-green-500 mr-1" />
+        <Wifi className="h-3 w-3 text-[#25d366] mr-1" />
       )}
       {readCount > 0 ? (
         // Blue double check for read messages

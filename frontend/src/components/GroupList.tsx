@@ -56,7 +56,7 @@ export const GroupList: FC<GroupListProps> = ({ groups, onGroupSelect, onCreateG
             </p>
             <button
               onClick={onCreateGroup}
-              className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+              className="flex items-center space-x-2 bg-[#00a884] text-white px-4 py-2 rounded-lg hover:bg-[#06cf9c]"
             >
               <Plus className="h-5 w-5" />
               <span>{t('group.create')}</span>

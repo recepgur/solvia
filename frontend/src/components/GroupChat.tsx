@@ -69,7 +69,7 @@ export function GroupChat({ group, onLeaveGroup, onSendMessage }: GroupChatProps
             <div
               className={`max-w-[70%] rounded-lg p-3 ${
                 msg.sender === group.created_by
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-[#00a884] text-white'
                   : 'bg-gray-100 dark:bg-gray-800'
               }`}
             >

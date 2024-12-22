@@ -67,7 +67,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           <button
             onClick={() => setView('chats')}
             className={`flex-1 py-4 text-center ${
-              view === 'chats' ? 'border-b-2 border-green-500 text-green-500' : ''
+              view === 'chats' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
             }`}
           >
             {t('messages')}
@@ -75,7 +75,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           <button
             onClick={() => setView('status')}
             className={`flex-1 py-4 text-center ${
-              view === 'status' ? 'border-b-2 border-green-500 text-green-500' : ''
+              view === 'status' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
             }`}
           >
             {t('status.updates')}
@@ -92,12 +92,17 @@ export function Layout({ children, onViewChange }: LayoutProps) {
       
       {/* Main content - Chat/Call view */}
       <div className="chat-view flex-1 flex flex-col relative">
-        <Header 
-          view="messages"
-          chatName="Chat Name"
-          onlineStatus="online"
-          onBack={() => onViewChange('chats')}
-        />
+        {selectedChat && (
+          <Header 
+            view="messages"
+            chatName={selectedChat}
+            onlineStatus="online"
+            onBack={() => {
+              setSelectedChat(undefined);
+              onViewChange('chats');
+            }}
+          />
+        )}
         <div className="flex-1 overflow-y-auto px-4 py-2 bg-[#efeae2] dark:bg-[#0b141a]">
           {children}
         </div>
