@@ -3,3 +3,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --app-background: #F0F2F5;
+  }
+  
+  .dark {
+    --app-background: #111B21;
+  }
+}
+
+body {
+  @apply bg-[var(--app-background)] min-h-screen;
+}

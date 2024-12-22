@@ -16,11 +16,11 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   const getStatusIcon = () => {
     switch (message.status) {
       case 'read':
-        return <CheckCheck className="h-4 w-4 text-blue-500" />;
+        return <CheckCheck className="h-4 w-4 text-[#53BDEB]" />;
       case 'delivered':
-        return <CheckCheck className="h-4 w-4 text-gray-500" />;
+        return <CheckCheck className="h-4 w-4 text-[#8696A0]" />;
       case 'sent':
-        return <Check className="h-4 w-4 text-gray-500" />;
+        return <Check className="h-4 w-4 text-[#8696A0]" />;
     }
   };
 
@@ -33,17 +33,17 @@ export function ChatBubble({ message }: ChatBubbleProps) {
     >
       <div
         className={cn(
-          'max-w-[70%] rounded-lg px-3 py-2 shadow-sm',
+          'max-w-[70%] rounded-lg px-3 py-2 shadow-md',
           message.isOutgoing
-            ? 'bg-[#dcf8c6] rounded-tr-none text-gray-800'
+            ? 'bg-[#DCF8C6] rounded-tr-none text-gray-900'
             : 'bg-white dark:bg-gray-800 rounded-tl-none'
         )}
       >
         <p className="text-sm leading-relaxed break-words">{message.text}</p>
         <div className="flex items-center justify-end space-x-1 mt-1">
-          <span className="text-[11px] text-gray-500">{message.timestamp}</span>
+          <span className="text-[11px] text-[#8696A0] dark:text-gray-400">{message.timestamp}</span>
           {message.isOutgoing && (
-            <div className="text-[#53bdeb]">{getStatusIcon()}</div>
+            <div>{getStatusIcon()}</div>
           )}
         </div>
       </div>
