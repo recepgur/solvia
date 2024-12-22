@@ -2,31 +2,45 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Camera, Paperclip, Mic, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useKeyManagement } from '../hooks/useKeyManagement';
+import { encryptMessage, type EncryptedData } from '../utils/crypto';
 
 interface MessageInputProps {
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, encrypted: string) => Promise<void>;
   onAttachFile: () => void;
   onStartRecording: () => void;
+  recipientAddress: string;
 }
 
-export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, recipientAddress }: MessageInputProps) {
+  const { keyPair } = useKeyManagement();
   const [message, setMessage] = useState('');
   const { t } = useLanguage();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      onSendMessage(message.trim());
-      setMessage('');
+      try {
+        if (!keyPair) {
+          console.error('Encryption keys not ready');
+          return;
+        }
+        const encrypted = await encryptMessage(message.trim(), keyPair.publicKey);
+        await onSendMessage(message.trim(), JSON.stringify(encrypted));
+        setMessage('');
+      } catch (error) {
+        console.error('Failed to encrypt message:', error);
+        // TODO: Show error toast to user
+      }
     }
   };
 
   return (
-    <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-4 py-2">
+    <div className="bg-gradient-to-t from-[var(--app-background)] to-[var(--chat-background)] px-4 py-2 border-t border-[var(--border-light)] backdrop-blur-sm shadow-md">
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <button
           type="button"
-          className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+          className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bubble-in)] transition-colors"
           onClick={onAttachFile}
           title={t('attach.file')}
         >
@@ -34,7 +48,7 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
         </button>
         <button
           type="button"
-          className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+          className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bubble-in)] transition-colors"
           onClick={onAttachFile}
           title={t('attach.photo')}
         >
@@ -46,20 +60,20 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={t('type.message')}
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-[#2a3942] focus:outline-none placeholder-[#3b4a54] dark:placeholder-[#8696a0] text-[#111b21] dark:text-[#d1d7db]"
+            className="w-full px-4 py-3 rounded-lg bg-[var(--bubble-in)] focus:outline-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]"
           />
         </div>
         {message.trim() ? (
           <button
             type="submit"
-            className="p-2 rounded-full bg-[#00a884] dark:bg-[#00a884] hover:bg-[#06cf9c] dark:hover:bg-[#06cf9c] transition-colors"
+            className="p-2 rounded-full bg-[var(--primary-accent)] hover:opacity-90 transition-colors"
           >
             <Send className="h-5 w-5 text-white" />
           </button>
         ) : (
           <button
             type="button"
-            className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+            className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bubble-in)] transition-colors"
             onClick={onStartRecording}
             title={t('start.recording')}
           >
