@@ -8,7 +8,6 @@ import { GroupChat } from './components/GroupChat';
 import { GroupList } from './components/GroupList';
 import { CreateGroupModal } from './components/CreateGroupModal';
 import { useGroups } from './hooks/useGroups';
-import { useLanguage } from './contexts/LanguageContext';
 import type { Group } from './types/group.types';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -18,7 +17,6 @@ import { clusterApiUrl } from '@solana/web3.js';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 function App() {
-  useLanguage(); // Initialize language context
   const [activeView, setActiveView] = useState('video');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string>();

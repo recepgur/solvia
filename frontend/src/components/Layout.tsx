@@ -56,7 +56,17 @@ export function Layout({ children, onViewChange }: LayoutProps) {
       onTouchStart={handleTouchStart}
     >
       {/* Left panel - Chat list / Status */}
-      <div className="chat-list-panel w-[30%] max-w-[400px] min-w-[300px] border-r border-gray-200 dark:border-gray-800 flex flex-col">
+      <div className="chat-list-panel w-[30%] max-w-[400px] min-w-[300px] border-r border-[var(--border-light)] flex flex-col">
+        <div className="app-header">
+          <h1 className="text-xl font-semibold text-white">Solvio</h1>
+          <div className="flex items-center gap-3">
+            <button className="p-2 rounded-full hover:bg-[rgba(255,255,255,0.1)]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
         <Header 
           view={view} 
           onCreateGroup={() => console.log('Create group')}
@@ -103,7 +113,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
             }}
           />
         )}
-        <div className="flex-1 overflow-y-auto px-4 py-2 bg-[#efeae2] dark:bg-[#0b141a]">
+        <div className="flex-1 overflow-y-auto px-4 py-2 chat-background">
           {children}
         </div>
         <div className="sticky bottom-0 p-4 bg-[var(--app-background)]">

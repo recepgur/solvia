@@ -33,10 +33,10 @@ export function ChatBubble({ message }: ChatBubbleProps) {
     >
       <div
         className={cn(
-          'max-w-[70%] rounded-lg px-3 py-2 shadow-md',
+          'max-w-[70%] mb-2',
           message.isOutgoing
-            ? 'bg-[#DCF8C6] rounded-tr-none text-gray-900'
-            : 'bg-white dark:bg-gray-800 rounded-tl-none'
+            ? 'chat-bubble-out text-[var(--text-primary)] ml-auto'
+            : 'chat-bubble-in text-[var(--text-primary)]'
         )}
       >
         <p className="text-sm leading-relaxed break-words">{message.text}</p>
