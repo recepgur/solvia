@@ -7,11 +7,11 @@
 @layer base {
   :root {
     --app-background: #F8F9FD;
-    --primary-accent: #6B4FBB;    /* Deep purple for blockchain theme */
-    --secondary-accent: #38A1DB;  /* Bright blue for modern feel */
+    --primary-accent: #7952B3;    /* Rich purple - distinctly different from WhatsApp */
+    --secondary-accent: #FF6B6B;  /* Coral accent for modern feel */
     --chat-background: #FFFFFF;
-    --bubble-out: #EDE9F8;       /* Light purple for sent messages */
-    --bubble-in: #F0F7FC;        /* Light blue for received messages */
+    --bubble-out: #F3E5FF;       /* Light purple for sent messages */
+    --bubble-in: #FFE5E5;        /* Light coral for received messages */
     --border-light: #E2E8F0;
     --text-primary: #2D3748;
     --text-secondary: #4A5568;
@@ -20,13 +20,13 @@
   .dark {
     --app-background: #1A1B23;    /* Dark navy background */
     --chat-background: #242632;   /* Slightly lighter navy */
-    --bubble-out: #4A3B8C;       /* Darker purple for sent messages */
-    --bubble-in: #2C4B6E;        /* Darker blue for received messages */
+    --bubble-out: #563D7C;       /* Darker purple for sent messages */
+    --bubble-in: #8B3D3D;        /* Darker coral for received messages */
     --border-light: #2D3748;
     --text-primary: #F7FAFC;
     --text-secondary: #A0AEC0;
-    --primary-accent: #8A6FE8;   /* Brighter purple for dark mode */
-    --secondary-accent: #4DB5FF;  /* Brighter blue for dark mode */
+    --primary-accent: #9B6BDE;   /* Brighter purple for dark mode */
+    --secondary-accent: #FF8585;  /* Brighter coral for dark mode */
   }
 }
 
