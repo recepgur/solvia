@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from './components/Layout';
+import { useNetworkStore } from './stores/networkStore';
 import { VideoCall } from './components/VideoCall';
 import { NFTProfile } from './components/NFTProfile';
 import { PrivateRooms } from './components/PrivateRooms';
@@ -13,7 +14,6 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 function App() {
@@ -22,8 +22,9 @@ function App() {
   const [selectedGroup, setSelectedGroup] = useState<string>();
   const { groups, createGroup, leaveGroup, sendMessage } = useGroups();
   const selectedGroupData = selectedGroup ? groups.find((g: Group) => g.id === selectedGroup) : undefined;
-  const endpoint = process.env.VITE_SOLANA_NETWORK || clusterApiUrl('devnet');
-  const wallets = [new PhantomWalletAdapter()];
+  const { getCurrentEndpoint } = useNetworkStore();
+  const endpoint = useMemo(() => getCurrentEndpoint(), [getCurrentEndpoint]);
+  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
 
   const renderView = () => {
     switch (activeView) {

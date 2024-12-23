@@ -3,16 +3,28 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { StateCreator } from 'zustand';
 
 // Parse RPC endpoints from environment
+const isValidUrl = (urlString: string): boolean => {
+  try {
+    const url = new URL(urlString.trim());
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 const getRPCEndpoints = async (): Promise<string[]> => {
   console.log('Initializing RPC endpoints...');
   
-  const envEndpoints = import.meta.env.VITE_SOLANA_RPC_ENDPOINTS?.split(',') || [];
+  const envEndpoints = (import.meta.env.VITE_SOLANA_RPC_ENDPOINTS?.split(',') || [])
+    .map((url: string) => url.trim())
+    .filter(isValidUrl);
+    
   const defaultEndpoints = [
     clusterApiUrl('devnet'),
     'https://api.devnet.solana.com',
     'https://rpc.ankr.com/solana_devnet',
-    'https://solana-devnet.g.alchemy.com'
-  ];
+    'https://solana-devnet.g.alchemy.com/v2/demo'
+  ].filter(isValidUrl);
   
   const allEndpoints = [...new Set([...envEndpoints, ...defaultEndpoints])];
   console.log('Available RPC endpoints:', allEndpoints);
@@ -66,12 +78,12 @@ interface NetworkStore {
 }
 
 const createNetworkStore: StateCreator<NetworkStore> = (set, get) => {
-  // Initialize with default endpoints
-  const defaultEndpoint = clusterApiUrl('devnet');
+  // Initialize with validated default endpoint
+  const defaultEndpoint = 'https://api.devnet.solana.com';
   
   const store = {
     network: import.meta.env.VITE_SOLANA_NETWORK || 'devnet',
-    rpcEndpoints: [defaultEndpoint],
+    rpcEndpoints: [defaultEndpoint], // Start with a known valid endpoint
     currentEndpointIndex: 0,
     customEndpoint: null,
     setNetwork: (network: string) => set({ network }),
