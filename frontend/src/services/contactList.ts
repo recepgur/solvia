@@ -1,7 +1,7 @@
 import { encryptMessage, decryptMessage } from '../utils/crypto';
 import { uploadToIPFS, getFromIPFS } from './ipfs';
 import { PublicKey } from '@solana/web3.js';
-import { SolanaManager } from '../utils/solana';
+import { solana } from '../utils/solana';
 
 export interface Contact {
   walletAddress: string;
@@ -28,19 +28,13 @@ export async function storeContactList(contacts: Contact[], publicKey: PublicKey
     };
     
     // Encrypt contact list using user's public key
-    const encryptedData = await encryptMessage(JSON.stringify(contactList), await window.crypto.subtle.importKey(
-      'raw',
-      publicKey.toBytes(),
-      { name: 'RSA-OAEP', hash: 'SHA-256' },
-      true,
-      ['encrypt']
-    ));
+    const encryptedData = await encryptMessage(JSON.stringify(contactList), publicKey);
     
     // Upload encrypted data to IPFS and store CID on Solana
     const serializedData = JSON.stringify(encryptedData);
     const cid = await uploadToIPFS(serializedData);
-    const solanaManager = new SolanaManager();
-    await solanaManager.storeCID(publicKey.toString(), cid);
+    const solanaManager = solana.createManager(window.solana, [process.env.VITE_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com']);
+    await solanaManager.storeData(publicKey.toString(), cid);
     
     return cid;
   } catch (error) {
@@ -55,16 +49,16 @@ export async function storeContactList(contacts: Contact[], publicKey: PublicKey
 export async function retrieveContactList(walletAddress: string, privateKey: CryptoKey): Promise<Contact[]> {
   try {
     // Get CID from Solana blockchain
-    const solanaManager = new SolanaManager();
-    const cid = await solanaManager.getCID(walletAddress);
+    const solanaManager = solana.createManager(window.solana, [process.env.VITE_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com']);
+    const cid = await solanaManager.retrieveData(walletAddress);
     if (!cid) return [];
     
     // Get encrypted data from IPFS
-    const encryptedData = await getFromIPFS(cid);
+    const encryptedData = await getFromIPFS<string>(cid);
     
     // Decrypt data using private key
-    const parsedData = JSON.parse(encryptedData.toString());
-    const decryptedData = await decryptMessage(parsedData, privateKey);
+    const parsedData = JSON.parse(encryptedData);
+    const decryptedData = await decryptMessage(parsedData, privateKey as any);
     const contactList: EncryptedContactList = JSON.parse(decryptedData);
     
     return contactList.contacts;

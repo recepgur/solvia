@@ -77,6 +77,46 @@ export class SolanaManager {
       return null;
     }
   }
+
+  async storeData(key: string, value: string): Promise<void> {
+    if (!this.wallet.publicKey || !this.wallet.signTransaction) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      const programId = new PublicKey(process.env.VITE_SOLANA_PROGRAM_ID || '');
+      const instruction = {
+        keys: [{ pubkey: new PublicKey(key), isSigner: true, isWritable: true }],
+        programId,
+        data: Buffer.from(value)
+      };
+
+      const transaction = new Transaction().add(instruction);
+      const { blockhash } = await this.connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.wallet.publicKey;
+
+      const signed = await this.wallet.signTransaction(transaction);
+      const signature = await this.connection.sendRawTransaction(signed.serialize());
+      await this.connection.confirmTransaction(signature);
+    } catch (error) {
+      console.error('Error storing data:', error);
+      await this.rotateEndpoint();
+      throw error;
+    }
+  }
+
+  async retrieveData(key: string): Promise<string | null> {
+    try {
+      const account = await this.connection.getAccountInfo(new PublicKey(key));
+      if (!account) return null;
+      return account.data.toString();
+    } catch (error) {
+      console.error('Error retrieving data:', error);
+      await this.rotateEndpoint();
+      return null;
+    }
+  }
 }
 
 export const solana = {

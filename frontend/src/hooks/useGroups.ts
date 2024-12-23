@@ -116,14 +116,14 @@ export const useGroups = (): GroupHookReturn => {
 
     try {
       // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      const groupData = await getFromIPFS<Group>(groupId);
 
       // Add member to group
       groupData.members.push({
         wallet_address: publicKey.toString(),
         joined_at: new Date().toISOString(),
         role: 'member',
-        nft_proof: group.required_nft ? await verifyNFTOwnership(group.required_nft) : undefined,
+        nft_proof: group.required_nft ? group.required_nft : undefined,
       });
 
       // Upload updated group data to IPFS
@@ -151,7 +151,7 @@ export const useGroups = (): GroupHookReturn => {
 
     try {
       // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      const groupData = await getFromIPFS<Group>(groupId);
 
       // Remove member from group
       groupData.members = groupData.members.filter(
@@ -190,7 +190,7 @@ export const useGroups = (): GroupHookReturn => {
       };
 
       // Get current group data from IPFS
-      const groupData = await getFromIPFS(groupId);
+      const groupData = await getFromIPFS<Group>(groupId);
 
       // Add message to group
       groupData.messages.push(message);
@@ -227,7 +227,7 @@ export const useGroups = (): GroupHookReturn => {
         
         const loadedGroups = await Promise.all(
           groupCids.map(async (cid): Promise<Group> => {
-            const groupData = await getFromIPFS(cid);
+            const groupData = await getFromIPFS<Group>(cid);
             return {
               id: cid,
               name: groupData.name,

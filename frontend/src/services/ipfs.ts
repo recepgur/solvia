@@ -14,7 +14,7 @@ const clients = IPFS_GATEWAYS.map(gateway => create(gateway));
 
 // Note: CID storage on chain is now handled directly by the services that need it
 
-export async function uploadToIPFS(data: File | string | Record<string, unknown> | Buffer): Promise<string> {
+export async function uploadToIPFS<T>(data: T | File | Buffer): Promise<string> {
   let cid: string;
   
   if (data instanceof File) {
@@ -28,7 +28,8 @@ export async function uploadToIPFS(data: File | string | Record<string, unknown>
   // Store CID on chain if it's a string (encrypted data) and wallet is connected
   if (typeof data === 'string' && window.solana?.publicKey) {
     try {
-      await solana.storeCID(window.solana.publicKey.toBase58(), cid);
+      const manager = solana.createManager(window.solana, [process.env.VITE_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com']);
+      await manager.storeData(window.solana.publicKey.toBase58(), cid);
     } catch (error) {
       console.error('Failed to store CID on chain:', error);
     }
@@ -42,7 +43,7 @@ export async function uploadToIPFS(data: File | string | Record<string, unknown>
   return cid;
 }
 
-async function uploadToIPFSRaw(data: string | Record<string, unknown> | Buffer): Promise<string> {
+async function uploadToIPFSRaw<T>(data: T | Buffer): Promise<string> {
   let lastError;
   // Try each IPFS client until one succeeds - maintaining complete decentralization
   for (const client of clients) {
@@ -63,7 +64,7 @@ async function uploadToIPFSRaw(data: string | Record<string, unknown> | Buffer):
   throw new Error('Failed to upload to IPFS');
 }
 
-export async function getFromIPFS(cid: string): Promise<Record<string, unknown> | string> {
+export async function getFromIPFS<T>(cid: string): Promise<T> {
   let lastError;
   // Try each IPFS client until one succeeds
   for (const client of clients) {
@@ -76,10 +77,10 @@ export async function getFromIPFS(cid: string): Promise<Record<string, unknown> 
       const data = Buffer.concat(chunks).toString();
       try {
         // Try to parse as JSON first
-        return JSON.parse(data);
+        return JSON.parse(data) as T;
       } catch {
         // If not JSON, return as string (for encrypted file data)
-        return data;
+        return data as unknown as T;
       }
     } catch (error) {
       lastError = error;

@@ -109,8 +109,8 @@ export function PrivateRooms() {
     try {
       // Get latest room data from IPFS if available
       if (room.ipfsCid) {
-        const updatedRoomData = await getFromIPFS(room.ipfsCid);
-        const parsedRoomData = JSON.parse(updatedRoomData);
+        const updatedRoomData = await getFromIPFS<Room>(room.ipfsCid);
+        const parsedRoomData = updatedRoomData;
         if (parsedRoomData.currentParticipants >= parsedRoomData.maxParticipants) {
           alert(t('error.room.full'));
           return;
