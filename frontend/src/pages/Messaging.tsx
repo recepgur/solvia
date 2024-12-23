@@ -13,6 +13,10 @@ export function Messaging() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [messageEffect, setMessageEffect] = useState<{ active: boolean; position: [number, number, number] }>({
+    active: false,
+    position: [0, 0, 0]
+  });
   const [language, setLanguage] = useState<Language>('en');
   
   const t = (key: TranslationKey) => translations[language][key];
@@ -53,6 +57,17 @@ export function Messaging() {
       timestamp: Date.now(),
     };
 
+    // Trigger dramatic launch effect with particle burst
+    const launchPosition: [number, number, number] = [
+      Math.random() * 4 - 2,  // Random x between -2 and 2
+      Math.random() * 2,      // Random y between 0 and 2
+      Math.random() * 4 - 2   // Random z between -2 and 2
+    ];
+    setMessageEffect({ active: true, position: launchPosition });
+    
+    // Reset effect after animation
+    setTimeout(() => setMessageEffect({ active: false, position: [0, 0, 0] }), 1500);
+
     // Add unverified message immediately for better UX
     setMessages(prev => [...prev, message]);
     setNewMessage('');
@@ -74,7 +89,7 @@ export function Messaging() {
     <div className="relative min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* 3D Scene Background */}
       <div className="absolute inset-0 -z-10">
-        <ThreeScene isProcessing={isProcessing} />
+        <ThreeScene isProcessing={isProcessing} messageEffect={messageEffect} />
       </div>
 
       {/* Messaging Interface */}
