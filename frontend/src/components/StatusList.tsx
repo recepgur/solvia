@@ -10,7 +10,11 @@ interface Status {
   avatar?: string;
 }
 
-export function StatusList() {
+interface StatusListProps {
+  className?: string;
+}
+
+export function StatusList({ className }: StatusListProps = {}) {
   const { t } = useLanguage();
   const [statuses] = React.useState<Status[]>([
     {
@@ -28,7 +32,7 @@ export function StatusList() {
   ]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+    <div className={`flex-1 overflow-y-auto bg-white dark:bg-gray-900 ${className || ''}`}>
       {/* My Status */}
       <button className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-[#f5f6f6] dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="relative">

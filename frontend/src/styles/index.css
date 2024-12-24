@@ -48,11 +48,13 @@ body {
 
 .chat-background {
   background-color: var(--chat-background);
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='rgba(0,168,132,0.03)'%3E%3Cpath d='M50 25l25 15v30l-25 15l-25-15v-30z'/%3E%3C/g%3E%3Cpath d='M50 25l25 15v30l-25 15l-25-15v-30z' fill='none' stroke='rgba(34,197,94,0.02)' stroke-width='2'/%3E%3Cpath d='M50 25v60M25 40l50-30M25 70l50 30' stroke='rgba(0,168,132,0.02)' stroke-width='1'/%3E%3C/svg%3E");
-  background-size: 50px 50px;
+  background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='rgba(0,168,132,0.02)'%3E%3Cpath d='M35 0h35v35H35zM0 35h35v35H0z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  background-position: center;
   background-repeat: repeat;
   position: relative;
   animation: subtleGlow 4s infinite;
+  min-height: 100%;
 }
 
 .chat-background::before {

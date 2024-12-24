@@ -18,7 +18,12 @@ export function Layout({ children, onViewChange }: LayoutProps) {
   const [showChatInfo, setShowChatInfo] = React.useState(false);
   const [view, setView] = React.useState<'chats' | 'status' | 'encryption' | 'messages'>('chats');
 
+  React.useEffect(() => {
+    console.log('Layout mounted, view:', view);
+  }, [view]);
+
   const handleChatSelect = (chatId: string) => {
+    console.log('Chat selected:', chatId);
     setSelectedChat(chatId);
     onViewChange('messages');
   };
@@ -57,13 +62,14 @@ export function Layout({ children, onViewChange }: LayoutProps) {
       onTouchStart={handleTouchStart}
     >
       {/* Left panel - Chat list / Status */}
-      <div className="chat-list-panel w-[30%] max-w-[400px] min-w-[300px] border-r border-[var(--border-light)] flex flex-col">
+      <div className="chat-list-panel w-[30%] max-w-[400px] min-w-[300px] border-r border-[var(--border-light)] flex flex-col bg-[var(--app-background)] shadow-lg">
         <Header 
           view={view} 
           onCreateGroup={() => console.log('Create group')}
+          className="sticky top-0 z-10 bg-[var(--app-background)]"
         >
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-[rgba(255,255,255,0.1)]">
+            <button className="blockchain-button p-2 rounded-full">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
               </svg>
@@ -72,19 +78,23 @@ export function Layout({ children, onViewChange }: LayoutProps) {
         </Header>
 
         {/* View toggle */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800">
+        <div className="flex border-b border-[var(--border-light)] bg-[var(--app-background)] sticky top-[72px] z-10">
           <button
             onClick={() => setView('chats')}
-            className={`flex-1 py-4 text-center ${
-              view === 'chats' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+            className={`flex-1 py-3 text-center text-sm font-medium transition-colors duration-300 ${
+              view === 'chats' 
+                ? 'border-b-2 border-[var(--primary-accent)] text-[var(--primary-accent)]' 
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             {t('messages')}
           </button>
           <button
             onClick={() => setView('status')}
-            className={`flex-1 py-4 text-center ${
-              view === 'status' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+            className={`flex-1 py-3 text-center text-sm font-medium transition-colors duration-300 ${
+              view === 'status' 
+                ? 'border-b-2 border-[var(--primary-accent)] text-[var(--primary-accent)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             {t('status.updates')}
@@ -94,8 +104,10 @@ export function Layout({ children, onViewChange }: LayoutProps) {
               setView('encryption');
               onViewChange('encryption');
             }}
-            className={`flex-1 py-4 text-center ${
-              view === 'encryption' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+            className={`flex-1 py-3 text-center text-sm font-medium transition-colors duration-300 ${
+              view === 'encryption' 
+                ? 'border-b-2 border-[var(--primary-accent)] text-[var(--primary-accent)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             Test E2E
@@ -104,23 +116,32 @@ export function Layout({ children, onViewChange }: LayoutProps) {
 
         {/* Chat list, Status, or Encryption view */}
         {view === 'chats' ? (
-          <ChatList onChatSelect={handleChatSelect} selectedChat={selectedChat} />
+          <div className="space-y-1">
+            <ChatList 
+              onChatSelect={handleChatSelect} 
+              selectedChat={selectedChat}
+              className="hover-effect"
+            />
+          </div>
         ) : view === 'status' ? (
-          <StatusList />
+          <div className="space-y-1">
+            <StatusList className="hover-effect" />
+          </div>
         ) : view === 'encryption' ? (
           <div className="p-4">
-            <EncryptionTest />
+            <EncryptionTest className="hover-effect" />
           </div>
         ) : null}
       </div>
       
       {/* Main content - Chat/Call view */}
-      <div className="chat-view flex-1 flex flex-col relative">
+      <div className="chat-view flex-1 flex flex-col relative bg-[var(--app-background)]">
         {selectedChat && (
           <Header 
             view="messages"
             chatName={selectedChat}
             onlineStatus="online"
+            className="sticky top-0 z-10 bg-[var(--app-background)] shadow-sm"
             onBack={() => {
               setSelectedChat(undefined);
               onViewChange('chats');
@@ -128,14 +149,19 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           />
         )}
         <div className="flex-1 overflow-y-auto px-4 py-2 chat-background">
-          {children}
+          <div className="max-w-3xl mx-auto space-y-4">
+            {children}
+          </div>
         </div>
-        <div className="sticky bottom-0 p-4 bg-[var(--app-background)]">
-          <MessageInput 
-            onSendMessage={(text) => console.log('Send:', text)}
-            onAttachFile={() => console.log('Attach file')}
-            onStartRecording={() => console.log('Start recording')}
-          />
+        <div className="message-input-container">
+          <div className="max-w-3xl mx-auto">
+            <MessageInput 
+              onSendMessage={(text) => console.log('Send:', text)}
+              onAttachFile={() => console.log('Attach file')}
+              onStartRecording={() => console.log('Start recording')}
+              className="hover-effect"
+            />
+          </div>
         </div>
       </div>
 

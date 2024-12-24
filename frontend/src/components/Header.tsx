@@ -10,14 +10,15 @@ interface HeaderProps {
   onlineStatus?: string;
   avatarUrl?: string;
   children?: React.ReactNode;
+  className?: string;
 }
 
-export const Header: FC<HeaderProps> = ({ view, onBack, onCreateGroup, chatName, onlineStatus, avatarUrl, children }) => {
+export const Header: FC<HeaderProps> = ({ view, onBack, onCreateGroup, chatName, onlineStatus, avatarUrl, children, className }) => {
   useLanguage(); // Initialize language context for future translations
 
   if (view === 'messages' && chatName) {
     return (
-      <div className="bg-[var(--chat-background)] border-b border-[var(--border-light)] p-4 flex items-center justify-between">
+      <div className={`bg-[var(--chat-background)] border-b border-[var(--border-light)] p-4 flex items-center justify-between ${className || ''}`}>
         <div className="flex items-center space-x-3">
           <button 
             onClick={onBack}
@@ -52,7 +53,7 @@ export const Header: FC<HeaderProps> = ({ view, onBack, onCreateGroup, chatName,
   }
 
   return (
-    <div className="p-4 bg-gradient-to-r from-[var(--primary-accent)] to-[var(--secondary-accent)] flex justify-between items-center relative overflow-hidden">
+    <div className={`p-4 bg-gradient-to-r from-[var(--primary-accent)] to-[var(--secondary-accent)] flex justify-between items-center relative overflow-hidden ${className || ''}`}>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'rgba(255,255,255,0.03)\'%3E%3Cpath d=\'M50 25l25 15v30l-25 15l-25-15v-30z\'/%3E%3C/g%3E%3C/svg%3E')] bg-repeat opacity-50"></div>
       <h1 className="text-xl font-bold text-white hover-effect relative z-10">Solvio</h1>
       <div className="flex items-center space-x-2 relative z-10">

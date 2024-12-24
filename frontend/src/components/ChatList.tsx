@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useLanguage } from '../contexts/LanguageContext';
 import { Check, CheckCheck } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 
@@ -16,10 +15,11 @@ interface Chat {
 interface ChatListProps {
   onChatSelect: (chatId: string) => void;
   selectedChat?: string;
+  className?: string;
 }
 
 export function ChatList({ onChatSelect, selectedChat }: ChatListProps) {
-  const { t: _t } = useLanguage();
+  // const { t } = useLanguage(); // Keep for future translations - will use when adding translations
   const [chats] = React.useState<Chat[]>([
     {
       id: '1',

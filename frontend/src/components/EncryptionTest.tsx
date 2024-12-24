@@ -6,7 +6,11 @@ import { PublicKey } from '@solana/web3.js';
 import { useKeyManagement } from '../hooks/useKeyManagement';
 import { EncryptedMessage } from '../utils/crypto';
 
-const EncryptionTest: React.FC = () => {
+interface EncryptionTestProps {
+  className?: string;
+}
+
+const EncryptionTest: React.FC<EncryptionTestProps> = ({ className }) => {
   const [message, setMessage] = useState('');
   const [recipientPublicKey, setRecipientPublicKey] = useState('');
   const [encryptedMessage, setEncryptedMessage] = useState<EncryptedMessage | null>(null);
@@ -49,7 +53,7 @@ const EncryptionTest: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto bg-gray-50 min-h-screen">
+    <div className={`p-4 max-w-2xl mx-auto bg-gray-50 min-h-screen ${className || ''}`}>
       <h1 className="text-2xl font-bold mb-6 text-gray-800">End-to-End Encryption Test</h1>
       
       <div className="mb-6 bg-white rounded-lg shadow-md p-6">

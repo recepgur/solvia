@@ -233,7 +233,6 @@ export function VideoCall() {
         <div className="relative aspect-video rounded-lg bg-zinc-900">
           <video
             ref={localVideoRef}
-            autoPlay
             playsInline
             muted
             className="h-full w-full rounded-lg object-cover"
@@ -255,7 +254,6 @@ export function VideoCall() {
             <div key={id} className="relative aspect-video rounded-lg bg-zinc-900">
               <video
                 ref={videoRef}
-                autoPlay
                 playsInline
                 className="h-full w-full rounded-lg object-cover"
               />

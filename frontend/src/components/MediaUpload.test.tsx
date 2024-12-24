@@ -4,7 +4,7 @@ import { render } from '../test/test-utils';
 import { MediaUpload } from './MediaUpload';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 // Import jest-dom matchers without type declaration since it's already included in setupTests.ts
 

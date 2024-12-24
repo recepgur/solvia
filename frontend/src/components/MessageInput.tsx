@@ -7,9 +7,10 @@ interface MessageInputProps {
   onSendMessage: (text: string) => void;
   onAttachFile: () => void;
   onStartRecording: () => void;
+  className?: string;
 }
 
-export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, className }: MessageInputProps) {
   const [message, setMessage] = useState('');
   const { t } = useLanguage();
 
@@ -22,7 +23,7 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
   };
 
   return (
-    <div className="bg-[var(--chat-background)] px-4 py-2">
+    <div className={`bg-[var(--chat-background)] px-4 py-2 ${className || ''}`}>
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <button
           type="button"
