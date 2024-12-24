@@ -13,9 +13,6 @@ Object.defineProperty(global, 'TextDecoder', {
   writable: true
 });
 
-// Import jest-dom for type augmentation
-import '@testing-library/jest-dom';
-
 // Set up globals
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -62,8 +59,5 @@ Object.defineProperty(window, 'localStorage', {
   configurable: true,
   writable: true
 });
-
-// Add jest-dom matchers
-import '@testing-library/jest-dom';
 
 // Set test timeout

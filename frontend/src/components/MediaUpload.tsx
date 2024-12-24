@@ -46,11 +46,12 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error: any) {
-      console.error('Error uploading file:', error);
-      const errorMessage = error.message === 'error.token.required' 
+    } catch (error: Error | unknown) {
+      const errorObj = error instanceof Error ? error : new Error('Unknown error occurred');
+      console.error('Error uploading file:', errorObj);
+      const errorMessage = errorObj.message === 'error.token.required' 
         ? 'Solvio token is required to upload media'
-        : error.message || t('error.upload.failed');
+        : errorObj.message || t('error.upload.failed');
       
       setError(errorMessage);
       if (fileInputRef.current) {

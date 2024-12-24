@@ -41,9 +41,6 @@ jest.mock('../hooks/useMedia', () => ({
 
 describe('MediaUpload', () => {
   beforeEach(() => {
-    // Import mockAdapter from test-utils
-    const { mockAdapter } = require('../test/test-utils');
-    
     // Reset mock adapter state before each test
     mockAdapter._connected = false;
     mockAdapter._connecting = false;

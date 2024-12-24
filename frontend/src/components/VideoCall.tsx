@@ -26,14 +26,53 @@ interface CallLog {
   ipfsHash?: string;
 }
 
+interface ParticipantVideoProps {
+  id: string;
+  participant: Participant;
+}
+
+const ParticipantVideo = ({ id, participant }: ParticipantVideoProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    if (videoRef.current && participant.stream) {
+      videoRef.current.srcObject = participant.stream;
+    }
+  }, [participant.stream]);
+
+  return (
+    <div className="relative aspect-video rounded-lg bg-zinc-900">
+      <video
+        ref={videoRef}
+        playsInline
+        className="h-full w-full rounded-lg object-cover"
+      />
+      <div className="absolute bottom-4 left-4 text-white text-sm">
+        {id ? `${id.slice(0, 8)}...` : ''}
+      </div>
+      {!participant.videoEnabled && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <VideoOff className="h-8 w-8 text-white opacity-50" />
+        </div>
+      )}
+      {!participant.audioEnabled && (
+        <div className="absolute top-4 right-4">
+          <MicOff className="h-4 w-4 text-white opacity-50" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export function VideoCall() {
   const { t } = useLanguage();
   const [isVideoEnabled, setIsVideoEnabled] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [userInitiatedAudio, setUserInitiatedAudio] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
-  const [_callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
@@ -71,10 +110,10 @@ export function VideoCall() {
     }
   };
 
-  // Only initialize audio if enabled
+  // Only initialize audio if enabled AND user initiated
   useEffect(() => {
     const initializeAudio = async () => {
-      if (isAudioEnabled && (!localStream || !localStream.getAudioTracks().length)) {
+      if (isAudioEnabled && userInitiatedAudio && (!localStream || !localStream.getAudioTracks().length)) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: false,
@@ -91,6 +130,7 @@ export function VideoCall() {
         } catch (error) {
           console.error('Error accessing audio device:', error);
           setIsAudioEnabled(false);
+          setUserInitiatedAudio(false);
         }
       }
     };
@@ -98,7 +138,9 @@ export function VideoCall() {
     initializeAudio();
     return () => {
       // Cleanup on unmount
-      localStream?.getTracks().forEach(track => track.stop());
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
       peerConnectionsRef.current.forEach(peer => {
         peer.connection.close();
       });
@@ -106,7 +148,7 @@ export function VideoCall() {
       setParticipants(new Map());
       setIsCalling(false);
     };
-  }, [isAudioEnabled]);
+  }, [isAudioEnabled, userInitiatedAudio, localStream]);
 
   const createPeerConnection = async (participantId: string) => {
     const peerConnection = new RTCPeerConnection(configuration);
@@ -218,7 +260,7 @@ export function VideoCall() {
       participants: Array.from(participants.keys()),
       duration: Date.now() - callStartTime
     };
-    setCallLogs(prev => [...prev, newLog]);
+    setCallLogs((prev: CallLog[]) => [...prev, newLog]);
     
     // Upload call log to IPFS
     uploadToIPFS(newLog).catch(console.error);
@@ -241,40 +283,24 @@ export function VideoCall() {
             {t('video.you')} {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : ''}
           </div>
         </div>
-        {Array.from(participants.entries()).map(([id, participant]) => {
-          const videoRef = useRef<HTMLVideoElement>(null);
-          
-          useEffect(() => {
-            if (videoRef.current && participant.stream) {
-              videoRef.current.srcObject = participant.stream;
-            }
-          }, [participant.stream]);
-
-          return (
-            <div key={id} className="relative aspect-video rounded-lg bg-zinc-900">
-              <video
-                ref={videoRef}
-                playsInline
-                className="h-full w-full rounded-lg object-cover"
-              />
-              <div className="absolute bottom-4 left-4 text-white text-sm">
-                {id ? `${id.slice(0, 8)}...` : ''}
-              </div>
-              {!participant.videoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                  <VideoOff className="h-8 w-8 text-white opacity-50" />
-                </div>
-              )}
-              {!participant.audioEnabled && (
-                <div className="absolute top-4 right-4">
-                  <MicOff className="h-4 w-4 text-white opacity-50" />
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {Array.from(participants.entries()).map(([id, participant]) => (
+          <ParticipantVideo
+            key={id}
+            id={id}
+            participant={participant}
+          />
+        ))}
       </div>
       
+      {/* Display call logs */}
+      <div className="mt-4 text-sm text-gray-500">
+        {callLogs.map((log, index) => (
+          <div key={index} className="mb-2">
+            {log.type === 'outgoing' ? 'Outgoing' : 'Incoming'} call with {log.participants.join(', ')} ({Math.round(log.duration / 1000)}s)
+          </div>
+        ))}
+      </div>
+
       <div className="flex justify-center space-x-4">
         <Button
           variant="outline"
@@ -291,7 +317,10 @@ export function VideoCall() {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+          onClick={() => {
+            setIsAudioEnabled(!isAudioEnabled);
+            setUserInitiatedAudio(true);
+          }}
           className={!isAudioEnabled ? 'bg-red-500 text-white' : ''}
         >
           {isAudioEnabled ? (
