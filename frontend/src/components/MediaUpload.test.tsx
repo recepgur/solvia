@@ -1,55 +1,77 @@
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { useWallet } from '@solana/wallet-adapter-react';
+/** @jest-environment jsdom */
+/** @jsxImportSource react */
+import { render } from '../test/test-utils';
 import { MediaUpload } from './MediaUpload';
-import { useMedia } from '../hooks/useMedia';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/extend-expect';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+// Import jest-dom matchers without type declaration since it's already included in setupTests.ts
 
-jest.mock('@solana/wallet-adapter-react');
-jest.mock('../hooks/useMedia');
+// Mock implementations
+const mockWalletState = jest.fn();
+const mockMediaState = jest.fn();
 
-describe('MediaUpload Component', () => {
+// Mock the hooks
+jest.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => mockWalletState()
+}));
+
+jest.mock('../hooks/useMedia', () => ({
+  useMedia: () => mockMediaState()
+}));
+
+describe('MediaUpload', () => {
   beforeEach(() => {
-    (useWallet as jest.Mock).mockReturnValue({
+    mockWalletState.mockReturnValue({
       publicKey: null,
       connected: false,
     });
-    (useMedia as jest.Mock).mockReturnValue({
+    mockMediaState.mockReturnValue({
       uploadMedia: jest.fn(),
       isUploading: false,
+      progress: 0
     });
   });
 
+  it('renders without crashing', () => {
+    const { container } = render(<MediaUpload onUpload={() => {}} />);
+    expect(container.firstChild).not.toBeNull();
+  });
+
   it('should require wallet connection', async () => {
-    const { getByText, getByLabelText } = render(<MediaUpload onUpload={() => {}} />);
-    const fileInput = getByLabelText('Attach File');
+    render(<MediaUpload onUpload={() => {}} />);
+    const fileInput = screen.getByLabelText('Attach File');
     
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    await userEvent.upload(fileInput, file);
+    
     await waitFor(() => {
-      expect(getByText('Please connect your wallet')).toBeInTheDocument();
+      expect(screen.getByTestId('error-message')).toHaveTextContent('Please connect your wallet');
     });
   });
 
   it('should verify Solvio token before upload', async () => {
-    (useWallet as jest.Mock).mockReturnValue({
+    mockWalletState.mockReturnValue({
       publicKey: 'test-public-key',
       connected: true,
     });
     
-    const mockUploadMedia = jest.fn().mockRejectedValue(new Error('error.token.required'));
-    (useMedia as jest.Mock).mockReturnValue({
+    const mockUploadMedia = jest.fn().mockImplementation(() => Promise.reject(new Error('error.token.required'))) as jest.Mock;
+    mockMediaState.mockReturnValue({
       uploadMedia: mockUploadMedia,
       isUploading: false,
+      progress: 0
     });
 
-    const { getByText, getByLabelText } = render(<MediaUpload onUpload={() => {}} />);
-    const fileInput = getByLabelText('Attach File');
+    render(<MediaUpload onUpload={() => {}} />);
+    const fileInput = screen.getByLabelText('Attach File');
     
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    await userEvent.upload(fileInput, file);
+    
     await waitFor(() => {
-      expect(getByText('Solvio token is required to upload media')).toBeInTheDocument();
+      expect(screen.getByTestId('error-message')).toHaveTextContent('Solvio token is required to upload media');
     });
   });
 });
