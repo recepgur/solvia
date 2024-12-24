@@ -69,8 +69,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           className="sticky top-0 z-10 bg-[var(--app-background)]"
         >
           <div className="flex items-center gap-3 w-full">
-            <div className="flex-1 flex items-center gap-4">
-              <h1 className="text-lg font-semibold text-[var(--text-primary)]">Solvio</h1>
+            <div className="flex-1 flex items-center">
               <h1 className="text-lg font-semibold text-[var(--text-primary)]">Solvio</h1>
             </div>
             <button className="blockchain-button p-2 rounded-full">
