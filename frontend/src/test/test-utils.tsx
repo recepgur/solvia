@@ -79,9 +79,15 @@ class MockWalletAdapter extends BaseWalletAdapter implements MessageSignerWallet
         return transactions;
     }
 
-    async signMessage(message: Uint8Array): Promise<Uint8Array> {
+    async signMessage(_message: Uint8Array): Promise<Uint8Array> {
         if (!this._connected) throw new WalletNotConnectedError();
-        return message;
+        
+        // Return a consistent signature for testing
+        const testSignature = new Uint8Array(64);
+        for (let i = 0; i < 64; i++) {
+            testSignature[i] = i + 1;
+        }
+        return testSignature;
     }
 
     async sendTransaction<T extends Transaction | VersionedTransaction>(

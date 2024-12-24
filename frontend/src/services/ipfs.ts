@@ -1,6 +1,5 @@
 import { create } from 'ipfs-http-client';
 import { Buffer } from 'buffer';
-import { solana } from '../utils/solana';
 
 // Configure IPFS clients with multiple public gateways for decentralization
 const IPFS_GATEWAYS = [
@@ -26,10 +25,11 @@ export async function uploadToIPFS<T>(data: T | File | Buffer): Promise<string> 
   }
 
   // Store CID on chain if it's a string (encrypted data) and wallet is connected
-  if (typeof data === 'string' && window.solana?.publicKey) {
+  const solana = typeof window !== 'undefined' ? (window as any).solana : undefined;
+  if (typeof data === 'string' && solana?.publicKey && typeof solana.createManager === 'function') {
     try {
-      const manager = solana.createManager(window.solana, [process.env.VITE_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com']);
-      await manager.storeData(window.solana.publicKey.toBase58(), cid);
+      const manager = solana.createManager(solana, [process.env.VITE_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com']);
+      await manager.storeData(solana.publicKey.toBase58(), cid);
     } catch (error) {
       console.error('Failed to store CID on chain:', error);
     }

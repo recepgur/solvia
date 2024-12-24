@@ -1,86 +1,69 @@
 import '@testing-library/jest-dom';
-import { TextEncoder as NodeTextEncoder, TextDecoder as NodeTextDecoder } from 'util';
+import { TextEncoder, TextDecoder } from 'util';
 import cryptoMock from './test/setup/crypto.mock';
-import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
-import { expect } from '@jest/globals';
 
-// Set up TextEncoder/TextDecoder
-global.TextEncoder = NodeTextEncoder as typeof global.TextEncoder;
-global.TextDecoder = NodeTextDecoder as typeof global.TextDecoder;
+// Set up TextEncoder/Decoder for Node environment
+Object.defineProperty(global, 'TextEncoder', {
+  value: TextEncoder,
+  writable: true
+});
 
-// Wallet adapter is mocked in test-utils.tsx
-declare global {
-  namespace jest {
-    interface Matchers<R> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {
-      toBeInTheDocument(): R;
-      toHaveTextContent(text: string): R;
-      toBeVisible(): R;
-      toHaveClass(className: string): R;
-      toHaveAttribute(attr: string, value?: string): R;
+Object.defineProperty(global, 'TextDecoder', {
+  value: TextDecoder,
+  writable: true
+});
+
+// Import jest-dom for type augmentation
+import '@testing-library/jest-dom';
+
+// Set up globals
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
+Object.assign(global, {
+  TextEncoder: function() { return textEncoder; },
+  TextDecoder: function() { return textDecoder; },
+  Buffer: require('buffer').Buffer
+});
+
+// Mock crypto for tests
+const mockCrypto = {
+  getRandomValues: (buffer: Uint8Array) => {
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = Math.floor(Math.random() * 256);
     }
-  }
-}
-
-// Use the imported crypto mock implementation
-const mockSubtle = cryptoMock.subtle;
-
-// Set up crypto mock implementation
-Object.defineProperty(window, 'crypto', {
-  value: {
-    ...cryptoMock,
-    subtle: mockSubtle
+    return buffer;
   },
-  configurable: true,
-  writable: true
-});
+  subtle: cryptoMock.subtle
+};
 
-// Also set it on global for Node environment
-Object.defineProperty(global, 'crypto', {
-  value: window.crypto,
-  configurable: true,
-  writable: true
+// Set up crypto mock on both window and global
+[window, global].forEach(target => {
+  Object.defineProperty(target, 'crypto', {
+    value: mockCrypto,
+    configurable: true,
+    writable: true
+  });
 });
-
-// Mock Buffer for tests
-global.Buffer = require('buffer').Buffer;
 
 // Mock localStorage with in-memory storage
-const localStorageMock = (() => {
-  let store: { [key: string]: string } = {};
-  return {
-    getItem: jest.fn((key: string): string | null => store[key] || null),
-    setItem: jest.fn((key: string, value: string): void => {
-      store[key] = value.toString();
-    }),
-    clear: jest.fn((): void => {
-      store = {};
-    }),
-    removeItem: jest.fn((key: string): void => {
-      delete store[key];
-    }),
-    key: jest.fn((index: number): string | null => {
-      return Object.keys(store)[index] || null;
-    }),
-    get length(): number {
-      return Object.keys(store).length;
-    }
-  };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+const store = new Map<string, string>();
+const mockStorage = {
+  getItem: jest.fn((key: string) => store.get(key) || null),
+  setItem: jest.fn((key: string, value: string) => store.set(key, value)),
+  clear: jest.fn(() => store.clear()),
+  removeItem: jest.fn((key: string) => store.delete(key)),
+  key: jest.fn((index: number) => Array.from(store.keys())[index] || null),
+  get length() { return store.size; }
+};
 
-// Extend expect matchers
-expect.extend({
-  toBeInTheDocument(received) {
-    const pass = received !== null;
-    return {
-      message: () => 
-        pass 
-          ? `expected ${received} not to be in the document`
-          : `expected ${received} to be in the document`,
-      pass
-    };
-  }
+Object.defineProperty(window, 'localStorage', { 
+  value: mockStorage,
+  configurable: true,
+  writable: true
 });
 
-// Increase test timeout
-jest.setTimeout(10000);
+// Add jest-dom matchers
+import '@testing-library/jest-dom';
+
+// Set test timeout
