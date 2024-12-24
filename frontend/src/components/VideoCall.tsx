@@ -28,8 +28,8 @@ interface CallLog {
 
 export function VideoCall() {
   const { t } = useLanguage();
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
@@ -46,39 +46,67 @@ export function VideoCall() {
     ],
   };
 
+  const handleEnableCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: isAudioEnabled,
+      });
+      setLocalStream(stream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      setIsVideoEnabled(true);
+    } catch (error) {
+      console.error('Error accessing media devices:', error);
+      alert(t('error.media.access'));
+      setIsVideoEnabled(false);
+    }
+  };
+
+  const handleDisableCamera = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => track.stop());
+      setIsVideoEnabled(false);
+    }
+  };
+
+  // Only initialize audio if enabled
   useEffect(() => {
-    const initializeMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: isVideoEnabled,
-          audio: isAudioEnabled,
-        });
-        setLocalStream(stream);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
+    const initializeAudio = async () => {
+      if (isAudioEnabled && (!localStream || !localStream.getAudioTracks().length)) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+          setLocalStream(prevStream => {
+            if (prevStream) {
+              // Merge new audio track with existing stream
+              prevStream.addTrack(stream.getAudioTracks()[0]);
+              return prevStream;
+            }
+            return stream;
+          });
+        } catch (error) {
+          console.error('Error accessing audio device:', error);
+          setIsAudioEnabled(false);
         }
-      } catch (error) {
-        console.error('Error accessing media devices:', error);
-        alert(t('error.media.access'));
       }
     };
 
-    initializeMedia();
+    initializeAudio();
     return () => {
-      // Stop all tracks in local stream
+      // Cleanup on unmount
       localStream?.getTracks().forEach(track => track.stop());
-      
-      // Close all peer connections
       peerConnectionsRef.current.forEach(peer => {
         peer.connection.close();
       });
       peerConnectionsRef.current.clear();
-      
-      // Clear participants
       setParticipants(new Map());
       setIsCalling(false);
     };
-  }, [isVideoEnabled, isAudioEnabled, t]);
+  }, [isAudioEnabled]);
 
   const createPeerConnection = async (participantId: string) => {
     const peerConnection = new RTCPeerConnection(configuration);
@@ -155,7 +183,7 @@ export function VideoCall() {
         // Store offer in IPFS and share the hash
         const offerData = {
           type: 'offer',
-          from: publicKey.toString(),
+          from: publicKey?.toString() || '',
           to: participantId,
           offer
         };
@@ -211,7 +239,7 @@ export function VideoCall() {
             className="h-full w-full rounded-lg object-cover"
           />
           <div className="absolute bottom-4 left-4 text-white text-sm">
-            {t('video.you')} ({publicKey?.toBase58().slice(0, 8)}...)
+            {t('video.you')} {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : ''}
           </div>
         </div>
         {Array.from(participants.entries()).map(([id, participant]) => {
@@ -232,7 +260,7 @@ export function VideoCall() {
                 className="h-full w-full rounded-lg object-cover"
               />
               <div className="absolute bottom-4 left-4 text-white text-sm">
-                {id.slice(0, 8)}...
+                {id ? `${id.slice(0, 8)}...` : ''}
               </div>
               {!participant.videoEnabled && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -253,8 +281,8 @@ export function VideoCall() {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setIsVideoEnabled(!isVideoEnabled)}
-          className={!isVideoEnabled ? 'bg-red-500 text-white' : ''}
+          onClick={() => isVideoEnabled ? handleDisableCamera() : handleEnableCamera()}
+          className={!isVideoEnabled ? 'bg-red-500 text-white hover:bg-red-600' : ''}
         >
           {isVideoEnabled ? (
             <Video className="h-4 w-4" />

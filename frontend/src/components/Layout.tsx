@@ -5,6 +5,7 @@ import { Header } from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ChatList } from './ChatList';
 import { StatusList } from './StatusList';
+import EncryptionTest from './EncryptionTest';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
   const { t } = useLanguage();
   const [selectedChat, setSelectedChat] = React.useState<string>();
   const [showChatInfo, setShowChatInfo] = React.useState(false);
-  const [view, setView] = React.useState<'chats' | 'status'>('chats');
+  const [view, setView] = React.useState<'chats' | 'status' | 'encryption' | 'messages'>('chats');
 
   const handleChatSelect = (chatId: string) => {
     setSelectedChat(chatId);
@@ -57,8 +58,10 @@ export function Layout({ children, onViewChange }: LayoutProps) {
     >
       {/* Left panel - Chat list / Status */}
       <div className="chat-list-panel w-[30%] max-w-[400px] min-w-[300px] border-r border-[var(--border-light)] flex flex-col">
-        <div className="app-header">
-          <h1 className="text-xl font-semibold text-white">Solvio</h1>
+        <Header 
+          view={view} 
+          onCreateGroup={() => console.log('Create group')}
+        >
           <div className="flex items-center gap-3">
             <button className="p-2 rounded-full hover:bg-[rgba(255,255,255,0.1)]">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,11 +69,7 @@ export function Layout({ children, onViewChange }: LayoutProps) {
               </svg>
             </button>
           </div>
-        </div>
-        <Header 
-          view={view} 
-          onCreateGroup={() => console.log('Create group')}
-        />
+        </Header>
 
         {/* View toggle */}
         <div className="flex border-b border-gray-200 dark:border-gray-800">
@@ -90,14 +89,29 @@ export function Layout({ children, onViewChange }: LayoutProps) {
           >
             {t('status.updates')}
           </button>
+          <button
+            onClick={() => {
+              setView('encryption');
+              onViewChange('encryption');
+            }}
+            className={`flex-1 py-4 text-center ${
+              view === 'encryption' ? 'border-b-2 border-[#00a884] text-[#00a884]' : ''
+            }`}
+          >
+            Test E2E
+          </button>
         </div>
 
-        {/* Chat list or Status view */}
+        {/* Chat list, Status, or Encryption view */}
         {view === 'chats' ? (
           <ChatList onChatSelect={handleChatSelect} selectedChat={selectedChat} />
-        ) : (
+        ) : view === 'status' ? (
           <StatusList />
-        )}
+        ) : view === 'encryption' ? (
+          <div className="p-4">
+            <EncryptionTest />
+          </div>
+        ) : null}
       </div>
       
       {/* Main content - Chat/Call view */}

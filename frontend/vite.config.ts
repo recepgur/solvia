@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     nodePolyfills({
-      include: ['stream', 'crypto', 'buffer', 'process'],
+      include: ['stream', 'crypto', 'buffer', 'process', 'util'],
       globals: {
         Buffer: true,
         global: true,
@@ -25,8 +25,9 @@ export default defineConfig({
     port: Number(process.env.PORT) || 5173,
     strictPort: true,
     hmr: {
-      clientPort: Number(process.env.HMR_PORT) || 443,
-      host: process.env.HMR_HOST || 'localhost'
+      clientPort: 443,
+      protocol: 'wss',
+      host: 'solana-decentralized-app-tunnel-cvgil0ep.devinapps.com'
     }
   },
   build: {

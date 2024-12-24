@@ -22,11 +22,11 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
   };
 
   return (
-    <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-4 py-2">
+    <div className="bg-[var(--chat-background)] px-4 py-2">
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <button
           type="button"
-          className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+          className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
           onClick={onAttachFile}
           title={t('attach.file')}
         >
@@ -34,7 +34,7 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
         </button>
         <button
           type="button"
-          className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+          className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
           onClick={onAttachFile}
           title={t('attach.photo')}
         >
@@ -46,20 +46,20 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording }: 
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={t('type.message')}
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-[#2a3942] focus:outline-none placeholder-[#3b4a54] dark:placeholder-[#8696a0] text-[#111b21] dark:text-[#d1d7db]"
+            className="w-full px-4 py-3 rounded-lg bg-[var(--chat-background)] hover-effect focus:outline-none focus:ring-2 focus:ring-[var(--primary-accent)] placeholder-[var(--text-secondary)] text-[var(--text-primary)]"
           />
         </div>
         {message.trim() ? (
           <button
             type="submit"
-            className="p-2 rounded-full bg-[#00a884] dark:bg-[#00a884] hover:bg-[#06cf9c] dark:hover:bg-[#06cf9c] transition-colors"
+            className="blockchain-button p-2 rounded-full"
           >
             <Send className="h-5 w-5 text-white" />
           </button>
         ) : (
           <button
             type="button"
-            className="p-2 rounded-full text-[#54656f] dark:text-[#8696a0] hover:bg-[#d9dbdf] dark:hover:bg-[#384147] transition-colors"
+            className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
             onClick={onStartRecording}
             title={t('start.recording')}
           >

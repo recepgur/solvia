@@ -10,10 +10,15 @@ import data from '@emoji-mart/data';
 import { Buffer } from 'buffer';
 import { MediaUpload } from './MediaUpload';
 import { MediaPreview } from './MediaPreview';
+import { useKeyManagement } from '../hooks/useKeyManagement';
+import { PublicKey } from '@solana/web3.js';
+
+import { EncryptedMessage } from '../utils/crypto';
 
 interface Message {
   id: string;
   text: string;
+  encrypted?: EncryptedMessage; // Properly typed encrypted message data
   sender: string;
   timestamp: number;
   type: 'text' | 'voice' | 'forwarded' | 'media';
@@ -37,6 +42,9 @@ export function Messaging() {
   const [selectedMedia, setSelectedMedia] = useState<{ hash: string; type: string } | null>(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const { publicKey } = useWallet();
+  // Initialize WebSocket connection state
+  const [wsConnected, setWsConnected] = useState(false);
+  const { encryptForRecipient, decryptFromSender, isInitialized } = useKeyManagement();
   
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -133,12 +141,22 @@ export function Messaging() {
     
     socket.onopen = () => {
       console.log('WebSocket Connected');
+      setWsConnected(true);
     };
 
-    socket.onmessage = (event) => {
+    socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'message') {
-        setMessages(prev => [...prev, data.message]);
+        try {
+          // Decrypt the message if it's encrypted
+          if (data.message.encrypted && isInitialized) {
+            const decryptedText = await decryptFromSender(data.message.encrypted);
+            data.message.text = decryptedText;
+          }
+          setMessages(prev => [...prev, data.message]);
+        } catch (error) {
+          console.error('Failed to decrypt message:', error);
+        }
       } else if (data.type === 'delivery') {
         setMessages(prev => prev.map(msg => 
           msg.id === data.messageId 
@@ -156,9 +174,11 @@ export function Messaging() {
 
     socket.onclose = () => {
       console.log('WebSocket Disconnected');
+      setWsConnected(false);
       // Attempt to reconnect after 1 second
       setTimeout(() => {
-        setWs(new WebSocket('ws://localhost:8000/ws'));
+        const newSocket = new WebSocket('ws://localhost:8000/ws');
+        setWs(newSocket);
       }, 1000);
     };
 
@@ -172,18 +192,23 @@ export function Messaging() {
   }, []);
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !isInitialized) return;
 
     try {
-      // Store message content in IPFS
+      // Encrypt message for all recipients
+      const recipientKey = new PublicKey('9YYTVNc7VcyEcharU4DMwTE1aydGnBFJJKRCR2fhh5ka'); // Default recipient for testing
+      const encrypted = await encryptForRecipient(newMessage, recipientKey);
+
+      // Store encrypted message content in IPFS
       const { cid } = await ipfs.add(JSON.stringify({
-        text: newMessage,
+        encrypted,
         timestamp: Date.now()
       }));
 
       const message: Message = {
         id: cid.toString(),
-        text: newMessage,
+        text: newMessage, // Store decrypted version locally
+        encrypted, // Store encrypted version for transmission
         sender: publicKey?.toBase58() || 'anonymous',
         timestamp: Date.now(),
         type: 'text',
@@ -258,12 +283,12 @@ export function Messaging() {
           <div
             key={message.id}
             className={`flex ${
-              message.sender === publicKey?.toBase58() ? 'justify-end' : 'justify-start'
+              message.sender === publicKey?.toBase58?.() ? 'justify-end' : 'justify-start'
             }`}
           >
             <div
               className={`max-w-[65%] rounded-lg px-3 py-2 shadow-sm ${
-                message.sender === publicKey?.toBase58()
+                message.sender === publicKey?.toBase58?.()
                   ? 'bg-[#d9fdd3] dark:bg-green-700 rounded-tr-none'
                   : 'bg-white dark:bg-gray-800 rounded-tl-none'
               }`}

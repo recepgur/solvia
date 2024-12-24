@@ -6,27 +6,29 @@
 
 @layer base {
   :root {
-    --app-background: #F8F9FD;
-    --primary-accent: #7952B3;    /* Rich purple - distinctly different from WhatsApp */
-    --secondary-accent: #FF6B6B;  /* Coral accent for modern feel */
-    --chat-background: #FFFFFF;
-    --bubble-out: #F3E5FF;       /* Light purple for sent messages */
-    --bubble-in: #FFE5E5;        /* Light coral for received messages */
-    --border-light: #E2E8F0;
-    --text-primary: #2D3748;
-    --text-secondary: #4A5568;
+    --app-background: #0f172a;    /* Dark background for blockchain feel */
+    --primary-accent: #00a884;    /* Solvio green */
+    --secondary-accent: #22c55e;  /* Success green */
+    --chat-background: #1e293b;   /* Slate background */
+    --bubble-out: #059669;        /* Emerald for sent messages */
+    --bubble-in: #0d9488;         /* Teal for received messages */
+    --border-light: #334155;      /* Slate border */
+    --text-primary: #f8fafc;      /* Light text */
+    --text-secondary: #94a3b8;    /* Muted text */
+    --glow-color: rgba(0, 168, 132, 0.5); /* Solvio green glow */
   }
   
   .dark {
-    --app-background: #1A1B23;    /* Dark navy background */
-    --chat-background: #242632;   /* Slightly lighter navy */
-    --bubble-out: #563D7C;       /* Darker purple for sent messages */
-    --bubble-in: #8B3D3D;        /* Darker coral for received messages */
-    --border-light: #2D3748;
-    --text-primary: #F7FAFC;
-    --text-secondary: #A0AEC0;
-    --primary-accent: #9B6BDE;   /* Brighter purple for dark mode */
-    --secondary-accent: #FF8585;  /* Brighter coral for dark mode */
+    --app-background: #020617;    /* Darker background */
+    --chat-background: #0f172a;   /* Dark slate */
+    --bubble-out: #047857;        /* Darker emerald */
+    --bubble-in: #0f766e;         /* Darker teal */
+    --border-light: #1e293b;      /* Darker border */
+    --text-primary: #f8fafc;      /* Light text */
+    --text-secondary: #94a3b8;    /* Muted text */
+    --primary-accent: #00a884;    /* Solvio green */
+    --secondary-accent: #22c55e;  /* Success green */
+    --glow-color: rgba(0, 168, 132, 0.3); /* Dimmed glow */
   }
 }
 
@@ -46,10 +48,11 @@ body {
 
 .chat-background {
   background-color: var(--chat-background);
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='rgba(107,79,187,0.03)'%3E%3Cpath d='M25 25h10v10H25zM65 25h10v10H65zM45 45h10v10H45zM25 65h10v10H25zM65 65h10v10H65z'/%3E%3Cpath d='M15 15h70v70H15z' fill='none' stroke='rgba(56,161,219,0.02)' stroke-width='2'/%3E%3Cpath d='M35 35l30 30M65 35L35 65' stroke='rgba(107,79,187,0.02)' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 40px 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='rgba(0,168,132,0.03)'%3E%3Cpath d='M50 25l25 15v30l-25 15l-25-15v-30z'/%3E%3C/g%3E%3Cpath d='M50 25l25 15v30l-25 15l-25-15v-30z' fill='none' stroke='rgba(34,197,94,0.02)' stroke-width='2'/%3E%3Cpath d='M50 25v60M25 40l50-30M25 70l50 30' stroke='rgba(0,168,132,0.02)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 50px 50px;
   background-repeat: repeat;
   position: relative;
+  animation: subtleGlow 4s infinite;
 }
 
 .chat-background::before {
@@ -105,12 +108,165 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* Modern hover effects */
+/* Intro Screen Styles */
+.intro-screen {
+  @apply fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d] overflow-hidden;
+}
+
+.blockchain-animation {
+  @apply absolute inset-0 pointer-events-none;
+}
+
+.blockchain-node {
+  @apply absolute w-4 h-4 rounded-full bg-[#00a884];
+  animation: nodeGlow 2s infinite;
+  opacity: 0;
+}
+
+.blockchain-connection {
+  @apply absolute h-0.5 bg-[#00a884] origin-left;
+  animation: connectionGrow 1.5s infinite;
+  opacity: 0;
+}
+
+.intro-content {
+  @apply relative z-10 text-center text-white opacity-0 cursor-pointer;
+  transition: transform 0.3s ease-out;
+}
+
+.intro-content:hover {
+  transform: scale(1.02);
+}
+
+.intro-content.fade-in {
+  animation: contentFadeIn 1s forwards;
+}
+
+.intro-title {
+  @apply text-6xl font-bold mb-4 text-[#00a884];
+  text-shadow: 0 0 20px rgba(0, 168, 132, 0.5);
+}
+
+.intro-subtitle {
+  @apply text-xl mb-8 text-gray-300;
+}
+
+.intro-features {
+  @apply flex gap-8 justify-center;
+}
+
+.feature {
+  @apply flex flex-col items-center gap-2;
+}
+
+.feature-icon {
+  @apply text-2xl;
+}
+
+.feature-text {
+  @apply text-sm text-gray-300;
+}
+
+@keyframes nodeGlow {
+  0% { 
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(0, 168, 132, 0);
+    transform: scale(0.8);
+  }
+  50% { 
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.4);
+    transform: scale(1);
+  }
+  100% { 
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(0, 168, 132, 0);
+    transform: scale(0.8);
+  }
+}
+
+@keyframes connectionGrow {
+  0% {
+    opacity: 0;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes contentFadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Blockchain-inspired effects */
 .hover-effect {
   @apply transition-all duration-200;
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, var(--glow-color) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
 .hover-effect:hover {
   @apply transform scale-[1.02];
-  filter: brightness(1.05);
+}
+
+.hover-effect:hover::after {
+  opacity: 0.1;
+}
+
+@keyframes subtleGlow {
+  0%, 100% { box-shadow: inset 0 0 30px rgba(0, 168, 132, 0); }
+  50% { box-shadow: inset 0 0 30px rgba(0, 168, 132, 0.1); }
+}
+
+.blockchain-button {
+  @apply relative overflow-hidden transition-all duration-300;
+  background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blockchain-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.blockchain-button:hover::before {
+  left: 100%;
 }

@@ -9,16 +9,20 @@ import { Metaplex, walletAdapterIdentity, Nft, Sft, NftWithToken, SftWithToken }
 export function NFTProfile() {
   const [profileImage, setProfileImage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const { publicKey, connected } = useWallet();
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
   
   // Store NFT address in ref to avoid re-renders
   const nftAddressRef = useRef<string>('');
 
   const connection = new Connection(process.env.VITE_SOLANA_NETWORK || 'https://api.devnet.solana.com');
-  const metaplex = new Metaplex(connection).use(walletAdapterIdentity(useWallet()));
+  const metaplex = new Metaplex(connection).use(walletAdapterIdentity(wallet));
 
   const fetchNFTs = async () => {
-    if (!publicKey) return;
+    if (!publicKey?.toBase58()) {
+      console.log('No public key available');
+      return;
+    }
     
     try {
       setLoading(true);
