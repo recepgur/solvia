@@ -2,16 +2,9 @@ import * as React from 'react';
 import { X, MoreVertical, Reply } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-interface Status {
-  id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  media: string;
-  type: 'image' | 'video';
-  timestamp: number;
-  viewers?: string[];
-}
+import { type Status } from '../types/status';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 interface StatusViewerProps {
   statuses: Status[];
@@ -22,8 +15,33 @@ interface StatusViewerProps {
 
 export function StatusViewer({ statuses, currentIndex, onClose, onReply }: StatusViewerProps) {
   const { t } = useLanguage();
+  const { publicKey } = useWallet();
+  const { ws } = useWebSocket();
   const [activeIndex, setActiveIndex] = React.useState(currentIndex);
   const [progress, setProgress] = React.useState(0);
+  const [swipeOffset, setSwipeOffset] = React.useState(0);
+
+  // Mark status as viewed
+  React.useEffect(() => {
+    const currentStatus = statuses[activeIndex];
+    if (currentStatus && publicKey && currentStatus.expiresAt > Date.now()) {
+      const viewerAddress = publicKey.toBase58();
+      if (!currentStatus.viewers?.includes(viewerAddress)) {
+        const updatedStatus = {
+          ...currentStatus,
+          viewers: [...(currentStatus.viewers || []), viewerAddress]
+        };
+        // Emit status update event
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'status_update',
+            status: updatedStatus,
+            action: 'view'
+          }));
+        }
+      }
+    }
+  }, [activeIndex, publicKey, statuses]);
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -47,6 +65,14 @@ export function StatusViewer({ statuses, currentIndex, onClose, onReply }: Statu
 
   const currentStatus = statuses[activeIndex];
 
+  // Handle swipe animation reset
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSwipeOffset(0);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [activeIndex]);
+
   const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     const startX = touch.clientX;
@@ -56,7 +82,9 @@ export function StatusViewer({ statuses, currentIndex, onClose, onReply }: Statu
       const currentX = touch.clientX;
       const diff = currentX - startX;
       
-      if (Math.abs(diff) > 50) {
+      setSwipeOffset(diff);
+      
+      if (Math.abs(diff) > 100) {
         if (diff > 0 && activeIndex > 0) {
           setActiveIndex(activeIndex - 1);
           setProgress(0);
@@ -64,6 +92,7 @@ export function StatusViewer({ statuses, currentIndex, onClose, onReply }: Statu
           setActiveIndex(activeIndex + 1);
           setProgress(0);
         }
+        setSwipeOffset(0);
         document.removeEventListener('touchmove', handleTouchMove);
       }
     };
@@ -76,7 +105,10 @@ export function StatusViewer({ statuses, currentIndex, onClose, onReply }: Statu
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black"
+      className="fixed inset-0 z-50 bg-black transition-transform duration-300"
+      style={{
+        transform: `translateX(${swipeOffset}px)`
+      }}
       onTouchStart={handleTouchStart}
     >
       {/* Progress bars */}

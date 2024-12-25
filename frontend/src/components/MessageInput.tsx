@@ -23,11 +23,11 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, cl
   };
 
   return (
-    <div className={`bg-[var(--chat-background)] px-4 py-2 ${className || ''}`}>
+    <div className={`bg-[var(--background)] dark:bg-[var(--secondary)] px-4 py-2 border-t border-[var(--border-light)] ${className || ''}`}>
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <button
           type="button"
-          className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
+          className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover-background)] transition-colors"
           onClick={onAttachFile}
           title={t('attach.file')}
         >
@@ -35,7 +35,7 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, cl
         </button>
         <button
           type="button"
-          className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
+          className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover-background)] transition-colors"
           onClick={onAttachFile}
           title={t('attach.photo')}
         >
@@ -47,20 +47,20 @@ export function MessageInput({ onSendMessage, onAttachFile, onStartRecording, cl
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={t('type.message')}
-            className="w-full px-4 py-3 rounded-lg bg-[var(--chat-background)] hover-effect focus:outline-none focus:ring-2 focus:ring-[var(--primary-accent)] placeholder-[var(--text-secondary)] text-[var(--text-primary)]"
+            className="w-full px-4 py-3 rounded-lg bg-[var(--message-incoming)] dark:bg-[var(--message-incoming)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-colors"
           />
         </div>
         {message.trim() ? (
           <button
             type="submit"
-            className="blockchain-button p-2 rounded-full"
+            className="p-2 rounded-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] transition-colors"
           >
-            <Send className="h-5 w-5 text-white" />
+            <Send className="h-5 w-5 text-white dark:text-[var(--text-primary)]" />
           </button>
         ) : (
           <button
             type="button"
-            className="blockchain-button p-2 rounded-full text-[var(--text-primary)]"
+            className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover-background)] transition-colors"
             onClick={onStartRecording}
             title={t('start.recording')}
           >

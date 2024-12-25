@@ -6,6 +6,8 @@ export interface GroupMember {
   publicKey?: string;  // For message encryption
   chainId?: string;  // For multi-chain support
   lastActive?: number;  // For presence tracking
+  muted_until?: number;  // Timestamp when mute expires
+  banned?: boolean;  // Whether the member is banned
 }
 
 export interface GroupMessage {
@@ -17,6 +19,9 @@ export interface GroupMessage {
   reply_to?: string;
   ipfsCid?: string;  // For decentralized storage
   signature?: string;  // For message verification
+  forwardedFrom?: string;  // Original sender for forwarded messages
+  forwardedTimestamp?: number;  // Original timestamp for forwarded messages
+  forwardedMessageId?: string;  // Original message ID for reference
 }
 
 export interface Group {

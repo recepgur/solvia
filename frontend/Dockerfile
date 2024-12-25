@@ -1,10 +1,11 @@
 FROM node:18-alpine as builder
 
 WORKDIR /app
+ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html

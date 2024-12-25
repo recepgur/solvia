@@ -1,3 +1,71 @@
+/* WhatsApp-like theme colors */
+:root {
+  --primary: #00a884;
+  --primary-dark: #008069;
+  --secondary: #111b21;
+  --background: #f0f2f5;
+  --chat-background: #efeae2;
+  --border-light: #e9edef;
+  --text-primary: #111b21;
+  --text-secondary: #667781;
+  --message-outgoing: #d9fdd3;
+  --message-incoming: #ffffff;
+  --hover-background: rgba(0, 0, 0, 0.05);
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  --primary: #00a884;
+  --primary-dark: #008069;
+  --secondary: #202c33;
+  --background: #111b21;
+  --chat-background: #0b141a;
+  --border-light: #222d34;
+  --text-primary: #e9edef;
+  --text-secondary: #8696a0;
+  --message-outgoing: #005c4b;
+  --message-incoming: #202c33;
+  --hover-background: rgba(255, 255, 255, 0.05);
+  --shadow-light: rgba(0, 0, 0, 0.2);
+  --shadow-medium: rgba(0, 0, 0, 0.3);
+}
+
+/* Chat bubble styles */
+.chat-bubble-in {
+  position: relative;
+  padding: 8px 12px;
+  background: var(--message-incoming);
+  border-radius: 8px 8px 8px 0;
+  box-shadow: 0 1px 0.5px var(--shadow-light);
+}
+
+.chat-bubble-out {
+  position: relative;
+  padding: 8px 12px;
+  background: var(--message-outgoing);
+  border-radius: 8px 8px 0 8px;
+  box-shadow: 0 1px 0.5px var(--shadow-light);
+}
+
+/* Status styles */
+.status-ring {
+  position: relative;
+}
+
+.status-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: var(--primary);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
 /* Mobile-first responsive design */
 @media (max-width: 768px) {
   .chat-list-panel {
@@ -9,7 +77,7 @@
     z-index: 10;
     transform: translateX(0);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background-color: var(--app-background);
+    background-color: var(--background);
     will-change: transform;
     padding-bottom: env(safe-area-inset-bottom);
   }

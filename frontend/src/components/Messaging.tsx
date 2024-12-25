@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Mic, Forward, Smile } from 'lucide-react';
+import { Send, Mic, Forward, Smile, StopCircle } from 'lucide-react';
+import { AudioWaveform } from './AudioWaveform';
 import { ReadReceipt } from './ReadReceipt';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useBackup } from '../hooks/useBackup';
 import { create } from 'ipfs-http-client';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
@@ -23,7 +25,9 @@ interface Message {
   timestamp: number;
   type: 'text' | 'voice' | 'forwarded' | 'media';
   reactions?: { [key: string]: string[] }; // emoji -> array of user addresses
-  originalSender?: string; // for forwarded messages
+  forwardedFrom?: string; // Original sender for forwarded messages
+  forwardedTimestamp?: number; // Original timestamp for forwarded messages
+  forwardedMessageId?: string; // Original message ID for reference
   audioUrl?: string; // for voice messages
   mediaHash?: string; // IPFS hash for media content
   mediaType?: string; // MIME type of the media
@@ -37,24 +41,49 @@ export function Messaging() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<{ hash: string; type: string } | null>(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const { publicKey } = useWallet();
   // Initialize WebSocket connection state
-  const [wsConnected, setWsConnected] = useState(false);
+  const [_, setWsConnected] = useState(false);
   const { encryptForRecipient, decryptFromSender, isInitialized } = useKeyManagement();
   
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const { backupAllChats } = useBackup();
   const ipfs = create({ url: 'http://localhost:5001' });
 
   // Voice message recording
   const startRecording = async () => {
     try {
+      // Check browser compatibility
+      if (!window.MediaRecorder) {
+        throw new Error('Your browser does not support voice recording');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
+      
+      // Set recording stream first so UI updates immediately
+      setRecordingStream(stream);
+
+      // Set up MediaRecorder with better audio quality
+      const options = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
+      };
+
+      try {
+        mediaRecorder.current = new MediaRecorder(stream, options);
+      } catch (e) {
+        // Fallback to default options if the preferred format is not supported
+        mediaRecorder.current = new MediaRecorder(stream);
+      }
+      
       audioChunks.current = [];
 
       mediaRecorder.current.ondataavailable = (event) => {
@@ -62,23 +91,56 @@ export function Messaging() {
       };
 
       mediaRecorder.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
-        const buffer = Buffer.from(await audioBlob.arrayBuffer());
-        const { cid } = await ipfs.add(buffer);
-        
-        const message: Message = {
-          id: cid.toString(),
-          text: '',
-          sender: publicKey?.toBase58() || 'anonymous',
-          timestamp: Date.now(),
-          type: 'voice',
-          audioUrl: `https://ipfs.io/ipfs/${cid.toString()}`
-        };
+        try {
+          setIsUploading(true);
+          setRecordingError(null);
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+          const buffer = Buffer.from(await audioBlob.arrayBuffer());
+          
+          // Implement retry logic for IPFS upload
+          let retries = 3;
+          let cid;
+          while (retries > 0) {
+            try {
+              const result = await ipfs.add(buffer);
+              cid = result.cid;
+              break;
+            } catch (error) {
+              retries--;
+              if (retries === 0) throw error;
+              // Exponential backoff: 1s, 2s, 4s
+              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, 3 - retries)));
+            }
+          }
+          
+          if (!cid) throw new Error('Failed to upload voice message after multiple attempts');
+          
+          const message: Message = {
+            id: cid.toString(),
+            text: '',
+            sender: publicKey?.toBase58() || 'anonymous',
+            timestamp: Date.now(),
+            type: 'voice',
+            audioUrl: `https://ipfs.io/ipfs/${cid.toString()}`
+          };
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(message));
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(message));
+          }
+          setMessages([...messages, message]);
+          
+          // Trigger backup after sending voice message
+          try {
+            await backupAllChats();
+          } catch (error) {
+            console.error('Failed to backup after sending voice message:', error);
+          }
+        } catch (error) {
+          console.error('Error uploading voice message:', error);
+          setRecordingError('Failed to upload voice message. Please try again.');
+        } finally {
+          setIsUploading(false);
         }
-        setMessages([...messages, message]);
       };
 
       mediaRecorder.current.start();
@@ -92,6 +154,9 @@ export function Messaging() {
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop();
       setIsRecording(false);
+      // Clean up stream when stopping
+      recordingStream?.getTracks().forEach(track => track.stop());
+      setRecordingStream(null);
     }
   };
 
@@ -103,13 +168,21 @@ export function Messaging() {
       sender: publicKey?.toBase58() || 'anonymous',
       timestamp: Date.now(),
       type: 'forwarded',
-      originalSender: message.sender
+      forwardedFrom: message.sender,
+      forwardedTimestamp: message.timestamp,
+      forwardedMessageId: message.id
     };
 
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(forwardedMessage));
     }
     setMessages([...messages, forwardedMessage]);
+    // Trigger backup after forwarding message
+    try {
+      await backupAllChats();
+    } catch (error) {
+      console.error('Failed to backup after forwarding message:', error);
+    }
   };
 
   // Emoji reactions
@@ -235,6 +308,12 @@ export function Messaging() {
 
       setMessages([...messages, message]);
       setNewMessage('');
+      // Trigger backup after sending text message
+      try {
+        await backupAllChats();
+      } catch (error) {
+        console.error('Failed to backup after sending message:', error);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -295,12 +374,25 @@ export function Messaging() {
             >
               {message.type === 'forwarded' && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Forwarded from {message.originalSender}
+                  Forwarded from {message.forwardedFrom}
                 </div>
               )}
               {message.type === 'voice' ? (
-                <div className="bg-[#2a2a2a] rounded-lg p-1">
-                  <audio src={message.audioUrl} controls className="w-full h-8" />
+                <div className="bg-[#2a2a2a] rounded-lg p-2">
+                  <AudioWaveform
+                    audioUrl={message.audioUrl}
+                    isRecording={false}
+                    onPlaybackComplete={() => {
+                      // Mark message as played
+                      if (publicKey && ws?.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                          type: 'read',
+                          messageId: message.id,
+                          reader: publicKey.toBase58()
+                        }));
+                      }
+                    }}
+                  />
                 </div>
               ) : message.type === 'media' && message.mediaHash ? (
                 <div 
@@ -390,20 +482,26 @@ export function Messaging() {
       {/* Input area */}
       <div className="bg-[#f0f2f5] dark:bg-gray-800 px-4 py-3">
         <div className="flex items-center space-x-2 bg-white dark:bg-gray-700 rounded-lg px-4 py-2">
-          <MediaUpload onUpload={(hash, type) => {
-            const message: Message = {
-              id: Date.now().toString(),
-              text: '',
-              sender: publicKey?.toBase58() || 'anonymous',
-              timestamp: Date.now(),
-              type: 'media',
-              mediaHash: hash,
-              mediaType: type
-            };
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify(message));
+          <MediaUpload onUpload={async (hash, type) => {
+            try {
+              const message: Message = {
+                id: Date.now().toString(),
+                text: '',
+                sender: publicKey?.toBase58() || 'anonymous',
+                timestamp: Date.now(),
+                type: 'media',
+                mediaHash: hash,
+                mediaType: type
+              };
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+              }
+              setMessages([...messages, message]);
+              // Trigger backup after sending media
+              await backupAllChats();
+            } catch (error) {
+              console.error('Failed to handle media upload:', error);
             }
-            setMessages([...messages, message]);
           }} />
           <button
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -427,15 +525,34 @@ export function Messaging() {
               <Send className="h-6 w-6" />
             </Button>
           ) : (
-            <Button
-              onClick={isRecording ? stopRecording : startRecording}
-              size="icon"
-              className={`bg-transparent hover:bg-transparent ${
-                isRecording ? 'text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <Mic className="h-6 w-6" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              {recordingError && (
+                <div className="text-red-500 text-sm mr-2">{recordingError}</div>
+              )}
+              {recordingStream && (
+                <div className="w-48">
+                  <AudioWaveform
+                    stream={recordingStream}
+                    isRecording={isRecording}
+                  />
+                </div>
+              )}
+              <Button
+                onClick={isRecording ? stopRecording : startRecording}
+                size="icon"
+                className={`bg-transparent hover:bg-transparent ${
+                  isRecording ? 'text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {isRecording ? (
+                  <StopCircle className="h-6 w-6" />
+                ) : isUploading ? (
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                ) : (
+                  <Mic className="h-6 w-6" />
+                )}
+              </Button>
+            </div>
           )}
         </div>
       </div>

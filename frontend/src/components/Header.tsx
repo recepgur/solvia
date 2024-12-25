@@ -3,7 +3,7 @@ import { MoreVertical, Plus, Search, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeaderProps {
-  view: 'chats' | 'status' | 'messages' | 'encryption';
+  view: 'chats' | 'status' | 'messages' | 'encryption' | 'notifications';
   onBack?: () => void;
   onCreateGroup?: () => void;
   chatName?: string;
@@ -53,23 +53,28 @@ export const Header: FC<HeaderProps> = ({ view, onBack, onCreateGroup, chatName,
   }
 
   return (
-    <div className={`p-4 bg-gradient-to-r from-[var(--primary-accent)] to-[var(--secondary-accent)] flex justify-between items-center relative overflow-hidden ${className || ''}`}>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'rgba(255,255,255,0.03)\'%3E%3Cpath d=\'M50 25l25 15v30l-25 15l-25-15v-30z\'/%3E%3C/g%3E%3C/svg%3E')] bg-repeat opacity-50"></div>
-      <h1 className="text-xl font-bold text-white hover-effect relative z-10">Solvio</h1>
-      <div className="flex items-center space-x-2 relative z-10">
-        {view === 'chats' && (
-          <button
-            onClick={onCreateGroup}
-            className="blockchain-button p-2 rounded-full text-white"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        )}
-        {children || (
-          <button className="blockchain-button p-2 rounded-full text-white">
-            <MoreVertical className="h-5 w-5" />
-          </button>
-        )}
+    <div className={`p-4 bg-[var(--primary)] dark:bg-[var(--secondary)] flex justify-between items-center shadow-sm ${className || ''}`}>
+      <div className="flex-1 flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-white dark:text-[var(--text-primary)]">Solvio</h1>
+        <div className="flex items-center space-x-3">
+          {view === 'chats' && (
+            <button
+              onClick={onCreateGroup}
+              className="p-2 rounded-full text-white dark:text-[var(--text-primary)] hover:bg-[var(--primary-dark)] dark:hover:bg-[var(--hover-background)] transition-colors"
+              aria-label="Create Group"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          )}
+          {children || (
+            <button 
+              className="p-2 rounded-full text-white dark:text-[var(--text-primary)] hover:bg-[var(--primary-dark)] dark:hover:bg-[var(--hover-background)] transition-colors"
+              aria-label="More Options"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

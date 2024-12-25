@@ -30,7 +30,7 @@
   },
   "include": ["src", "src/types"],
   "typeRoots": ["./node_modules/@types", "./src/types"],
-  "types": ["node"]
+  "types": ["node"],
   "exclude": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"]
 }
 

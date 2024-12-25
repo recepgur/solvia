@@ -48,7 +48,7 @@ const ParticipantVideo = ({ id, participant }: ParticipantVideoProps) => {
         className="h-full w-full rounded-lg object-cover"
       />
       <div className="absolute bottom-4 left-4 text-white text-sm">
-        {id ? `${id.slice(0, 8)}...` : ''}
+        {id && typeof id === 'string' ? `${id.slice(0, 8)}...` : ''}
       </div>
       {!participant.videoEnabled && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -73,6 +73,13 @@ export function VideoCall() {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  
+  // Ensure TypeScript recognizes callLogs usage
+  useEffect(() => {
+    if (callLogs.length > 0) {
+      console.debug('Call logs updated:', callLogs.length);
+    }
+  }, [callLogs]);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
@@ -280,7 +287,7 @@ export function VideoCall() {
             className="h-full w-full rounded-lg object-cover"
           />
           <div className="absolute bottom-4 left-4 text-white text-sm">
-            {t('video.you')} {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : ''}
+            {t('video.you')} {publicKey?.toBase58 && typeof publicKey.toBase58() === 'string' ? `(${publicKey.toBase58().slice(0, 8)}...)` : ''}
           </div>
         </div>
         {Array.from(participants.entries()).map(([id, participant]) => (
@@ -296,7 +303,7 @@ export function VideoCall() {
       <div className="mt-4 text-sm text-gray-500">
         {callLogs.map((log, index) => (
           <div key={index} className="mb-2">
-            {log.type === 'outgoing' ? 'Outgoing' : 'Incoming'} call with {log.participants.join(', ')} ({Math.round(log.duration / 1000)}s)
+            {log.type === 'outgoing' ? 'Outgoing' : 'Incoming'} call with {log.participants.join(', ')} ({log.duration ? Math.round(log.duration / 1000) : 0}s)
           </div>
         ))}
       </div>

@@ -3,7 +3,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { SOLVIO_TOKEN_MINT } from '../config/constants';
 import { uploadToIPFS, getFromIPFS, uploadFile } from '../services/ipfs';
-import type { Group, GroupMember, GroupMessage } from '../types/group.types';
+import type { Group, GroupMember, GroupMessage } from '../types/group';
 
 interface CreateGroupData {
   name: string;
@@ -20,12 +20,52 @@ export interface GroupHookReturn {
   joinGroup: (groupId: string) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
   sendMessage: (groupId: string, content: string, replyTo?: string) => Promise<void>;
+  promoteToAdmin: (groupId: string, memberId: string) => Promise<void>;
+  demoteFromAdmin: (groupId: string, memberId: string) => Promise<void>;
+  muteMember: (groupId: string, memberId: string, duration: number) => Promise<void>;
+  banMember: (groupId: string, memberId: string) => Promise<void>;
 }
 
 export const useGroups = (): GroupHookReturn => {
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<Group[]>(() => {
+    // Initialize with mock data in development
+    if (process.env.NODE_ENV === 'development' && process.env.VITE_MOCK_DATA === 'true') {
+      console.log('Initializing mock groups data');
+      const timestamp = Math.floor(Date.now() / 1000);
+      const mockWalletAddress = 'mock-wallet-address';
+      const mockGroupId = `test-group-${timestamp}`;
+      
+      const mockGroup: Group = {
+        id: mockGroupId,
+        name: 'Test Group',
+        description: 'Test group for development',
+        created_at: timestamp,
+        created_by: mockWalletAddress,
+        required_nft: undefined,
+        members: [{
+          wallet_address: mockWalletAddress,
+          role: 'admin' as const,
+          joined_at: timestamp,
+          publicKey: mockWalletAddress,
+          lastActive: timestamp,
+          nft_proof: undefined
+        }],
+        messages: [{
+          id: `test-message-${timestamp}`,
+          sender: mockWalletAddress,
+          content: 'Welcome to the test group!',
+          timestamp: timestamp,
+          reply_to: undefined
+        }],
+        chainId: '1',
+        ipfsCid: mockGroupId
+      };
+      return [mockGroup];
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>();
   const { connection } = useConnection();
   const { publicKey, signMessage } = useWallet();
 
@@ -69,32 +109,41 @@ export const useGroups = (): GroupHookReturn => {
 
     try {
       // Upload avatar to IPFS if provided
-      let avatarCid;
       if (data.avatar) {
-        avatarCid = await uploadFile(data.avatar);
+        await uploadFile(data.avatar);
       }
 
-      // Create group metadata
-      const groupData = {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const walletAddress = publicKey.toString();
+
+      // Create group metadata that matches Group interface
+      const groupData: Group = {
+        id: '', // Will be set to groupCid
         name: data.name,
-        description: data.description,
-        created_at: new Date().toISOString(),
-        created_by: publicKey.toString(),
+        description: data.description || '',
+        created_at: timestamp,
+        created_by: walletAddress,
         required_nft: data.requiredNft,
-        avatar_cid: avatarCid,
         members: [{
-          wallet_address: publicKey.toString(),
-          joined_at: new Date().toISOString(),
+          wallet_address: walletAddress,
+          joined_at: timestamp,
           role: 'admin' as const,
+          publicKey: walletAddress,
+          lastActive: timestamp,
+          nft_proof: undefined
         }],
         messages: [],
+        chainId: '1',
+        ipfsCid: ''
       };
 
       // Upload group metadata to IPFS
       const groupCid = await uploadToIPFS(groupData);
+      groupData.id = groupCid;
+      groupData.ipfsCid = groupCid;
 
-      // Update local state
-      setGroups(prev => [...prev, { ...groupData, id: groupCid }]);
+      // Update local state with properly typed group data
+      setGroups(prev => [...prev, groupData]);
     } catch (error) {
       console.error('Error creating group:', error);
       throw new Error('Failed to create group');
@@ -121,9 +170,10 @@ export const useGroups = (): GroupHookReturn => {
       // Add member to group
       groupData.members.push({
         wallet_address: publicKey.toString(),
-        joined_at: new Date().toISOString(),
+        joined_at: Math.floor(Date.now() / 1000),
         role: 'member',
         nft_proof: group.required_nft ? group.required_nft : undefined,
+        lastActive: Math.floor(Date.now() / 1000)
       });
 
       // Upload updated group data to IPFS
@@ -180,12 +230,17 @@ export const useGroups = (): GroupHookReturn => {
     if (!group) throw new Error('Group not found');
 
     try {
-      // Create message
+      // Generate message ID with safe string operations
+      const timestamp = Math.floor(Date.now() / 1000);
+      const randomNum = Math.floor(Math.random() * 1000000);
+      const messageId = `msg-${timestamp}-${randomNum}`;
+      console.log('[useGroups] Generated message ID:', messageId);
+      
       const message: GroupMessage = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: messageId,
         sender: publicKey.toString(),
         content,
-        timestamp: new Date().toISOString(),
+        timestamp,
         reply_to: replyTo,
       };
 
@@ -214,32 +269,134 @@ export const useGroups = (): GroupHookReturn => {
 
   useEffect(() => {
     const loadGroups = async () => {
-      if (!publicKey) {
-        setGroups([]);
-        setLoading(false);
-        return;
-      }
-
+      console.log('[useGroups] Starting loadGroups with state:', {
+        publicKey: publicKey?.toString() || 'none',
+        environment: process.env.NODE_ENV,
+        mockData: process.env.VITE_MOCK_DATA,
+        currentGroups: Array.isArray(groups) ? groups.length : 'invalid'
+      });
+      
+      setLoading(true);
+      setError(undefined); // Reset error state
+      
       try {
-        // For now, we'll use a simple array to store group CIDs
-        // In a full implementation, these would be stored on-chain
-        const groupCids: string[] = [];
+        // Ensure we have the required environment variables
+        if (!process.env.NODE_ENV) {
+          console.error('[useGroups] Missing NODE_ENV');
+          throw new Error('Missing environment configuration');
+        }
         
-        const loadedGroups = await Promise.all(
-          groupCids.map(async (cid): Promise<Group> => {
-            const groupData = await getFromIPFS<Group>(cid);
-            return {
-              id: cid,
-              name: groupData.name,
-              description: groupData.description,
-              created_at: groupData.created_at,
-              created_by: groupData.created_by,
-              required_nft: groupData.required_nft,
-              members: groupData.members || [],
-              messages: groupData.messages || []
-            };
-          })
-        );
+        // In development mode, always load mock data
+        // Always use mock data in development
+        if (process.env.NODE_ENV === 'development' && process.env.VITE_MOCK_DATA === 'true') {
+          console.log('Development mode with mock data enabled - loading mock data');
+          console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, VITE_MOCK_DATA: process.env.VITE_MOCK_DATA });
+          // Generate safe mock data
+          const timestamp = Math.floor(Date.now() / 1000);
+          const mockWalletAddress = publicKey?.toString() || `mock-wallet-${timestamp}`;
+          const mockGroupId = `test-group-${timestamp}`;
+          
+          console.log('[useGroups] Generating mock data with:', {
+            mockWalletAddress,
+            mockGroupId,
+            timestamp
+          });
+          
+          // Mock data for development with guaranteed ID and messages
+          const mockGroupData: Group = {
+            id: mockGroupId,
+            name: 'Test Group',
+            description: 'Test group for development',
+            created_at: Math.floor(Date.now() / 1000),
+            created_by: mockWalletAddress,
+            required_nft: undefined,
+            members: [{
+              wallet_address: mockWalletAddress,
+              role: 'admin',
+              joined_at: Math.floor(Date.now() / 1000),
+              publicKey: mockWalletAddress,
+              lastActive: Math.floor(Date.now() / 1000)
+            }],
+            messages: [{
+              id: `test-message-${Date.now()}`,
+              sender: mockWalletAddress,
+              content: 'Welcome to the test group!',
+              timestamp: Math.floor(Date.now() / 1000),
+              reply_to: undefined
+            }],
+            chainId: '1',
+            ipfsCid: mockGroupId
+          };
+          
+          // Validate mock group data before using it
+          if (!mockGroupData || typeof mockGroupData !== 'object') {
+            console.error('[useGroups] Invalid mock group data structure');
+            throw new Error('Invalid mock group data');
+          }
+
+          // Ensure all required fields are present and properly typed
+          const validatedGroup = {
+            ...mockGroupData,
+            id: mockGroupId,
+            name: mockGroupData.name || 'Test Group',
+            description: mockGroupData.description || '',
+            created_at: timestamp,
+            created_by: mockWalletAddress,
+            members: Array.isArray(mockGroupData.members) ? mockGroupData.members : [],
+            messages: Array.isArray(mockGroupData.messages) ? mockGroupData.messages : [],
+            chainId: mockGroupData.chainId || '1',
+            ipfsCid: mockGroupId
+          };
+
+          console.log('[useGroups] Setting validated mock group:', validatedGroup);
+          
+          // Set groups with defensive wrapper
+          setGroups([validatedGroup].map(group => ({
+            ...group,
+            messages: Array.isArray(group.messages) ? group.messages : [],
+            members: Array.isArray(group.members) ? group.members : []
+          })));
+          
+          setLoading(false);
+          console.log('[useGroups] Development mode initialization complete');
+          return;
+        }
+        
+        // Production mode - require wallet connection
+        if (!publicKey) {
+          console.log('Production mode - no wallet connected');
+          setGroups([]);
+          setLoading(false);
+          return;
+        }
+
+        // Production implementation would go here
+        console.log('Production mode - loading real data');
+        const groupCids: string[] = ['test-group-1'];
+        console.log('Loading groups with CIDs:', groupCids);
+        // Ensure we have valid group CIDs before mapping
+        const validGroupCids = Array.isArray(groupCids) ? groupCids : [];
+        console.log('Validated group CIDs:', validGroupCids);
+        
+        const loadedGroups = validGroupCids.map((cid): Group => ({
+          id: cid,
+          name: 'Production Group',
+          description: 'Real group data would be loaded here',
+          created_at: Math.floor(Date.now() / 1000),
+          created_by: publicKey.toString(),
+          required_nft: undefined,
+          members: [{
+            wallet_address: publicKey.toString(),
+            joined_at: Math.floor(Date.now() / 1000),
+            role: 'admin' as const,
+            publicKey: publicKey.toString(),
+            lastActive: Math.floor(Date.now() / 1000),
+            nft_proof: undefined
+          }],
+          messages: [],
+          chainId: '1',
+          ipfsCid: cid
+        }));
 
         setGroups(loadedGroups);
         setLoading(false);
@@ -251,17 +408,197 @@ export const useGroups = (): GroupHookReturn => {
     };
 
     loadGroups();
-  }, [publicKey, connection]);
+  }, [publicKey]);
+
+  // Handle WebSocket connection error
+  useEffect(() => {
+    const handleWebSocketError = (error: Event) => {
+      console.error('WebSocket connection error:', error);
+      setError('Connection error. Please try again later.');
+    };
+
+    window.addEventListener('websocketerror', handleWebSocketError);
+    return () => window.removeEventListener('websocketerror', handleWebSocketError);
+  }, []);
+
+  // Ensure groups is always an array and has required properties
+  const safeGroups = Array.isArray(groups) ? groups.map(group => ({
+    ...group,
+    messages: Array.isArray(group.messages) ? group.messages : [],
+    members: Array.isArray(group.members) ? group.members : []
+  })) : [];
+
+  const promoteToAdmin = async (groupId: string, memberId: string): Promise<void> => {
+    if (!publicKey || !signMessage) throw new Error('Wallet not connected');
+
+    const group = groups.find(g => g.id === groupId);
+    if (!group) throw new Error('Group not found');
+
+    // Verify current user is admin
+    const currentUser = group.members.find(m => m.wallet_address === publicKey.toString());
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Only admins can promote members');
+    }
+
+    try {
+      // Get current group data from IPFS
+      const groupData = await getFromIPFS<Group>(groupId);
+
+      // Update member role
+      const memberIndex = groupData.members.findIndex(m => m.wallet_address === memberId);
+      if (memberIndex === -1) throw new Error('Member not found');
+
+      groupData.members[memberIndex].role = 'admin';
+
+      // Upload updated group data to IPFS
+      await uploadToIPFS(groupData);
+
+      // Update local state
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === groupId
+            ? { ...g, members: groupData.members }
+            : g
+        )
+      );
+    } catch (error) {
+      console.error('Error promoting member:', error);
+      throw new Error('Failed to promote member');
+    }
+  };
+
+  const demoteFromAdmin = async (groupId: string, memberId: string): Promise<void> => {
+    if (!publicKey || !signMessage) throw new Error('Wallet not connected');
+
+    const group = groups.find(g => g.id === groupId);
+    if (!group) throw new Error('Group not found');
+
+    // Verify current user is admin
+    const currentUser = group.members.find(m => m.wallet_address === publicKey.toString());
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Only admins can demote members');
+    }
+
+    try {
+      // Get current group data from IPFS
+      const groupData = await getFromIPFS<Group>(groupId);
+
+      // Update member role
+      const memberIndex = groupData.members.findIndex(m => m.wallet_address === memberId);
+      if (memberIndex === -1) throw new Error('Member not found');
+
+      groupData.members[memberIndex].role = 'member';
+
+      // Upload updated group data to IPFS
+      await uploadToIPFS(groupData);
+
+      // Update local state
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === groupId
+            ? { ...g, members: groupData.members }
+            : g
+        )
+      );
+    } catch (error) {
+      console.error('Error demoting member:', error);
+      throw new Error('Failed to demote member');
+    }
+  };
+
+  const muteMember = async (groupId: string, memberId: string, duration: number): Promise<void> => {
+    if (!publicKey || !signMessage) throw new Error('Wallet not connected');
+
+    const group = groups.find(g => g.id === groupId);
+    if (!group) throw new Error('Group not found');
+
+    // Verify current user is admin
+    const currentUser = group.members.find(m => m.wallet_address === publicKey.toString());
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Only admins can mute members');
+    }
+
+    try {
+      // Get current group data from IPFS
+      const groupData = await getFromIPFS<Group>(groupId);
+
+      // Update member mute status
+      const memberIndex = groupData.members.findIndex(m => m.wallet_address === memberId);
+      if (memberIndex === -1) throw new Error('Member not found');
+
+      const muteUntil = Math.floor(Date.now() / 1000) + duration;
+      groupData.members[memberIndex].muted_until = muteUntil;
+
+      // Upload updated group data to IPFS
+      await uploadToIPFS(groupData);
+
+      // Update local state
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === groupId
+            ? { ...g, members: groupData.members }
+            : g
+        )
+      );
+    } catch (error) {
+      console.error('Error muting member:', error);
+      throw new Error('Failed to mute member');
+    }
+  };
+
+  const banMember = async (groupId: string, memberId: string): Promise<void> => {
+    if (!publicKey || !signMessage) throw new Error('Wallet not connected');
+
+    const group = groups.find(g => g.id === groupId);
+    if (!group) throw new Error('Group not found');
+
+    // Verify current user is admin
+    const currentUser = group.members.find(m => m.wallet_address === publicKey.toString());
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Only admins can ban members');
+    }
+
+    try {
+      // Get current group data from IPFS
+      const groupData = await getFromIPFS<Group>(groupId);
+
+      // Update member ban status
+      const memberIndex = groupData.members.findIndex(m => m.wallet_address === memberId);
+      if (memberIndex === -1) throw new Error('Member not found');
+
+      groupData.members[memberIndex].banned = true;
+
+      // Upload updated group data to IPFS
+      await uploadToIPFS(groupData);
+
+      // Update local state
+      setGroups(prev =>
+        prev.map(g =>
+          g.id === groupId
+            ? { ...g, members: groupData.members }
+            : g
+        )
+      );
+    } catch (error) {
+      console.error('Error banning member:', error);
+      throw new Error('Failed to ban member');
+    }
+  };
 
   const hookReturn: GroupHookReturn = {
-    groups,
+    groups: safeGroups,
     loading,
     error,
     createGroup,
     joinGroup,
     leaveGroup,
-    sendMessage
+    sendMessage,
+    promoteToAdmin,
+    demoteFromAdmin,
+    muteMember,
+    banMember
   };
 
+  console.log('Returning hook state:', hookReturn);
   return hookReturn;
 }

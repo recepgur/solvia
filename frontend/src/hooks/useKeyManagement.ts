@@ -4,9 +4,42 @@ import { PublicKey } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { encryptMessage, decryptMessage, EncryptedMessage } from '../utils/crypto';
 
+// Type definitions
 export interface KeyPair {
   publicKey: PublicKey;
   privateKey: Uint8Array;
+}
+
+export type SignatureInput = Uint8Array | ArrayBuffer | ArrayBufferView | number[];
+
+// Type guards and utilities
+export function isUint8Array(value: unknown): value is Uint8Array {
+  return value instanceof Uint8Array;
+}
+
+export function isArrayBuffer(value: unknown): value is ArrayBuffer {
+  return value instanceof ArrayBuffer;
+}
+
+export function isArrayBufferView(value: unknown): value is ArrayBufferView {
+  return ArrayBuffer.isView(value);
+}
+
+export function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'number');
+}
+
+export function toUint8Array(data: SignatureInput): Uint8Array {
+  if (isUint8Array(data)) {
+    return data;
+  } else if (isArrayBuffer(data)) {
+    return new Uint8Array(data);
+  } else if (isArrayBufferView(data)) {
+    return new Uint8Array(data.buffer);
+  } else if (isNumberArray(data)) {
+    return new Uint8Array(data);
+  }
+  throw new Error('Invalid signature format');
 }
 
 export function useKeyManagement() {
@@ -15,7 +48,14 @@ export function useKeyManagement() {
 
   // Generate or retrieve key pair
   const initializeKeyPair = useCallback(async () => {
-    if (!publicKey || !signMessage) return;
+    if (!publicKey || !signMessage) {
+      console.log('[useKeyManagement] Missing required wallet properties:', { 
+        hasPublicKey: !!publicKey, 
+        hasSignMessage: !!signMessage 
+      });
+      return;
+    }
+    console.log('[useKeyManagement] Starting key pair initialization for wallet:', publicKey.toString());
 
     try {
       // Check local storage first
@@ -26,8 +66,51 @@ export function useKeyManagement() {
         const message = new TextEncoder().encode('Decrypt private key');
         const signature = await signMessage(message);
         
-        // Generate deterministic IV from signature
-        const iv = await crypto.subtle.digest('SHA-256', signature.slice(0, 12));
+        // Enhanced signature validation with defensive checks
+        if (!signature) {
+          console.error('[useKeyManagement] Signature is undefined or null');
+          throw new Error('Missing signature for decryption');
+        }
+        
+        // Convert signature to Uint8Array with type safety
+        let signatureArray: Uint8Array;
+        try {
+          if (!signature) {
+            throw new Error('Signature is null or undefined');
+          }
+
+          // Type assertion and conversion
+          signatureArray = toUint8Array(signature as SignatureInput);
+          
+          console.log('[useKeyManagement] Signature converted successfully:', {
+            originalType: typeof signature,
+            isUint8Array: isUint8Array(signatureArray),
+            length: signatureArray.length
+          });
+        } catch (error) {
+          console.error('[useKeyManagement] Signature conversion error:', error);
+          throw new Error('Failed to process signature format');
+        }
+
+        console.log('[useKeyManagement] Signature validation:', {
+          originalType: typeof signature,
+          convertedType: 'Uint8Array',
+          length: signatureArray.length,
+          isUint8Array: signatureArray instanceof Uint8Array
+        });
+
+        if (signatureArray.length < 12) {
+          console.error('[useKeyManagement] Signature too short:', signatureArray.length);
+          throw new Error('Invalid signature length for decryption');
+        }
+
+        // Generate deterministic IV from signature with defensive copy
+        const signaturePrefix = signatureArray.slice(0, 12);
+        const iv = await crypto.subtle.digest('SHA-256', signaturePrefix);
+        if (!iv) {
+          console.error('[useKeyManagement] Failed to generate IV from signature');
+          throw new Error('Failed to generate IV from signature');
+        }
         const ivArray = new Uint8Array(iv.slice(0, 12));
         
         // Use signature to decrypt the stored private key
@@ -62,8 +145,38 @@ export function useKeyManagement() {
         const message = new TextEncoder().encode('Encrypt private key');
         const signature = await signMessage(message);
         
+        // Convert signature to Uint8Array with type safety
+        let signatureArray: Uint8Array;
+        try {
+          if (!signature) {
+            throw new Error('Signature is null or undefined');
+          }
+
+          // Type assertion and conversion
+          signatureArray = toUint8Array(signature as SignatureInput);
+          
+          console.log('[useKeyManagement] Signature converted successfully:', {
+            originalType: typeof signature,
+            isUint8Array: isUint8Array(signatureArray),
+            length: signatureArray.length
+          });
+
+          if (signatureArray.length < 12) {
+            console.error('[useKeyManagement] Signature too short:', signatureArray.length);
+            throw new Error('Invalid signature length for encryption');
+          }
+        } catch (error) {
+          console.error('[useKeyManagement] Signature conversion error:', error);
+          throw new Error('Failed to process signature format');
+        }
+
         // Generate deterministic IV from signature
-        const iv = await crypto.subtle.digest('SHA-256', signature.slice(0, 12));
+        const signaturePrefix = signatureArray.slice(0, 12);
+        const iv = await crypto.subtle.digest('SHA-256', signaturePrefix);
+        if (!iv) {
+          console.error('[useKeyManagement] Failed to generate IV from signature');
+          throw new Error('Failed to generate IV from signature');
+        }
         const ivArray = new Uint8Array(iv.slice(0, 12));
         
         // Use signature to encrypt the private key
@@ -94,7 +207,10 @@ export function useKeyManagement() {
         setKeyPair(keyPair);
       }
     } catch (error) {
-      console.error('Failed to initialize key pair:', error);
+      console.error('[useKeyManagement] Failed to initialize key pair:', error);
+      // Reset key pair state on error
+      setKeyPair(null);
+      throw error; // Let the effect handler catch this
     }
   }, [publicKey, signMessage]);
 
@@ -182,11 +298,19 @@ export function useKeyManagement() {
         privateKey = new Uint8Array(Object.values(keyPair.privateKey));
       }
 
+      // Validate private key
+      if (!privateKey || privateKey.length === 0) {
+        console.error('[useKeyManagement] Private key is undefined or empty');
+        throw new Error('Invalid private key');
+      }
+
       // Validate private key length
       if (privateKey.length !== 32) {
+        console.log('[useKeyManagement] Adjusting private key length to 32 bytes');
         const adjustedKey = new Uint8Array(32);
         adjustedKey.set(privateKey.slice(0, Math.min(privateKey.length, 32)));
         if (adjustedKey.every(byte => byte === 0)) {
+          console.log('[useKeyManagement] Setting non-zero byte in adjusted key');
           adjustedKey[0] = 1;
         }
         privateKey = adjustedKey;
@@ -203,8 +327,28 @@ export function useKeyManagement() {
   }, [keyPair]);
 
   useEffect(() => {
-    initializeKeyPair();
-  }, [initializeKeyPair]);
+    const init = async () => {
+      try {
+        console.log('[useKeyManagement] Starting initialization...');
+        if (!publicKey) {
+          console.log('[useKeyManagement] No public key available, skipping initialization');
+          return;
+        }
+        if (!signMessage) {
+          console.log('[useKeyManagement] No signMessage function available, skipping initialization');
+          return;
+        }
+        await initializeKeyPair();
+        console.log('[useKeyManagement] Initialization complete');
+      } catch (error) {
+        console.error('[useKeyManagement] Initialization failed:', error);
+        // Don't throw here - we want to handle the error gracefully
+        setKeyPair(null);
+      }
+    };
+    
+    init();
+  }, [initializeKeyPair, publicKey, signMessage]);
 
   return {
     publicKey: keyPair?.publicKey,

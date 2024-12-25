@@ -7,12 +7,13 @@ export default defineConfig({
   plugins: [
     react(),
     nodePolyfills({
-      include: ['stream', 'crypto', 'buffer', 'process', 'util'],
+      include: ['crypto', 'stream', 'buffer', 'process', 'util', 'events', 'assert'],
+      protocolImports: true,
       globals: {
         Buffer: true,
         global: true,
-        process: true,
-      },
+        process: true
+      }
     }),
   ],
   resolve: {
@@ -22,13 +23,9 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: Number(process.env.PORT) || 5173,
+    port: Number(process.env.PORT) || 3000,
     strictPort: true,
-    hmr: {
-      clientPort: 443,
-      protocol: 'wss',
-      host: 'solana-decentralized-app-tunnel-cvgil0ep.devinapps.com'
-    }
+    hmr: true
   },
   build: {
     outDir: 'dist',
@@ -36,15 +33,27 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          wallet: ['@solana/web3.js', '@solana/wallet-adapter-react']
+          'crypto-deps': ['crypto', 'buffer', 'events', 'stream', 'util']
         }
       }
     }
   },
+  publicDir: 'public',
   define: {
     'process.env.VITE_SOLANA_NETWORK': JSON.stringify(process.env.VITE_SOLANA_NETWORK || 'devnet'),
-    'process.env.VITE_SOLVIO_TOKEN_ADDRESS': JSON.stringify(process.env.VITE_SOLVIO_TOKEN_ADDRESS)
+    'process.env.VITE_SOLVIO_TOKEN_ADDRESS': JSON.stringify(process.env.VITE_SOLVIO_TOKEN_ADDRESS),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    'process.env.VITE_MOCK_DATA': JSON.stringify(process.env.VITE_MOCK_DATA || 'false'),
+    'global': 'globalThis'
+  },
+  optimizeDeps: {
+    include: ['buffer', 'crypto-browserify', 'events', 'stream', 'util', 'browserify-sign/browser'],
+    esbuildOptions: {
+      target: 'esnext',
+      supported: { 
+        'import-meta': true 
+      }
+    }
   }
 })
 
