@@ -60,4 +60,79 @@ Object.defineProperty(window, 'localStorage', {
   writable: true
 });
 
+// Configure testing-library
+import { configure } from '@testing-library/react';
+
+configure({
+  asyncUtilTimeout: 5000,
+  testIdAttribute: 'data-testid',
+});
+
+// Mock IntersectionObserver
+class MockIntersectionObserver {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
+}
+
+Object.defineProperty(window, 'IntersectionObserver', {
+  writable: true,
+  configurable: true,
+  value: MockIntersectionObserver
+});
+
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Mock FileReader
+class MockFileReader {
+  DONE = FileReader.DONE;
+  EMPTY = FileReader.EMPTY;
+  LOADING = FileReader.LOADING;
+  readyState = FileReader.EMPTY;
+  error: Error | null = null;
+  result: string | ArrayBuffer | null = null;
+  abort = jest.fn();
+  addEventListener = jest.fn();
+  dispatchEvent = jest.fn();
+  onabort = null;
+  onerror = null;
+  onload = null;
+  onloadend = null;
+  onloadprogress = null;
+  onloadstart = null;
+  onprogress = null;
+  readAsArrayBuffer = jest.fn();
+  readAsBinaryString = jest.fn();
+  readAsDataURL = jest.fn().mockImplementation(function(this: any) {
+    setTimeout(() => {
+      this.result = 'data:image/jpeg;base64,mock-base64';
+      if (this.onloadend) {
+        this.onloadend({ target: this });
+      }
+    }, 0);
+  });
+  readAsText = jest.fn();
+  removeEventListener = jest.fn();
+}
+
+Object.defineProperty(window, 'FileReader', {
+  writable: true,
+  configurable: true,
+  value: MockFileReader
+});
+
 // Set test timeout
+jest.setTimeout(10000);
