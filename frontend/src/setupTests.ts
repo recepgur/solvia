@@ -1,4 +1,45 @@
 import '@testing-library/jest-dom';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import { expect } from '@jest/globals';
+
+// Extend Jest matchers
+expect.extend({
+  toBeInTheDocument(received) {
+    const pass = received !== null;
+    return {
+      message: () => `expected ${received} ${pass ? 'not ' : ''}to be in the document`,
+      pass,
+    };
+  },
+  toHaveTextContent(received, expected) {
+    const pass = received.textContent === expected;
+    return {
+      message: () => `expected ${received} to have text content "${expected}"`,
+      pass,
+    };
+  },
+});
+
+// Configure test environment
+(global as any).React = React;
+(global as any).ReactDOM = ReactDOM;
+(global as any).IS_REACT_ACT_ENVIRONMENT = true;
+
+// Mock window.solana
+Object.defineProperty(window, 'solana', {
+  value: {
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+  },
+  writable: true,
+  configurable: true
+});
+
+// Increase timeout for async operations
+jest.setTimeout(10000);
 import { TextEncoder, TextDecoder } from 'util';
 import cryptoMock from './test/setup/crypto.mock';
 

@@ -1,5 +1,7 @@
-import React from 'react';
+/** @jsxImportSource react */
 import { render, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { Messaging } from './Messaging';
 
 // Mock dependencies
@@ -28,8 +30,22 @@ jest.mock('../hooks/useKeyManagement', () => ({
 // Mock MediaRecorder
 const mockStart = jest.fn();
 const mockStop = jest.fn();
-const mockDataAvailable = jest.fn();
+
+// Create a proper mock MediaStream with correct typing
 const mockStream = new MediaStream();
+Object.defineProperty(mockStream, 'id', { value: 'mock-stream-id' });
+
+// Mock the required methods with proper types
+mockStream.getAudioTracks = jest.fn<() => MediaStreamTrack[]>().mockReturnValue([]);
+mockStream.getVideoTracks = jest.fn<() => MediaStreamTrack[]>().mockReturnValue([]);
+mockStream.getTracks = jest.fn<() => MediaStreamTrack[]>().mockReturnValue([]);
+mockStream.getTrackById = jest.fn<(id: string) => MediaStreamTrack | null>().mockReturnValue(null);
+mockStream.addTrack = jest.fn<(track: MediaStreamTrack) => void>();
+mockStream.removeTrack = jest.fn<(track: MediaStreamTrack) => void>();
+mockStream.clone = jest.fn<() => MediaStream>().mockReturnValue(mockStream);
+mockStream.addEventListener = jest.fn<(type: string, listener: EventListenerOrEventListenerObject) => void>();
+mockStream.removeEventListener = jest.fn<(type: string, listener: EventListenerOrEventListenerObject) => void>();
+mockStream.dispatchEvent = jest.fn<(event: Event) => boolean>().mockReturnValue(true);
 
 class MockMediaRecorder {
   ondataavailable: ((e: any) => void) | null = null;
@@ -47,8 +63,9 @@ class MockMediaRecorder {
 
 global.MediaRecorder = MockMediaRecorder as any;
 
-// Mock getUserMedia
-const mockGetUserMedia = jest.fn().mockResolvedValue(mockStream);
+// Mock getUserMedia with proper typing
+const mockGetUserMedia = jest.fn<(constraints?: MediaStreamConstraints) => Promise<MediaStream>>()
+  .mockResolvedValue(mockStream);
 Object.defineProperty(global.navigator, 'mediaDevices', {
   value: { getUserMedia: mockGetUserMedia }
 });

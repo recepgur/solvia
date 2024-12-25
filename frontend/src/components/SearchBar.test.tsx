@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { SearchBar } from './SearchBar';
 import { LanguageProvider } from '../contexts/LanguageContext';
 
@@ -37,17 +38,22 @@ describe('SearchBar', () => {
     // Open filters
     fireEvent.click(screen.getByRole('button'));
 
-    const [startDate, endDate] = screen.getAllByRole('textbox');
+    const startDate = screen.getByTestId('start-date');
+    const endDate = screen.getByTestId('end-date');
     
     fireEvent.change(startDate, { target: { value: '2023-12-01' } });
-    expect(mockOnSearch).toHaveBeenCalledWith(expect.objectContaining({
-      dateRange: { start: new Date('2023-12-01'), end: undefined }
-    }));
+    expect(mockOnSearch).toHaveBeenCalledWith({
+      dateRange: { start: new Date('2023-12-01'), end: undefined },
+      mediaTypes: [],
+      query: ''
+    });
 
     fireEvent.change(endDate, { target: { value: '2023-12-31' } });
-    expect(mockOnSearch).toHaveBeenCalledWith(expect.objectContaining({
-      dateRange: { start: new Date('2023-12-01'), end: new Date('2023-12-31') }
-    }));
+    expect(mockOnSearch).toHaveBeenCalledWith({
+      dateRange: { start: new Date('2023-12-01'), end: new Date('2023-12-31') },
+      mediaTypes: [],
+      query: ''
+    });
   });
 
   it('handles media type filters', () => {

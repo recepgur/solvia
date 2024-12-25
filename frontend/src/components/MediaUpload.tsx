@@ -11,8 +11,13 @@ interface MediaUploadProps {
 
 export function MediaUpload({ onUpload }: MediaUploadProps) {
   const { t } = useLanguage();
-  const [preview, setPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [options, setOptions] = useState<{
+    preview: string | null;
+    error: string | null;
+  }>({
+    preview: null,
+    error: null
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMedia, isUploading } = useMedia();
   const { connected } = useWallet();
@@ -20,6 +25,13 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Reset states at the start
+    setOptions(prev => ({
+      ...prev,
+      error: null,
+      preview: null
+    }));
 
     try {
       // Check wallet connection
@@ -29,11 +41,17 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
 
       // Create preview for images
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        const result = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        });
+        setOptions(prev => ({
+          ...prev,
+          preview: result
+        }));
       }
 
       // Upload using useMedia hook
@@ -48,21 +66,25 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
       }
     } catch (error: Error | unknown) {
       const errorObj = error instanceof Error ? error : new Error('Unknown error occurred');
-      console.error('Error uploading file:', errorObj);
       const errorMessage = errorObj.message === 'error.token.required' 
         ? 'Solvio token is required to upload media'
         : errorObj.message || t('error.upload.failed');
       
-      setError(errorMessage);
+      setOptions(prev => ({
+        ...prev,
+        error: errorMessage
+      }));
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      setPreview(null);
     }
   };
 
   const clearPreview = () => {
-    setPreview(null);
+    setOptions(prev => ({
+      ...prev,
+      preview: null
+    }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -70,9 +92,9 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
 
   return (
     <div className="relative">
-      {error && (
+      {options.error && (
         <div className="text-red-500 text-sm mb-2" role="alert" data-testid="error-message">
-          {error}
+          {options.error}
         </div>
       )}
       <input
@@ -84,9 +106,9 @@ export function MediaUpload({ onUpload }: MediaUploadProps) {
         aria-label="Attach File"
       />
       
-      {preview ? (
+      {options.preview ? (
         <div className="relative inline-block">
-          <img src={preview} alt="" className="h-20 w-20 rounded object-cover" />
+          <img src={options.preview} alt="" className="h-20 w-20 rounded object-cover" />
           <button
             onClick={clearPreview}
             className="absolute -right-2 -top-2 rounded-full bg-zinc-900 p-1 text-white hover:bg-zinc-700"

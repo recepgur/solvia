@@ -17,19 +17,32 @@ export function SearchBar({ onSearch }: SearchBarProps) {
   });
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newOptions = { ...options, query: e.target.value };
+    const newOptions = {
+      ...options,
+      query: e.target.value,
+      dateRange: { start: undefined, end: undefined },  // Reset dateRange when using text search
+      mediaTypes: []  // Reset mediaTypes when using text search
+    };
     setOptions(newOptions);
     onSearch(newOptions);
   };
 
   const handleDateChange = (type: 'start' | 'end', value: string) => {
+    // Parse the date value and update dateRange without affecting query
+    const date = value ? new Date(value) : undefined;
+    const dateRange = {
+      ...options.dateRange,
+      [type]: date
+    };
+
+    // Create new options object with updated dateRange
     const newOptions = {
       ...options,
-      dateRange: {
-        ...options.dateRange,
-        [type]: value ? new Date(value) : undefined
-      }
+      dateRange,
+      query: '',  // Reset query when using date filters
+      mediaTypes: options.mediaTypes || []
     };
+
     setOptions(newOptions);
     onSearch(newOptions);
   };
@@ -72,11 +85,15 @@ export function SearchBar({ onSearch }: SearchBarProps) {
               <div className="flex space-x-2">
                 <input
                   type="date"
+                  data-testid="start-date"
+                  value={options.dateRange?.start?.toISOString().split('T')[0] || ''}
                   onChange={(e) => handleDateChange('start', e.target.value)}
                   className="flex-1 p-2 rounded bg-white dark:bg-gray-700"
                 />
                 <input
                   type="date"
+                  data-testid="end-date"
+                  value={options.dateRange?.end?.toISOString().split('T')[0] || ''}
                   onChange={(e) => handleDateChange('end', e.target.value)}
                   className="flex-1 p-2 rounded bg-white dark:bg-gray-700"
                 />

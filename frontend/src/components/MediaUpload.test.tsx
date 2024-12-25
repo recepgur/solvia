@@ -1,12 +1,23 @@
 /** @jest-environment jsdom */
 /** @jsxImportSource react */
 import '@testing-library/jest-dom';
-import { render, act, mockAdapter } from '../test/test-utils';
+import { render, mockAdapter } from '../test/test-utils';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { MediaUpload } from './MediaUpload';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { PublicKey } from '@solana/web3.js';
+
+// Extend expect matchers
+expect.extend({
+  toBeInTheDocument(received) {
+    const pass = received !== null;
+    return {
+      message: () => `expected ${received} ${pass ? 'not ' : ''}to be in the document`,
+      pass,
+    };
+  },
+});
 
 type UploadMediaFn = (file: File) => Promise<{ hash: string; type: string }>;
 
@@ -51,22 +62,18 @@ describe('MediaUpload', () => {
   });
 
   it('should require wallet connection', async () => {
-    await act(async () => {
-      render(<MediaUpload onUpload={() => {}} />);
-    });
+    render(<MediaUpload onUpload={() => {}} />);
 
     const fileInput = screen.getByLabelText('Attach File');
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     
-    await act(async () => {
-      await userEvent.upload(fileInput, file);
-    });
+    await userEvent.upload(fileInput, file);
     
     await waitFor(() => {
       const errorElement = screen.getByTestId('error-message');
       expect(errorElement).toBeInTheDocument();
-      expect(errorElement).toHaveTextContent('Please connect your wallet');
-    });
+      expect(errorElement.textContent).toBe('Please connect your wallet');
+    }, { timeout: 3000 });
   });
 
   it('should verify Solvio token before upload', async () => {
@@ -75,22 +82,18 @@ describe('MediaUpload', () => {
     
     mockUseMedia.uploadMedia.mockImplementationOnce(() => Promise.reject(new Error('error.token.required')));
 
-    await act(async () => {
-      render(<MediaUpload onUpload={() => {}} />);
-    });
+    render(<MediaUpload onUpload={() => {}} />);
 
     const fileInput = screen.getByLabelText('Attach File');
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     
-    await act(async () => {
-      await userEvent.upload(fileInput, file);
-    });
+    await userEvent.upload(fileInput, file);
     
     await waitFor(() => {
       const errorElement = screen.getByTestId('error-message');
       expect(errorElement).toBeInTheDocument();
-      expect(errorElement).toHaveTextContent('Solvio token is required to upload media');
-    });
+      expect(errorElement.textContent).toBe('Solvio token is required to upload media');
+    }, { timeout: 3000 });
   });
 
   it('should handle successful upload', async () => {
@@ -100,20 +103,16 @@ describe('MediaUpload', () => {
     
     mockUseMedia.uploadMedia.mockImplementationOnce(() => Promise.resolve({ hash: 'test-hash', type: 'image/jpeg' }));
 
-    await act(async () => {
-      render(<MediaUpload onUpload={onUpload} />);
-    });
+    render(<MediaUpload onUpload={onUpload} />);
 
     const fileInput = screen.getByLabelText('Attach File');
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     
-    await act(async () => {
-      await userEvent.upload(fileInput, file);
-    });
+    await userEvent.upload(fileInput, file);
     
     await waitFor(() => {
       expect(onUpload).toHaveBeenCalledWith('test-hash', 'image/jpeg');
       expect(screen.queryByTestId('error-message')).not.toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 });

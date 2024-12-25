@@ -45,6 +45,14 @@ declare global {
       Writable: WritableConstructor;
     };
     process: Process;
+    solana?: {
+      connect: () => Promise<void>;
+      disconnect: () => Promise<void>;
+      on: (event: string, callback: Function) => void;
+      off: (event: string, callback: Function) => void;
+    };
+    solvioWs?: WebSocket;
+    MediaStream: typeof MediaStream;
   }
 
   var process: Process;

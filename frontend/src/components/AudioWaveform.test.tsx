@@ -1,6 +1,7 @@
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { AudioWaveform } from './AudioWaveform';
+import '@testing-library/jest-dom';
 
 // Mock canvas context
 const mockGetContext = jest.fn();
