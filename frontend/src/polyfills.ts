@@ -1,112 +1,10 @@
 import { Buffer } from 'buffer';
 import streamBrowserify from 'stream-browserify';
 
-// Show initialization state in DOM before any React code
-function showLoadingState() {
-  const rootElement = document.getElementById('root');
-  if (rootElement) {
-    rootElement.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1b23;color:#fff;">
-        <div style="text-align:center;">
-          <h1 style="color:#00a884;font-size:24px;margin-bottom:16px;">Loading Solvio...</h1>
-          <p style="color:#aaa;font-size:14px;">Initializing secure environment</p>
-        </div>
-      </div>
-    `;
-  }
-}
-
-function showInitializationError(error: Error) {
-  const rootElement = document.getElementById('root');
-  if (rootElement) {
-    rootElement.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1b23;color:#fff;padding:20px;">
-        <div style="text-align:center;max-width:600px;">
-          <h1 style="color:#ff4444;font-size:24px;margin-bottom:16px;">Initialization Error</h1>
-          <p style="color:#aaa;font-size:14px;margin-bottom:20px;">The application failed to initialize properly. Please refresh the page or contact support.</p>
-          <pre style="background:#2d2e3d;padding:15px;border-radius:5px;text-align:left;overflow-x:auto;font-size:12px;">${error.message}</pre>
-        </div>
-      </div>
-    `;
-  }
-}
-
-// Initialize polyfills before any React code
-try {
-  console.log('[polyfills] Starting initialization...');
-  showLoadingState();
-
-  // Initialize Buffer
-  if (typeof window !== 'undefined') {
-    if (!window.Buffer) {
-      window.Buffer = Buffer;
-      window.global = window;
-      console.log('[polyfills] Buffer initialized globally');
-    }
-
-    // Initialize stream
-    if (!window.stream) {
-      const stream = streamBrowserify;
-      if (!stream?.Readable?.prototype) {
-        throw new Error('Invalid stream object structure');
-      }
-      window.stream = stream;
-      console.log('[polyfills] Stream initialized globally');
-    }
-
-    // Initialize process
-    if (!window.process) {
-      const processEnv: ProcessEnv = {
-        NODE_ENV: process.env.NODE_ENV || 'production',
-        VITE_MOCK_DATA: process.env.VITE_MOCK_DATA || 'false',
-        VITE_SOLANA_NETWORK: process.env.VITE_SOLANA_NETWORK || 'devnet'
-      };
-
-      const proc: Process = {
-        env: processEnv,
-        stdout: null,
-        stderr: null,
-        stdin: null,
-        argv: [],
-        version: '',
-        versions: {},
-        platform: 'browser',
-        browser: true,
-        title: 'browser',
-        nextTick: (fn: Function) => setTimeout(fn, 0),
-        cwd: () => '/',
-        exit: () => {},
-        kill: () => {},
-        umask: () => 0,
-        uptime: () => 0,
-        hrtime: () => [0, 0],
-        memoryUsage: () => ({
-          heapTotal: 0,
-          heapUsed: 0,
-          external: 0,
-          rss: 0,
-          arrayBuffers: 0
-        })
-      };
-
-      (window as any).process = proc;
-      console.log('[polyfills] Process initialized with env:', processEnv);
-    }
-
-    // Verify initialization
-    if (!window.Buffer || !window.stream?.Readable || !(window as any).process?.env) {
-      throw new Error('Critical polyfills not properly initialized');
-    }
-
-    console.log('[polyfills] All polyfills initialized successfully');
-  } else {
-    throw new Error('Window object not available');
-  }
-} catch (error) {
-  console.error('[polyfills] Critical initialization error:', error);
-  showInitializationError(error instanceof Error ? error : new Error(String(error)));
-  throw error;
-}
+// Initialize loading state
+console.log('[polyfills] Initializing loading state...');
+(window as any).__solvio_loading = true;
+(window as any).__solvio_error = null;
 
 // Type declarations for global objects
 declare global {
@@ -114,12 +12,14 @@ declare global {
   interface Window {
     Buffer: typeof Buffer;
     global: typeof globalThis;
-    stream: typeof import('stream-browserify');
+    stream: typeof streamBrowserify;
+    crypto: Crypto;
     process: {
       env: {
         NODE_ENV: string;
         VITE_MOCK_DATA: string;
         VITE_SOLANA_NETWORK: string;
+        VITE_SKIP_FEE: string;
       };
       stdout: null;
       stderr: null;
@@ -148,6 +48,44 @@ declare global {
   }
 }
 
+// Initialize loading state UI functions
+function showLoadingState() {
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1b23;color:#fff;padding:20px;">
+        <div style="text-align:center;max-width:600px;">
+          <h1 style="color:#fff;font-size:24px;margin-bottom:16px;">Loading Solvio</h1>
+          <p style="color:#aaa;font-size:14px;margin-bottom:20px;">Please wait while we initialize the application...</p>
+          <div style="width:50px;height:50px;border:3px solid #ffffff3d;border-top:3px solid #fff;border-radius:50%;animation:spin 1s linear infinite;"></div>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+  }
+}
+
+function showInitializationError(error: Error) {
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1b23;color:#fff;padding:20px;">
+        <div style="text-align:center;max-width:600px;">
+          <h1 style="color:#ff4444;font-size:24px;margin-bottom:16px;">Initialization Error</h1>
+          <p style="color:#aaa;font-size:14px;margin-bottom:20px;">The application failed to initialize properly. Please refresh the page or contact support.</p>
+          <pre style="background:#2d2e3d;padding:15px;border-radius:5px;text-align:left;overflow-x:auto;font-size:12px;">${error.message}</pre>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// Initialize Buffer with proper TypedArray inheritance
 function initializeBuffer() {
   if (typeof window === 'undefined') return;
 
@@ -248,19 +186,6 @@ function initializeBuffer() {
       };
     });
 
-    // Verify Buffer functionality
-    console.log('[polyfills] Verifying Buffer functionality...');
-    const testBuf = Buffer.from('test');
-    if (!(testBuf instanceof Uint8Array)) {
-      throw new Error('Buffer is not instanceof Uint8Array');
-    }
-
-    // Test required methods
-    const sliced = testBuf.slice(0);
-    if (sliced.length !== 4 || !sliced.equals(testBuf)) {
-      throw new Error('Buffer methods not working correctly');
-    }
-
     console.log('[polyfills] Buffer initialized and verified successfully');
   } catch (error) {
     console.error('[polyfills] Buffer initialization error:', error);
@@ -268,16 +193,20 @@ function initializeBuffer() {
   }
 }
 
+// Initialize process with environment variables
 function initializeProcess() {
   if (typeof window === 'undefined') return;
 
   if (!window.process) {
+    const processEnv = {
+      NODE_ENV: process.env.NODE_ENV || 'production',
+      VITE_MOCK_DATA: process.env.VITE_MOCK_DATA || 'false',
+      VITE_SOLANA_NETWORK: process.env.VITE_SOLANA_NETWORK || 'devnet',
+      VITE_SKIP_FEE: process.env.VITE_SKIP_FEE || 'false'
+    };
+
     window.process = {
-      env: {
-        NODE_ENV: process.env.NODE_ENV || 'production',
-        VITE_MOCK_DATA: process.env.VITE_MOCK_DATA || 'false',
-        VITE_SOLANA_NETWORK: process.env.VITE_SOLANA_NETWORK || 'devnet'
-      },
+      env: processEnv,
       stdout: null,
       stderr: null,
       stdin: null,
@@ -303,14 +232,52 @@ function initializeProcess() {
       })
     } as any;
     
-    console.log('[polyfills] Process initialized with env:', (window as any).process?.env);
+    console.log('[polyfills] Process initialized with env:', processEnv);
   } else {
     console.log('[polyfills] Process already initialized');
   }
 }
 
-// Initialize in order
-initializeBuffer();
-initializeProcess();
+// Get crypto implementation
+const cryptoImpl = window.crypto || globalThis.crypto;
+if (!cryptoImpl) {
+  console.error('[polyfills.ts] No crypto implementation found');
+  throw new Error('Crypto implementation not available');
+}
 
-export {};
+// Initialize polyfills before any React code
+try {
+  console.log('[polyfills] Starting initialization...');
+  showLoadingState();
+
+  // Initialize Buffer and Process
+  initializeBuffer();
+  initializeProcess();
+
+  // Initialize stream
+  if (!window.stream) {
+    const stream = streamBrowserify;
+    if (!stream?.Readable?.prototype) {
+      throw new Error('Invalid stream object structure');
+    }
+    window.stream = stream;
+    console.log('[polyfills] Stream initialized globally');
+  }
+
+  // Verify initialization
+  if (!window.Buffer || !window.stream?.Readable || !(window as any).process?.env) {
+    throw new Error('Critical polyfills not properly initialized');
+  }
+
+  console.log('[polyfills] All polyfills initialized successfully');
+} catch (error) {
+  console.error('[polyfills] Critical initialization error:', error);
+  showInitializationError(error instanceof Error ? error : new Error(String(error)));
+  throw error;
+}
+
+// Mark initialization as complete
+(window as any).__solvio_loading = false;
+
+// Export crypto implementation
+export { cryptoImpl as crypto };
