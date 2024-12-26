@@ -52,7 +52,8 @@ const SecurityPanel: React.FC = () => {
       const newTargetId = generateTargetId(target);
       console.log('Generated target ID:', newTargetId);
       
-      const response = await fetch('http://localhost:8001/api/v1/analyze/target', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
+      const response = await fetch(`${API_URL}/api/v1/analyze/target`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -71,7 +72,7 @@ const SecurityPanel: React.FC = () => {
       const progressInterval = setInterval(async () => {
         try {
           console.log('Checking progress for target ID:', target_id);
-          const progressResponse = await fetch(`http://localhost:8001/api/v1/analysis/progress/${encodeURIComponent(target_id)}`);
+          const progressResponse = await fetch(`${API_URL}/api/v1/analysis/progress/${encodeURIComponent(target_id)}`);
           if (!progressResponse.ok) {
             console.error('Progress check failed:', progressResponse.status);
             return;
@@ -86,7 +87,7 @@ const SecurityPanel: React.FC = () => {
             setProgress(100);
             
             console.log('Analysis completed, fetching results for target ID:', target_id);
-            const resultsResponse = await fetch(`http://localhost:8001/api/v1/analysis/results/${encodeURIComponent(target_id)}`);
+            const resultsResponse = await fetch(`${API_URL}/api/v1/analysis/results/${encodeURIComponent(target_id)}`);
             if (!resultsResponse.ok) {
               console.error('Results fetch failed:', resultsResponse.status);
               setError('Sonuçlar alınırken bir hata oluştu');
