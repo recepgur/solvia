@@ -1,6 +1,6 @@
 // Import polyfills first
 // Import and initialize polyfills before React
-import './polyfills';
+import { crypto } from './polyfills';
 
 console.log('[main.tsx] Starting application initialization...');
 
@@ -33,8 +33,7 @@ rootElement.innerHTML = `
 
 // Verify critical dependencies
 try {
-  // Import and verify crypto
-  const crypto = require('crypto-browserify');
+  // Verify crypto is available
   if (!crypto) {
     throw new Error('Failed to load crypto-browserify');
   }
@@ -142,28 +141,26 @@ try {
   
   // Initialize wallet and render full app
   console.log('[main.tsx] Initializing wallet providers...');
-  setTimeout(() => {
-    root.render(
-      <StrictMode>
-        <ErrorBoundary>
-          <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider 
-              wallets={walletAdapters} 
-              onError={handleWalletError}
-              autoConnect={process.env.NODE_ENV === 'production'}
-            >
-              <WalletModalProvider>
-                <LanguageProvider>
-                  <App />
-                </LanguageProvider>
-              </WalletModalProvider>
-            </WalletProvider>
-          </ConnectionProvider>
-        </ErrorBoundary>
-      </StrictMode>
-    );
-    console.log('[main.tsx] Wallet providers initialized');
-  }, 1000); // Give time for polyfills and initialization
+  root.render(
+    <StrictMode>
+      <ErrorBoundary>
+        <ConnectionProvider endpoint={endpoint}>
+          <WalletProvider 
+            wallets={walletAdapters} 
+            onError={handleWalletError}
+            autoConnect={false}
+          >
+            <WalletModalProvider>
+              <LanguageProvider>
+                <App />
+              </LanguageProvider>
+            </WalletModalProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </ErrorBoundary>
+    </StrictMode>
+  );
+  console.log('[main.tsx] Wallet providers initialized');
 
   console.log('[main.tsx] App initialization completed successfully');
 } catch (error) {

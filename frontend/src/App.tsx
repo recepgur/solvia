@@ -119,12 +119,18 @@ function App() {
   });
 
   // Add defensive check for hook initialization
-  if (!groupsHook) {
-    console.error('Groups hook not properly initialized');
+  if (!groupsHook || !Array.isArray(groups)) {
+    console.error('Groups hook not properly initialized:', { groupsHook, groups });
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
         <p className="text-2xl font-semibold text-[#00a884] mb-4">Initializing Secure Environment</p>
         <p className="text-sm text-gray-400">Please wait while we set up your application</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -148,10 +154,12 @@ function App() {
   
   // Add defensive initialization check
   if (!Array.isArray(groups)) {
-    console.error('Groups not properly initialized');
+    console.log('Groups not initialized yet, showing wallet connection screen');
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Initializing application...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
+        <h1 className="text-2xl font-semibold text-[#00a884] mb-4">Welcome to Solvio</h1>
+        <p className="text-sm text-gray-400 mb-6">Connect your wallet to continue</p>
+        <WalletMultiButton />
       </div>
     );
   }
