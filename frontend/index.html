@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solvio - Secure Messaging</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #1a1b23;
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      #root:empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(to bottom right, #1a1b23, #2d2e3d);
+      }
+      #root:empty:before {
+        content: 'Loading Solvio...';
+        color: #00a884;
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+      #root:empty:after {
+        content: 'Initializing secure environment';
+        color: #aaaaaa;
+        font-size: 14px;
+      }
+      .loading-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(to bottom right, #1a1b23, #2d2e3d);
+        color: #ff4444;
+        padding: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(event) {
+        console.error('[Global Error Handler]', event.error);
+        const root = document.getElementById('root');
+        if (!root.hasChildNodes()) {
+          root.innerHTML = `
+            <div class="loading-error">
+              <h1 style="color: #ff4444; margin-bottom: 16px;">Application Error</h1>
+              <p style="color: #aaa; margin-bottom: 20px;">${event.error?.message || 'Failed to initialize application'}</p>
+              <button onclick="window.location.reload()" style="background: #00a884; border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                Retry
+              </button>
+            </div>
+          `;
+        }
+      });
+
+      // Show initial loading state
+      const root = document.getElementById('root');
+      if (!root.hasChildNodes()) {
+        root.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(to bottom right, #1a1b23, #2d2e3d);">
+            <h1 style="color: #00a884; margin-bottom: 16px;">Loading Solvio...</h1>
+            <p style="color: #aaa;">Initializing secure environment</p>
+          </div>
+        `;
+      }
+    </script>
+    <script type="module">
+      try {
+        console.log('[index.html] Starting application initialization');
+        await import('/src/polyfills.ts');
+        console.log('[index.html] Polyfills loaded successfully');
+        await import('/src/main.tsx');
+        console.log('[index.html] Application loaded successfully');
+      } catch (error) {
+        console.error('[index.html] Failed to load application:', error);
+        document.getElementById('root').innerHTML = `
+          <div class="loading-error">
+            <h1 style="color: #ff4444; margin-bottom: 16px;">Failed to Load Application</h1>
+            <p style="color: #aaa; margin-bottom: 20px;">${error?.message || 'An unknown error occurred'}</p>
+            <button onclick="window.location.reload()" style="background: #00a884; border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+              Retry
+            </button>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>
