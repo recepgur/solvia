@@ -16,6 +16,7 @@ import { useGroups } from './hooks/useGroups';
 import EncryptionTest from './components/EncryptionTest';
 
 function App() {
+  console.log('[App] Starting component initialization...');
   console.log('App component mounting');
   
   // Development mode check first
@@ -331,43 +332,45 @@ function App() {
     return <IntroScreen onComplete={() => setShowIntro(false)} />;
   }
 
-  // Only check wallet and fees in production
-  if (process.env.NODE_ENV === 'production') {
-    console.log('Production mode - checking wallet and fees');
-    if (!connected) {
-      console.log('Rendering wallet connection screen');
-      return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
-          <h1 className="text-4xl font-bold text-[#00a884] mb-8">Connect Your Wallet</h1>
-          <WalletMultiButton className="!bg-[#00a884] hover:!bg-[#008069] text-white" />
-        </div>
-      );
-    }
-    
-    if (!hasPaidFee) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
-          <h1 className="text-4xl font-bold text-[#00a884] mb-8">
-            {isCheckingPayment ? 'Checking Gas Fee...' : 'One-time Gas Fee Required'}
-          </h1>
-          {!isCheckingPayment && (
-            <button
-              onClick={payGasFee}
-              className="px-6 py-3 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg"
-            >
-              Pay Gas Fee
-            </button>
-          )}
-          {feeError && (
-            <p className="text-red-500 mt-4">{feeError}</p>
-          )}
-        </div>
-      );
-    }
-  } else {
-    console.log('Development mode - bypassing wallet and fee checks');
-    // In development mode, proceed directly to rendering the main view
+  // Check wallet connection in all environments
+  if (!connected) {
+    console.log('Rendering wallet connection screen');
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
+        <h1 className="text-4xl font-bold text-[#00a884] mb-8">Connect Your Wallet</h1>
+        <WalletMultiButton className="!bg-[#00a884] hover:!bg-[#008069] text-white" />
+      </div>
+    );
   }
+
+  // Show fee payment UI in production, but don't block access
+  if (process.env.NODE_ENV === 'production' && !hasPaidFee && !isCheckingPayment) {
+    console.log('Production mode - showing optional fee payment UI');
+    return (
+      <Layout onViewChange={setActiveView}>
+        <div className="fixed bottom-4 right-4 z-50 bg-[#1a1b23] p-4 rounded-lg shadow-lg border border-[#00a884]">
+          <h2 className="text-lg font-semibold text-[#00a884] mb-2">Support Solvio</h2>
+          <p className="text-sm text-gray-300 mb-3">Help us maintain the platform by paying a one-time fee</p>
+          <button
+            onClick={payGasFee}
+            className="w-full px-4 py-2 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg text-sm"
+          >
+            Pay Gas Fee
+          </button>
+          {feeError && (
+            <p className="text-red-500 mt-2 text-xs">{feeError}</p>
+          )}
+        </div>
+        {renderView() || (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-lg">No content to display</p>
+          </div>
+        )}
+      </Layout>
+    );
+  }
+
+  console.log('Proceeding to main view');
 
   // Add debug logging before final render
   console.log('Rendering main view with:', {

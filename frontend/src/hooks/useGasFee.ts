@@ -16,6 +16,14 @@ export default function useGasFee() {
   // Check if wallet has already paid the fee
   useEffect(() => {
     const checkPaymentStatus = async () => {
+      // Skip fee check in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useGasFee] Skipping fee check in development mode');
+        setHasPaidFee(true);
+        setIsCheckingPayment(false);
+        return;
+      }
+
       if (!publicKey) {
         setHasPaidFee(false);
         setIsCheckingPayment(false);
@@ -35,7 +43,13 @@ export default function useGasFee() {
           })
         ).then(results => results.some(result => result));
 
-        setHasPaidFee(hasPaid);
+        // In production, also check for environment override
+        if (process.env.VITE_SKIP_FEE === 'true') {
+          console.log('[useGasFee] Skipping fee check due to VITE_SKIP_FEE');
+          setHasPaidFee(true);
+        } else {
+          setHasPaidFee(hasPaid);
+        }
         setError(null);
       } catch (err) {
         console.error('Error checking payment status:', err);
@@ -49,6 +63,20 @@ export default function useGasFee() {
   }, [connection, publicKey]);
 
   const payGasFee = async () => {
+    // Skip fee in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useGasFee] Skipping fee payment in development mode');
+      setHasPaidFee(true);
+      return;
+    }
+
+    // Skip fee if environment variable is set
+    if (process.env.VITE_SKIP_FEE === 'true') {
+      console.log('[useGasFee] Skipping fee payment due to VITE_SKIP_FEE');
+      setHasPaidFee(true);
+      return;
+    }
+
     if (!publicKey) {
       throw new Error('Wallet not connected');
     }
@@ -66,12 +94,12 @@ export default function useGasFee() {
         FEE_RECIPIENT
       );
 
-      // Create transfer instruction (1 Solvio token)
+      // Create transfer instruction (0.1 Solvio token - reduced from 1)
       const transferInstruction = createTransferInstruction(
         userTokenAccount,
         feeTokenAccount,
         publicKey,
-        1_000_000_000, // 1 token with 9 decimals
+        100_000_000, // 0.1 token with 9 decimals
         []
       );
 
