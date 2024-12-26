@@ -1,0 +1,69 @@
+@import './mobile.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --app-background: #F0F2F5;
+    --whatsapp-green: #25D366;
+    --whatsapp-teal: #00a884;
+    --chat-background: #efeae2;
+    --bubble-out: #dcf8c6;
+    --bubble-in: #ffffff;
+    --border-light: #e9edef;
+    --text-primary: #111b21;
+    --text-secondary: #667781;
+  }
+  
+  .dark {
+    --app-background: #111B21;
+    --chat-background: #0b141a;
+    --bubble-out: #005c4b;
+    --bubble-in: #202c33;
+    --border-light: #2f3b43;
+    --text-primary: #e9edef;
+    --text-secondary: #8696a0;
+  }
+}
+
+body {
+  @apply bg-[var(--app-background)] min-h-screen;
+}
+
+.app-header {
+  @apply bg-[#25D366] text-white px-4 py-3 flex items-center justify-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chat-header {
+  @apply bg-[#25D366] text-white px-4 py-3 flex items-center gap-3;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chat-background {
+  background-color: var(--chat-background);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(0,0,0,0.08)' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.message-input {
+  @apply bg-white dark:bg-[#2a3942] rounded-full px-4 py-3 flex items-center gap-3;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.message-input input {
+  @apply flex-1 bg-transparent outline-none text-[var(--text-primary)];
+}
+
+.message-input button {
+  @apply p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+
+.chat-bubble-out {
+  @apply bg-[var(--bubble-out)] rounded-2xl rounded-tr-sm px-3 py-2 shadow-sm;
+}
+
+.chat-bubble-in {
+  @apply bg-[var(--bubble-in)] rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm;
+}

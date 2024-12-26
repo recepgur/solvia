@@ -1,0 +1,87 @@
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  .chat-list-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateX(0);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fff;
+  }
+
+  .chat-active .chat-list-panel {
+    transform: translateX(-100%);
+  }
+
+  .chat-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+  }
+
+  .chat-info-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .info-active .chat-info-panel {
+    transform: translateX(0);
+  }
+}
+
+/* Touch-friendly tap targets */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Native-like animations */
+.slide-enter {
+  transform: translateX(100%);
+}
+
+.slide-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.slide-exit {
+  transform: translateX(0);
+}
+
+.slide-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms ease-out;
+}
+
+/* Prevent text selection during swipe */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
