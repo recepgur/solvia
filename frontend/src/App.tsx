@@ -21,6 +21,8 @@ function App() {
   // Development mode check first
   if (process.env.NODE_ENV === 'development') {
     console.log('Development mode - bypassing wallet and fee checks');
+  } else {
+    console.log('[App] Rendering in production mode, checking if wallet is connected...');
   }
 
   // Add defensive initialization check and loading state
@@ -118,19 +120,34 @@ function App() {
     mockData: process.env.VITE_MOCK_DATA
   });
 
-  // Add defensive check for hook initialization
+  // Add defensive check for hook initialization and wallet connection
   if (!groupsHook || !Array.isArray(groups)) {
-    console.error('Groups hook not properly initialized:', { groupsHook, groups });
+    console.log('[App] Groups hook or groups array not initialized, checking wallet state...');
+    console.log('[App] Wallet connection state:', { connected, publicKey: publicKey?.toString() || 'none' });
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
-        <p className="text-2xl font-semibold text-[#00a884] mb-4">Initializing Secure Environment</p>
-        <p className="text-sm text-gray-400">Please wait while we set up your application</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg"
-        >
-          Retry
-        </button>
+        <h1 className="text-3xl font-bold text-[#00a884] mb-6">Welcome to Solvio</h1>
+        {!connected ? (
+          <>
+            <p className="text-xl text-gray-300 mb-8">Connect your wallet to start messaging</p>
+            <div className="flex flex-col items-center gap-4">
+              <WalletMultiButton className="px-8 py-3 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg text-lg" />
+              <p className="text-sm text-gray-400">Supports Phantom and Solflare wallets</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-2xl font-semibold text-[#00a884] mb-4">Initializing Secure Environment</p>
+            <p className="text-sm text-gray-400">Please wait while we set up your application</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-[#00a884] hover:bg-[#008069] text-white rounded-lg"
+            >
+              Retry
+            </button>
+          </>
+        )}
       </div>
     );
   }
@@ -154,7 +171,12 @@ function App() {
   
   // Add defensive initialization check
   if (!Array.isArray(groups)) {
-    console.log('Groups not initialized yet, showing wallet connection screen');
+    console.log('[App] Groups not initialized yet, attempting to show wallet connection screen');
+    console.log('[App] Wallet connection state:', { 
+      connected,
+      publicKey: publicKey?.toString() || 'none',
+      groupsInitialized: Array.isArray(groups)
+    });
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
         <h1 className="text-2xl font-semibold text-[#00a884] mb-4">Welcome to Solvio</h1>

@@ -28,42 +28,49 @@ export interface GroupHookReturn {
 
 export const useGroups = (): GroupHookReturn => {
   const [groups, setGroups] = useState<Group[]>(() => {
-    // Initialize with mock data in development
-    if (process.env.NODE_ENV === 'development' && process.env.VITE_MOCK_DATA === 'true') {
-      console.log('Initializing mock groups data');
-      const timestamp = Math.floor(Date.now() / 1000);
-      const mockWalletAddress = 'mock-wallet-address';
-      const mockGroupId = `test-group-${timestamp}`;
-      
-      const mockGroup: Group = {
-        id: mockGroupId,
-        name: 'Test Group',
-        description: 'Test group for development',
-        created_at: timestamp,
-        created_by: mockWalletAddress,
-        required_nft: undefined,
-        members: [{
-          wallet_address: mockWalletAddress,
-          role: 'admin' as const,
-          joined_at: timestamp,
-          publicKey: mockWalletAddress,
-          lastActive: timestamp,
-          nft_proof: undefined
-        }],
-        messages: [{
-          id: `test-message-${timestamp}`,
-          sender: mockWalletAddress,
-          content: 'Welcome to the test group!',
-          timestamp: timestamp,
-          reply_to: undefined
-        }],
-        chainId: '1',
-        ipfsCid: mockGroupId,
-        admins: [mockWalletAddress]
-      };
-      return [mockGroup];
+    try {
+      console.log('Initializing groups state');
+      // Initialize with mock data in development
+      if (process.env.NODE_ENV === 'development' && process.env.VITE_MOCK_DATA === 'true') {
+        console.log('Initializing mock groups data');
+        const timestamp = Math.floor(Date.now() / 1000);
+        const mockWalletAddress = 'mock-wallet-address';
+        const mockGroupId = `test-group-${timestamp}`;
+        
+        const mockGroup: Group = {
+          id: mockGroupId,
+          name: 'Test Group',
+          description: 'Test group for development',
+          created_at: timestamp,
+          created_by: mockWalletAddress,
+          required_nft: undefined,
+          members: [{
+            wallet_address: mockWalletAddress,
+            role: 'admin' as const,
+            joined_at: timestamp,
+            publicKey: mockWalletAddress,
+            lastActive: timestamp,
+            nft_proof: undefined
+          }],
+          messages: [{
+            id: `test-message-${timestamp}`,
+            sender: mockWalletAddress,
+            content: 'Welcome to the test group!',
+            timestamp: timestamp,
+            reply_to: undefined
+          }],
+          chainId: '1',
+          ipfsCid: mockGroupId,
+          admins: [mockWalletAddress]
+        };
+        return [mockGroup];
+      }
+      // Always return an empty array as fallback
+      return [];
+    } catch (error) {
+      console.error('Error initializing groups:', error);
+      return [];
     }
-    return [];
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -275,7 +282,15 @@ export const useGroups = (): GroupHookReturn => {
         publicKey: publicKey?.toString() || 'none',
         environment: process.env.NODE_ENV,
         mockData: process.env.VITE_MOCK_DATA,
-        currentGroups: Array.isArray(groups) ? groups.length : 'invalid'
+        currentGroups: Array.isArray(groups) ? groups.length : 'invalid',
+        loading,
+        error: error?.message || 'none'
+      });
+      
+      console.log('[useGroups] Environment variables:', {
+        NODE_ENV: process.env.NODE_ENV,
+        VITE_MOCK_DATA: process.env.VITE_MOCK_DATA,
+        VITE_API_URL: process.env.VITE_API_URL || 'not set'
       });
       
       setLoading(true);
@@ -291,8 +306,12 @@ export const useGroups = (): GroupHookReturn => {
         // In development mode, always load mock data
         // Always use mock data in development
         if (process.env.NODE_ENV === 'development' && process.env.VITE_MOCK_DATA === 'true') {
-          console.log('Development mode with mock data enabled - loading mock data');
-          console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, VITE_MOCK_DATA: process.env.VITE_MOCK_DATA });
+          console.log('[useGroups] Development mode with mock data enabled - loading mock data');
+          console.log('[useGroups] Mock data configuration:', { 
+            NODE_ENV: process.env.NODE_ENV, 
+            VITE_MOCK_DATA: process.env.VITE_MOCK_DATA,
+            mockWalletEnabled: !publicKey
+          });
           // Generate safe mock data
           const timestamp = Math.floor(Date.now() / 1000);
           const mockWalletAddress = publicKey?.toString() || `mock-wallet-${timestamp}`;
@@ -365,50 +384,62 @@ export const useGroups = (): GroupHookReturn => {
           return;
         }
         
-        // Production mode - require wallet connection
+        // Production mode - allow UI to load even without wallet
         if (!publicKey) {
-          console.log('Production mode - no wallet connected');
-          setGroups([]);
+          console.log('[useGroups] Production mode - wallet not connected yet, allowing UI to load', {
+            timestamp: new Date().toISOString(),
+            loading,
+            groupsLength: Array.isArray(groups) ? groups.length : 'invalid'
+          });
           setLoading(false);
-          return;
+          setGroups([]); // Set empty groups but don't return early
+        } else {
+          try {
+            console.log('[useGroups] Production mode - wallet connected, loading groups');
+            
+            // Production implementation only runs when wallet is connected
+            console.log('Production mode - loading real data');
+            const groupCids: string[] = ['test-group-1'];
+            console.log('Loading groups with CIDs:', groupCids);
+            
+            // Ensure we have valid group CIDs before mapping
+            const validGroupCids = Array.isArray(groupCids) ? groupCids : [];
+            console.log('Validated group CIDs:', validGroupCids);
+            
+            // Safe to use publicKey here since we're in the else block
+            const walletAddress = publicKey.toString();
+            const timestamp = Math.floor(Date.now() / 1000);
+            
+            const loadedGroups = validGroupCids.map((cid): Group => ({
+              id: cid,
+              name: 'Production Group',
+              description: 'Real group data would be loaded here',
+              created_at: timestamp,
+              created_by: walletAddress,
+              required_nft: undefined,
+              members: [{
+                wallet_address: walletAddress,
+                joined_at: timestamp,
+                role: 'admin' as const,
+                publicKey: walletAddress,
+                lastActive: timestamp,
+                nft_proof: undefined
+              }],
+              messages: [],
+              chainId: '1',
+              ipfsCid: cid,
+              admins: [walletAddress]
+            }));
+            
+            setGroups(loadedGroups);
+            setLoading(false);
+          } catch (err) {
+            console.error('Error loading groups:', err);
+            setError('Failed to load groups');
+            setLoading(false);
+          }
+
         }
-
-        // Production implementation would go here
-        console.log('Production mode - loading real data');
-        const groupCids: string[] = ['test-group-1'];
-        console.log('Loading groups with CIDs:', groupCids);
-        // Ensure we have valid group CIDs before mapping
-        const validGroupCids = Array.isArray(groupCids) ? groupCids : [];
-        console.log('Validated group CIDs:', validGroupCids);
-        
-        const loadedGroups = validGroupCids.map((cid): Group => ({
-          id: cid,
-          name: 'Production Group',
-          description: 'Real group data would be loaded here',
-          created_at: Math.floor(Date.now() / 1000),
-          created_by: publicKey.toString(),
-          required_nft: undefined,
-          members: [{
-            wallet_address: publicKey.toString(),
-            joined_at: Math.floor(Date.now() / 1000),
-            role: 'admin' as const,
-            publicKey: publicKey.toString(),
-            lastActive: Math.floor(Date.now() / 1000),
-            nft_proof: undefined
-          }],
-          messages: [],
-          chainId: '1',
-          ipfsCid: cid,
-          admins: [publicKey.toString()]
-        }));
-
-        setGroups(loadedGroups);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading groups:', err);
-        setError('Failed to load groups');
-        setLoading(false);
-      }
     };
 
     loadGroups();
