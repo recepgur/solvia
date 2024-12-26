@@ -5,7 +5,7 @@ import './polyfills';
 console.log('[main.tsx] Starting application initialization...');
 
 // Verify critical globals are available
-if (typeof window === 'undefined' || !window.Buffer || !window.stream?.Readable || !window.process?.env) {
+if (typeof window === 'undefined' || !window.Buffer || !window.stream?.Readable || !(window as any).process?.env) {
   console.error('[main.tsx] Critical globals not initialized');
   throw new Error('Application initialization failed: Required globals not available');
 }

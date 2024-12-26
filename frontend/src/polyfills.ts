@@ -94,7 +94,7 @@ try {
     }
 
     // Verify initialization
-    if (!window.Buffer || !window.stream?.Readable || !window.process?.env) {
+    if (!window.Buffer || !window.stream?.Readable || !(window as any).process?.env) {
       throw new Error('Critical polyfills not properly initialized');
     }
 
@@ -303,7 +303,7 @@ function initializeProcess() {
       })
     } as any;
     
-    console.log('[polyfills] Process initialized with env:', window.process.env);
+    console.log('[polyfills] Process initialized with env:', (window as any).process?.env);
   } else {
     console.log('[polyfills] Process already initialized');
   }

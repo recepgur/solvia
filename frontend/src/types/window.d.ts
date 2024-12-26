@@ -11,30 +11,39 @@ declare global {
   }
 
   interface Process {
-    env?: ProcessEnv;
-    stdout?: any;
-    stderr?: any;
-    stdin?: any;
-    argv?: string[];
-    version?: string;
-    versions?: Record<string, string>;
-    platform?: string;
-    browser?: boolean;
-    title?: string;
-    nextTick?: (fn: Function) => void;
-    cwd?: () => string;
-    exit?: () => void;
-    kill?: () => void;
-    umask?: () => number;
-    uptime?: () => number;
-    hrtime?: () => [number, number];
-    memoryUsage?: () => {
+    env: {
+      NODE_ENV: string;
+      VITE_MOCK_DATA: string;
+      VITE_SOLANA_NETWORK: string;
+      [key: string]: string | undefined;
+    };
+    stdout: null;
+    stderr: null;
+    stdin: null;
+    argv: string[];
+    version: string;
+    versions: Record<string, string>;
+    platform: string;
+    browser: boolean;
+    title: string;
+    nextTick: (fn: Function) => void;
+    cwd: () => string;
+    exit: () => void;
+    kill: () => void;
+    umask: () => number;
+    uptime: () => number;
+    hrtime: () => [number, number];
+    memoryUsage: () => {
       heapTotal: number;
       heapUsed: 0;
       external: number;
       rss: number;
       arrayBuffers: number;
     };
+  }
+
+  interface Window {
+    process: Process;
   }
 
   interface Window {
