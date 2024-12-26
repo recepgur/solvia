@@ -1,0 +1,17 @@
+{
+  "name": "Solvio",
+  "symbol": "Solvi",
+  "description": "Solvio is a fully decentralized messaging, video calling, and voice calling platform built on the Solana blockchain. Designed to provide users with secure, fast, and anonymous communication utilizing the benefits of blockchain technology.",
+  "image": "https://bafybeiav42qdb3yw3wf4dnqxwuudxvlqfmndy4slumpihw3ok6vsrqvmu4.ipfs.w3s.link/solivo.png",
+  "external_url": "https://www.solvio.network",
+  "attributes": [
+    {
+      "trait_type": "Category",
+      "value": "Communication"
+    },
+    {
+      "trait_type": "Utility",
+      "value": "Messaging and Calling Platform"
+    }
+  ]
+}
