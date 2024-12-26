@@ -135,7 +135,8 @@ export const useGroups = (): GroupHookReturn => {
         }],
         messages: [],
         chainId: '1',
-        ipfsCid: ''
+        ipfsCid: '',
+        admins: [walletAddress]
       };
 
       // Upload group metadata to IPFS
@@ -326,7 +327,8 @@ export const useGroups = (): GroupHookReturn => {
               reply_to: undefined
             }],
             chainId: '1',
-            ipfsCid: mockGroupId
+            ipfsCid: mockGroupId,
+            admins: [mockWalletAddress]
           };
           
           // Validate mock group data before using it

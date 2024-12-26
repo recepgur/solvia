@@ -11,24 +11,24 @@ declare global {
   }
 
   interface Process {
-    env: ProcessEnv;
-    stdout: any;
-    stderr: any;
-    stdin: any;
-    argv: string[];
-    version: string;
-    versions: Record<string, string>;
-    platform: string;
-    browser: boolean;
-    title: string;
-    nextTick: (fn: Function) => void;
-    cwd: () => string;
-    exit: () => void;
-    kill: () => void;
-    umask: () => number;
-    uptime: () => number;
-    hrtime: () => [number, number];
-    memoryUsage: () => {
+    env?: ProcessEnv;
+    stdout?: any;
+    stderr?: any;
+    stdin?: any;
+    argv?: string[];
+    version?: string;
+    versions?: Record<string, string>;
+    platform?: string;
+    browser?: boolean;
+    title?: string;
+    nextTick?: (fn: Function) => void;
+    cwd?: () => string;
+    exit?: () => void;
+    kill?: () => void;
+    umask?: () => number;
+    uptime?: () => number;
+    hrtime?: () => [number, number];
+    memoryUsage?: () => {
       heapTotal: number;
       heapUsed: 0;
       external: number;
