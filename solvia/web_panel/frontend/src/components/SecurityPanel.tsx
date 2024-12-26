@@ -34,7 +34,8 @@ const SecurityPanel: React.FC = () => {
   const generateTargetId = (url: string) => {
     // Generate a simple hash from URL + timestamp
     const timestamp = Date.now();
-    return `target_${timestamp}`;
+    const urlHash = url.split('://').pop()?.replace(/[^a-zA-Z0-9]/g, '_') || '';
+    return `target_${urlHash}_${timestamp}`;
   };
 
   const startAnalysis = async () => {
@@ -62,7 +63,8 @@ const SecurityPanel: React.FC = () => {
 
       if (!response.ok) throw new Error('Analiz başlatılırken bir hata oluştu');
 
-      const data = await response.json();
+      const responseData = await response.json();
+      console.log('Analysis started:', responseData);
       const target_id = newTargetId; // Always use our generated ID
       console.log('Using target ID for progress checks:', target_id);
       
