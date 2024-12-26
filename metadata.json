@@ -1,7 +1,7 @@
 {
   "name": "Solvio",
-  "symbol": "SOLV",
-  "description": "Solvio is a decentralized token built on the Solana blockchain.",
+  "symbol": "Solvi",
+  "description": "Solvio is a fully decentralized messaging, video calling, and voice calling platform built on the Solana blockchain. Designed to provide users with secure, fast, and anonymous communication utilizing the benefits of blockchain technology.",
   "image": "https://bafybeiav42qdb3yw3wf4dnqxwuudxvlqfmndy4slumpihw3ok6vsrqvmu4.ipfs.w3s.link/solivo.png",
   "seller_fee_basis_points": 50,
   "attributes": [
