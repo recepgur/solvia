@@ -30,6 +30,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    target: 'esnext',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -44,6 +45,7 @@ export default defineConfig({
     'process.env.VITE_SOLVIO_TOKEN_ADDRESS': JSON.stringify(process.env.VITE_SOLVIO_TOKEN_ADDRESS),
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
     'process.env.VITE_MOCK_DATA': JSON.stringify(process.env.VITE_MOCK_DATA || 'false'),
+    'process.env.VITE_SKIP_FEE': JSON.stringify(process.env.VITE_SKIP_FEE || 'true'),
     'global': 'globalThis'
   },
   optimizeDeps: {

@@ -284,7 +284,7 @@ export const useGroups = (): GroupHookReturn => {
         mockData: process.env.VITE_MOCK_DATA,
         currentGroups: Array.isArray(groups) ? groups.length : 'invalid',
         loading,
-        error: error?.message || 'none'
+        error: error || 'none'
       });
       
       console.log('[useGroups] Environment variables:', {
@@ -438,8 +438,12 @@ export const useGroups = (): GroupHookReturn => {
             setError('Failed to load groups');
             setLoading(false);
           }
-
         }
+      } catch (error) {
+        console.error('[useGroups] Error in loadGroups:', error);
+        setError('Failed to initialize groups');
+        setLoading(false);
+      }
     };
 
     loadGroups();

@@ -47,10 +47,13 @@ export default function useGasFee() {
         if (process.env.VITE_SKIP_FEE === 'true') {
           console.log('[useGasFee] Skipping fee check due to VITE_SKIP_FEE');
           setHasPaidFee(true);
+          setIsCheckingPayment(false);
+          setError(null);
+          return;
         } else {
           setHasPaidFee(hasPaid);
+          setError(null);
         }
-        setError(null);
       } catch (err) {
         console.error('Error checking payment status:', err);
         setError('Failed to verify payment status');
@@ -74,6 +77,8 @@ export default function useGasFee() {
     if (process.env.VITE_SKIP_FEE === 'true') {
       console.log('[useGasFee] Skipping fee payment due to VITE_SKIP_FEE');
       setHasPaidFee(true);
+      setIsCheckingPayment(false);
+      setError(null);
       return;
     }
 

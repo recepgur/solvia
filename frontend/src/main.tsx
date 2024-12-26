@@ -1,14 +1,26 @@
 // Import polyfills first
-// Import and initialize polyfills before React
-import { crypto } from './polyfills';
+import './polyfills';
 
 console.log('[main.tsx] Starting application initialization...');
 
-// Verify critical globals are available
-if (typeof window === 'undefined' || !window.Buffer || !window.stream?.Readable || !(window as any).process?.env) {
-  console.error('[main.tsx] Critical globals not initialized');
-  throw new Error('Application initialization failed: Required globals not available');
-}
+// React and Solana imports
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Cluster } from '@solana/web3.js'
+import './styles/index.css'
+import './env-check'
+
+// App imports
+import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
+import { LanguageProvider } from './contexts/LanguageContext'
+
+// Solana imports
+import '@solana/wallet-adapter-react-ui/styles.css'
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
+import { clusterApiUrl } from '@solana/web3.js'
 
 // Set production mode for wallet UI
 if (process.env.NODE_ENV === 'production') {
@@ -21,15 +33,8 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Show initial loading state
-rootElement.innerHTML = `
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1b23;color:#fff;">
-    <div style="text-align:center;">
-      <h1 style="color:#00a884;font-size:24px;margin-bottom:16px;">Loading Solvio...</h1>
-      <p style="color:#aaa;font-size:14px;">Initializing secure environment</p>
-    </div>
-  </div>
-`;
+// Root element is already showing loading state from polyfills.ts
+console.log('[main.tsx] Root element ready for React initialization');
 
 // Verify critical dependencies
 try {
@@ -65,21 +70,7 @@ try {
 
 console.log('[main.tsx] Starting initialization...');
 
-// React imports
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './styles/index.css'
-import App from './App'
-import ErrorBoundary from './components/ErrorBoundary'
-import { LanguageProvider } from './contexts/LanguageContext'
-import './env-check'
 
-// Solana imports
-import '@solana/wallet-adapter-react-ui/styles.css'
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
-import { clusterApiUrl, Cluster } from '@solana/web3.js'
 
 // Initialize app with proper error handling
 try {
@@ -119,15 +110,7 @@ try {
     console.error('[main.tsx] Wallet error:', error);
   };
 
-  // Loading component
-  const LoadingFallback = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
-      <div className="animate-pulse">
-        <p className="text-2xl font-semibold text-[#00a884] mb-4">Loading Solvio...</p>
-        <p className="text-sm text-gray-400">Initializing secure environment</p>
-      </div>
-    </div>
-  );
+  // Loading state is handled by polyfills.ts
 
   // Create root element
   const rootElement = document.getElementById('root');
@@ -136,10 +119,8 @@ try {
   // Create React root and render app with loading state
   const root = createRoot(rootElement);
   
-  // Show loading state first
-  root.render(<LoadingFallback />);
-  
-  // Initialize wallet and render full app
+  // Initialize wallet and render full app immediately
+  console.log('[main.tsx] Rendering application with wallet providers...');
   console.log('[main.tsx] Initializing wallet providers...');
   root.render(
     <StrictMode>
