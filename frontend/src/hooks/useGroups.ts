@@ -58,7 +58,8 @@ export const useGroups = (): GroupHookReturn => {
           reply_to: undefined
         }],
         chainId: '1',
-        ipfsCid: mockGroupId
+        ipfsCid: mockGroupId,
+        admins: [mockWalletAddress]
       };
       return [mockGroup];
     }
@@ -395,7 +396,8 @@ export const useGroups = (): GroupHookReturn => {
           }],
           messages: [],
           chainId: '1',
-          ipfsCid: cid
+          ipfsCid: cid,
+          admins: [publicKey.toString()]
         }));
 
         setGroups(loadedGroups);

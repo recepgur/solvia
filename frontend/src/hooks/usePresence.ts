@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useBackup } from './useBackup';
-import type { BackupData } from '../types/backup';
+// BackupData type is handled internally by useBackup hook
 
 interface PresenceData {
   address: string;
