@@ -12,9 +12,9 @@ declare global {
 
   interface Process {
     env: ProcessEnv;
-    stdout: null;
-    stderr: null;
-    stdin: null;
+    stdout?: any;
+    stderr?: any;
+    stdin?: any;
     argv: string[];
     version: string;
     versions: Record<string, string>;

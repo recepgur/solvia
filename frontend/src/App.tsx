@@ -12,7 +12,7 @@ import { GroupChat } from './components/GroupChat';
 import { GroupList } from './components/GroupList';
 import { CreateGroupModal } from './components/CreateGroupModal';
 import { useGroups } from './hooks/useGroups';
-import type { Group } from './types/group';
+// Group type is used through selectedGroupData
 import EncryptionTest from './components/EncryptionTest';
 
 function App() {
@@ -264,6 +264,19 @@ function App() {
                       console.error('Error sending message:', error);
                     }
                   }}
+                  onPromoteToAdmin={async (memberId) => {
+                    console.log('Promoting member to admin:', memberId);
+                  }}
+                  onDemoteFromAdmin={async (memberId) => {
+                    console.log('Demoting member from admin:', memberId);
+                  }}
+                  onMuteMember={async (memberId) => {
+                    console.log('Muting member:', memberId);
+                  }}
+                  onBanMember={async (memberId) => {
+                    console.log('Banning member:', memberId);
+                  }}
+                  currentUserIsAdmin={selectedGroupData.admins?.includes(wallet?.publicKey?.toString() || '') || false}
                 />
               )}
             </div>

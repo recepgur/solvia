@@ -36,4 +36,5 @@ export interface Group {
   encryptionKey?: string;  // Group encryption key
   chainId?: string;  // For multi-chain support
   ipfsCid?: string;  // For decentralized storage
+  admins: string[];  // List of admin wallet addresses
 }

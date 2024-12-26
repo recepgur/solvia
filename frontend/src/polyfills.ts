@@ -89,7 +89,7 @@ try {
         })
       };
 
-      window.process = proc;
+      (window as any).process = proc;
       console.log('[polyfills] Process initialized with env:', processEnv);
     }
 
@@ -107,7 +107,6 @@ try {
   showInitializationError(error instanceof Error ? error : new Error(String(error)));
   throw error;
 }
-}
 
 // Type declarations for global objects
 declare global {
@@ -115,7 +114,7 @@ declare global {
   interface Window {
     Buffer: typeof Buffer;
     global: typeof globalThis;
-    stream: typeof stream;
+    stream: typeof import('stream-browserify');
     process: {
       env: {
         NODE_ENV: string;

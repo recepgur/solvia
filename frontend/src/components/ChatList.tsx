@@ -12,7 +12,8 @@ interface ChatListProps {
 }
 
 export function ChatList({ onChatSelect, selectedChat }: ChatListProps) {
-  const { t: translate } = useLanguage();
+  // Remove unused language context
+  const { } = useLanguage();
   const [chats] = React.useState<Chat[]>([
     {
       id: '1',
@@ -77,7 +78,7 @@ export function ChatList({ onChatSelect, selectedChat }: ChatListProps) {
 
           // Media type filter
           if (options.mediaTypes?.length && chat.lastMessage.type === 'media') {
-            return options.mediaTypes.includes(chat.lastMessage.mediaType || '');
+            return options.mediaTypes.includes((chat.lastMessage.mediaType || 'text') as 'text' | 'file' | 'image' | 'video' | 'audio');
           }
 
           return true;
