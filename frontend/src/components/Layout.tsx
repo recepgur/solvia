@@ -7,6 +7,7 @@ import { NotificationSettings } from './NotificationSettings';
 import { ChatList } from './ChatList';
 import { StatusList } from './StatusList';
 import EncryptionTest from './EncryptionTest';
+import { WalletDashboard } from './WalletDashboard';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -224,6 +225,9 @@ export function Layout({ children, onViewChange }: LayoutProps) {
       
       {/* Main content - Chat/Call view */}
       <div className="chat-view flex-1 flex flex-col relative bg-[var(--app-background)]">
+        <div className="wallet-container">
+          <WalletDashboard className="sticky top-0 z-20 border-b border-[var(--border-light)] bg-[var(--background)] shadow-sm" />
+        </div>
         {selectedChat && (
           <Header 
             view="messages"

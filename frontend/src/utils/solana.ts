@@ -1,124 +1,172 @@
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { 
+  Connection, 
+  PublicKey, 
+  SystemProgram, 
+  Transaction,
+  LAMPORTS_PER_SOL
+} from '@solana/web3.js';
+import { 
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  createTransferInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID 
+} from '@solana/spl-token';
 import { WalletContextState } from '@solana/wallet-adapter-react';
+import { SOLVIO_TOKEN_MINT } from '../config/constants';
 
-export class SolanaManager {
-  private connection: Connection;
-  private wallet: WalletContextState;
-  private endpoints: string[];
-  private currentEndpointIndex: number;
+/**
+ * Get or create an associated token account for the given mint
+ */
+async function getOrCreateAssociatedTokenAccount(
+  connection: Connection,
+  payer: PublicKey,
+  mint: PublicKey,
+  owner: PublicKey
+): Promise<PublicKey> {
+  const associatedToken = await getAssociatedTokenAddress(
+    mint,
+    owner,
+    false,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
 
-  constructor(wallet: WalletContextState, endpoints: string[]) {
-    this.wallet = wallet;
-    this.endpoints = endpoints;
-    this.currentEndpointIndex = 0;
-    this.connection = new Connection(this.endpoints[0], 'confirmed');
+  try {
+    await connection.getAccountInfo(associatedToken);
+  } catch (error) {
+    // Create the account if it doesn't exist
+    const transaction = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        payer,
+        associatedToken,
+        owner,
+        mint,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      )
+    );
+
+    const blockHash = await connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockHash.blockhash;
+    transaction.feePayer = payer;
+
+    throw new Error('Please create an associated token account first');
   }
 
-  async rotateEndpoint(): Promise<void> {
-    this.currentEndpointIndex = (this.currentEndpointIndex + 1) % this.endpoints.length;
-    this.connection = new Connection(this.endpoints[this.currentEndpointIndex], 'confirmed');
+  return associatedToken;
+}
+
+/**
+ * Transfer SOL to a recipient
+ */
+export async function transferSOL(
+  connection: Connection,
+  wallet: WalletContextState,
+  recipient: string,
+  amount: number
+): Promise<string> {
+  if (!wallet.publicKey || !wallet.signTransaction) {
+    throw new Error('Wallet not connected');
   }
 
-  async verifyTokenOwnership(tokenAddress: string, requiredBalance: number = 1): Promise<boolean> {
-    if (!this.wallet.publicKey) return false;
+  try {
+    const recipientPubKey = new PublicKey(recipient);
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: recipientPubKey,
+        lamports: amount * LAMPORTS_PER_SOL
+      })
+    );
 
-    try {
-      const tokenPublicKey = new PublicKey(tokenAddress);
-      const balance = await this.connection.getTokenAccountBalance(tokenPublicKey);
-      return Number(balance.value.amount) >= requiredBalance;
-    } catch (error) {
-      console.error('Error verifying token ownership:', error);
-      
-      // Try with next endpoint if available
-      if (this.currentEndpointIndex < this.endpoints.length - 1) {
-        await this.rotateEndpoint();
-        return this.verifyTokenOwnership(tokenAddress, requiredBalance);
-      }
-      
-      return false;
-    }
-  }
+    const blockHash = await connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockHash.blockhash;
+    transaction.feePayer = wallet.publicKey;
 
-  async signMessage(message: string): Promise<Uint8Array | null> {
-    if (!this.wallet.signMessage) return null;
-    
-    try {
-      const encodedMessage = new TextEncoder().encode(message);
-      return await this.wallet.signMessage(encodedMessage);
-    } catch (error) {
-      console.error('Error signing message:', error);
-      return null;
-    }
-  }
+    const signed = await wallet.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(signed.serialize());
+    await connection.confirmTransaction(signature);
 
-  async sendTransaction(recipient: string, amount: number): Promise<string | null> {
-    if (!this.wallet.publicKey || !this.wallet.signTransaction) return null;
-
-    try {
-      const recipientPubKey = new PublicKey(recipient);
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: this.wallet.publicKey,
-          toPubkey: recipientPubKey,
-          lamports: amount * LAMPORTS_PER_SOL
-        })
-      );
-
-      const { blockhash } = await this.connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = this.wallet.publicKey;
-
-      const signed = await this.wallet.signTransaction(transaction);
-      const signature = await this.connection.sendRawTransaction(signed.serialize());
-      
-      return signature;
-    } catch (error) {
-      console.error('Error sending transaction:', error);
-      return null;
-    }
-  }
-
-  async storeData(key: string, value: string): Promise<void> {
-    if (!this.wallet.publicKey || !this.wallet.signTransaction) {
-      throw new Error('Wallet not connected');
-    }
-
-    try {
-      const programId = new PublicKey(process.env.VITE_SOLANA_PROGRAM_ID || '');
-      const instruction = {
-        keys: [{ pubkey: new PublicKey(key), isSigner: true, isWritable: true }],
-        programId,
-        data: Buffer.from(value)
-      };
-
-      const transaction = new Transaction().add(instruction);
-      const { blockhash } = await this.connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = this.wallet.publicKey;
-
-      const signed = await this.wallet.signTransaction(transaction);
-      const signature = await this.connection.sendRawTransaction(signed.serialize());
-      await this.connection.confirmTransaction(signature);
-    } catch (error) {
-      console.error('Error storing data:', error);
-      await this.rotateEndpoint();
-      throw error;
-    }
-  }
-
-  async retrieveData(key: string): Promise<string | null> {
-    try {
-      const account = await this.connection.getAccountInfo(new PublicKey(key));
-      if (!account) return null;
-      return account.data.toString();
-    } catch (error) {
-      console.error('Error retrieving data:', error);
-      await this.rotateEndpoint();
-      return null;
-    }
+    return signature;
+  } catch (error) {
+    console.error('Error transferring SOL:', error);
+    throw error;
   }
 }
 
-export const solana = {
-  createManager: (wallet: WalletContextState, endpoints: string[]) => new SolanaManager(wallet, endpoints)
-};
+/**
+ * Transfer SOLV tokens to a recipient
+ */
+export async function transferSOLV(
+  connection: Connection,
+  wallet: WalletContextState,
+  recipient: string,
+  amount: number
+): Promise<string> {
+  if (!wallet.publicKey || !wallet.signTransaction) {
+    throw new Error('Wallet not connected');
+  }
+
+  try {
+    const recipientPubKey = new PublicKey(recipient);
+    const mintPubKey = new PublicKey(SOLVIO_TOKEN_MINT);
+
+    // Get the token accounts
+    const sourceTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.publicKey,
+      mintPubKey,
+      wallet.publicKey
+    );
+
+    const destinationTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.publicKey,
+      mintPubKey,
+      recipientPubKey
+    );
+
+    // Create transfer instruction
+    const transaction = new Transaction().add(
+      createTransferInstruction(
+        sourceTokenAccount,
+        destinationTokenAccount,
+        wallet.publicKey,
+        amount * (10 ** 9), // Assuming 9 decimals for SOLV token
+        [],
+        TOKEN_PROGRAM_ID
+      )
+    );
+
+    const blockHash = await connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockHash.blockhash;
+    transaction.feePayer = wallet.publicKey;
+
+    const signed = await wallet.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(signed.serialize());
+    await connection.confirmTransaction(signature);
+
+    return signature;
+  } catch (error) {
+    console.error('Error transferring SOLV:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generic token transfer function that handles both SOL and SOLV transfers
+ */
+export async function transferToken(
+  connection: Connection,
+  wallet: WalletContextState,
+  recipient: string,
+  tokenType: 'SOL' | 'SOLV',
+  amount: number
+): Promise<string> {
+  if (tokenType === 'SOL') {
+    return transferSOL(connection, wallet, recipient, amount);
+  } else {
+    return transferSOLV(connection, wallet, recipient, amount);
+  }
+}

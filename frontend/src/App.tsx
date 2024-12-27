@@ -174,27 +174,36 @@ function App() {
   
   console.log('Selected group data:', selectedGroupData);
   
-  // Show initialization or loading state with detailed feedback
+  // Simplified initialization check that doesn't block wallet
+  if (!connected) {
+    console.log('Wallet not connected, showing connect screen');
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b26] to-[#2d2e3d]">
+        <h1 className="text-4xl font-bold text-[#7b3fe4] mb-8">Welcome to Solvio</h1>
+        <p className="text-lg text-gray-300 mb-6">Connect your wallet to start messaging</p>
+        <WalletMultiButton className="!bg-[#7b3fe4] hover:!bg-[#5f2ec4] text-white" />
+      </div>
+    );
+  }
+
+  // Show loading state without blocking wallet functionality
   if (isInitializing || loading) {
-    const message = isInitializing ? 'Initializing application...' : 'Loading groups...';
-    const detail = isInitializing ? 'Setting up secure environment' : 'Initializing secure communication';
-    
-    console.log('[App] Rendering loading state:', {
+    console.log('[App] Loading application with wallet access:', {
       isInitializing,
       loading,
-      groups: Array.isArray(groups) ? groups.length : 'not an array',
-      error,
       connected,
       environment: process.env.NODE_ENV
     });
     
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1a1b23] to-[#2d2e3d]">
-        <div className="animate-pulse">
-          <p className="text-2xl font-semibold text-[#00a884] mb-4">{message}</p>
-          <p className="text-sm text-gray-400">{detail}</p>
+      <Layout onViewChange={setActiveView}>
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <div className="animate-pulse">
+            <p className="text-2xl font-semibold text-[#7b3fe4] mb-4">Loading Solvio...</p>
+            <p className="text-sm text-gray-400">Setting up your secure environment</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
   
