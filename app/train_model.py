@@ -143,7 +143,6 @@ async def train_models(self_learning, exploit_gen, training_params):
                 epochs=training_params["epochs"],
                 batch_size=training_params["batch_size"],
                 learning_rate=training_params["learning_rate"],
-                mixed_precision=training_params["mixed_precision"],
                 gradient_clipping=training_params["gradient_clipping"],
                 checkpoint_dir=str(checkpoint_dir),
                 checkpoint_interval=training_params["checkpoint_interval"]
