@@ -1,6 +1,6 @@
 const crypto = require('crypto')
 const { EventEmitter } = require('events')
-const { Ed25519Provider } = require('@transmute/ed25519-key-pair')
+const ed25519 = require('@noble/ed25519')
 const { createHash } = require('crypto')
 const { encode: uint8ArrayToBase64 } = require('uint8arrays/to-string')
 const { decode: base64ToUint8Array } = require('uint8arrays/from-string')
@@ -25,9 +25,8 @@ class BlockchainNode extends EventEmitter {
 
     // Initialize node's cryptographic keys
     async initializeKeys() {
-        const keyPair = await Ed25519Provider.generate()
-        this.privateKey = keyPair.privateKey
-        this.publicKey = keyPair.publicKey
+        this.privateKey = ed25519.utils.randomPrivateKey()
+        this.publicKey = await ed25519.getPublicKey(this.privateKey)
         this.address = createHash('sha256')
             .update(this.publicKey)
             .digest('hex')
@@ -124,7 +123,7 @@ class BlockchainNode extends EventEmitter {
     // Sign block with producer's private key
     async signBlock(block) {
         const message = uint8ArrayFromString(block.hash)
-        const signature = await Ed25519Provider.sign(message, this.privateKey)
+        const signature = await ed25519.sign(message, this.privateKey)
         return uint8ArrayToBase64(signature)
     }
 
@@ -148,7 +147,7 @@ class BlockchainNode extends EventEmitter {
         const producerPublicKey = this.validators.get(block.producer).publicKey
         
         try {
-            await Ed25519Provider.verify(message, signature, producerPublicKey)
+            await ed25519.verify(signature, message, producerPublicKey)
         } catch {
             return false
         }
@@ -196,9 +195,9 @@ class BlockchainNode extends EventEmitter {
         try {
             const message = uint8ArrayFromString(transaction.hash)
             const signature = base64ToUint8Array(transaction.signature)
-            await Ed25519Provider.verify(
-                message,
+            await ed25519.verify(
                 signature,
+                message,
                 transaction.senderPublicKey
             )
         } catch {

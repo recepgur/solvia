@@ -28,7 +28,7 @@
     "web3": "4.3.0",
     "@peculiar/webcrypto": "1.4.3",
     "@noble/secp256k1": "1.7.1",
-    "@transmute/ed25519-key-pair": "0.7.0",
+    "@noble/ed25519": "^2.0.0",
     "uint8arrays": "4.0.2",
     "webrtc": "1.14.1"
   }
