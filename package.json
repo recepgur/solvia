@@ -7,12 +7,23 @@
   "dependencies": {
     "@metaplex-foundation/js": "^0.19.4",
     "@solana/web3.js": "^1.87.6",
-    "bs58": "^5.0.0"
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6"
+  }
 }
