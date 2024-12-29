@@ -76,9 +76,23 @@ async function main() {
             throw new Error('Network validation failed');
         }
         
+        // Initialize provider with configuration
+        const providerConfig = {
+            timeout: TIMEOUT,
+            headers: { 'Content-Type': 'application/json' },
+            polling: true,
+            pollingInterval: 4000
+        };
+        
+        // Re-initialize provider with configuration
+        const configuredProvider = new ethers.providers.JsonRpcProvider(ETH_RPC, providerConfig);
+        
         // Initialize wallets
         console.log('Initializing wallets...');
-        const wallet = new ethers.Wallet(process.env.PRIVATE_KEY || 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
+        if (!process.env.ETHEREUM_PRIVATE_KEY) {
+            throw new Error('ETHEREUM_PRIVATE_KEY not set in environment');
+        }
+        const wallet = new ethers.Wallet(process.env.ETHEREUM_PRIVATE_KEY, configuredProvider);
         const solanaWallet = Keypair.generate();
         
         // Load contract artifact

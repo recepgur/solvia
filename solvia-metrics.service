@@ -5,8 +5,9 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/ubuntu/repos/solvia
-ExecStart=/usr/bin/node src/monitoring/metrics-exporter.js
+WorkingDirectory=/root/solvia
+ExecStart=/usr/bin/node /root/solvia/src/monitoring/metrics-exporter.js
+Environment=NODE_ENV=production
 Restart=always
 RestartSec=10
 

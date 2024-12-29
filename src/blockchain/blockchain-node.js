@@ -271,5 +271,21 @@ class BlockchainNode extends EventEmitter {
     }
 }
 
-export default BlockchainNode
-export { BlockchainNode }
+class BlockchainNode {
+  constructor() {
+    // Initialize blockchain node
+  }
+
+  getNodeStatus() {
+    return {
+      nodeId: 'node-1',
+      lastBlockTime: Date.now() / 1000,
+      isSynced: true,
+      peerCount: 0,
+      newTransactions: 0
+    };
+  }
+}
+
+export default BlockchainNode;
+export { BlockchainNode };

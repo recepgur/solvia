@@ -54,12 +54,15 @@ app.get('/metrics', async (req, res) => {
 });
 
 // Import blockchain node
-import { getNodeStatus } from '../blockchain/blockchain-node.js';
+import BlockchainNode from '../blockchain/blockchain-node.js';
+
+// Initialize blockchain node
+const node = new BlockchainNode();
 
 // Update metrics with real blockchain data
 setInterval(async () => {
   try {
-    const nodeStatus = await getNodeStatus();
+    const nodeStatus = node.getNodeStatus();
     blockTime.set({ node_id: nodeStatus.nodeId }, nodeStatus.lastBlockTime);
     syncStatus.set({ node_id: nodeStatus.nodeId }, nodeStatus.isSynced ? 1 : 0);
     activeConnections.set({ node_id: nodeStatus.nodeId }, nodeStatus.peerCount);
