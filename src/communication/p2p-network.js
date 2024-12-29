@@ -1,8 +1,8 @@
-const Libp2p = require('libp2p')
-const TCP = require('@libp2p/tcp')
-const Websockets = require('@libp2p/websockets')
-const Noise = require('@chainsafe/libp2p-noise')
-const MPLEX = require('@libp2p/mplex')
+const { createLibp2p } = require('@libp2p/libp2p')
+const { tcp } = require('@libp2p/tcp')
+const { webSockets } = require('@libp2p/websockets')
+const { noise } = require('@chainsafe/libp2p-noise')
+const { mplex } = require('@libp2p/mplex')
 const { createFromJSON } = require('@libp2p/peer-id-factory')
 const { stdinToStream, streamToConsole } = require('@libp2p/utils/streams')
 const { createEd25519PeerId } = require('@libp2p/peer-id-ed25519')
@@ -23,7 +23,7 @@ class P2PNetwork {
             this.peerId = await createEd25519PeerId()
 
             // Create the libp2p node
-            this.node = await Libp2p.create({
+            this.node = await createLibp2p({
                 peerId: this.peerId,
                 addresses: {
                     listen: [
@@ -32,14 +32,14 @@ class P2PNetwork {
                     ]
                 },
                 transports: [
-                    new TCP(),
-                    new Websockets()
+                    tcp(),
+                    webSockets()
                 ],
                 connectionEncryption: [
-                    new Noise()
+                    noise()
                 ],
                 streamMuxers: [
-                    new MPLEX()
+                    mplex()
                 ]
             })
 

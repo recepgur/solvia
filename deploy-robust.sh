@@ -51,13 +51,9 @@ ssh_with_retry "cd $DEPLOY_DIR && rm -rf node_modules package-lock.json"
 echo "Transferring package.json..."
 scp_with_retry "package.json" "$DEPLOY_DIR/"
 
-# Step 4: Transfer node_modules
-echo "Transferring node_modules..."
-scp_with_retry "node_modules.tar.gz" "$DEPLOY_DIR/"
-
-# Step 5: Extract node_modules
-echo "Extracting node_modules..."
-ssh_with_retry "cd $DEPLOY_DIR && tar xzf node_modules.tar.gz && rm node_modules.tar.gz"
+# Step 4: Install dependencies
+echo "Installing dependencies..."
+ssh_with_retry "cd $DEPLOY_DIR && npm install --no-package-lock"
 
 # Step 6: Transfer source files
 echo "Transferring source files..."

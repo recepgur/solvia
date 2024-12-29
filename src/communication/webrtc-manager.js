@@ -1,4 +1,4 @@
-const { RTCPeerConnection, RTCSessionDescription } = require('webrtc')
+const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 const { createCipheriv, createDecipheriv, randomBytes } = require('crypto')
 const { encode: uint8ArrayToBase64 } = require('uint8arrays/to-string')
 const { decode: base64ToUint8Array } = require('uint8arrays/from-string')
