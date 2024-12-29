@@ -3,10 +3,16 @@
 # Configuration
 MAX_RETRIES=5
 RETRY_DELAY=2
-SERVER="91.151.88.205"
-USER="root"
-PASS="Sanane120"
+SERVER="${1:-91.151.88.205}"
+USER="${2:-root}"
+PASS="${3:-Sanane120}"
 DEPLOY_DIR="/root/solvia"
+
+# Check if sshpass is installed
+if ! command -v sshpass &> /dev/null; then
+    echo "sshpass is required but not installed. Installing..."
+    sudo apt-get update && sudo apt-get install -y sshpass
+fi
 
 # Helper function for SSH commands with retry
 ssh_with_retry() {

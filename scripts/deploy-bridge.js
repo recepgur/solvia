@@ -19,14 +19,35 @@ async function main() {
     
     // Deploy the contract
     console.log('Deploying CrossChainBridge contract...');
+    // Compile the contract
+    const solc = require('solc');
+    const input = {
+        language: 'Solidity',
+        sources: {
+            'CrossChainBridge.sol': {
+                content: source
+            }
+        },
+        settings: {
+            outputSelection: {
+                '*': {
+                    '*': ['abi', 'evm.bytecode']
+                }
+            }
+        }
+    };
+
+    const output = JSON.parse(solc.compile(JSON.stringify(input)));
+    const contractArtifact = output.contracts['CrossChainBridge.sol'].CrossChainBridge;
+    
     const factory = new ethers.ContractFactory(
-        ['constructor()'],
-        '0x' + require('solc').compile(source, 1).contracts[':CrossChainBridge'].bytecode,
+        contractArtifact.abi,
+        contractArtifact.evm.bytecode.object,
         wallet
     );
     
-    const contract = await factory.deploy();
-    await contract.waitForDeployment();
+    const deployedContract = await factory.deploy();
+    await deployedContract.waitForDeployment();
     
     const address = await contract.getAddress();
     console.log('CrossChainBridge deployed to:', address);
