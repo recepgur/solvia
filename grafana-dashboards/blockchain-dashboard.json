@@ -1,0 +1,48 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Solvia Blockchain Metrics",
+    "tags": ["blockchain", "solvia"],
+    "timezone": "browser",
+    "refresh": "5s",
+    "panels": [
+      {
+        "title": "Block Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [{"expr": "blockchain_block_time_seconds{job='blockchain_metrics'}", "legendFormat": "Block Time"}]
+      },
+      {
+        "title": "Node Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [{"expr": "blockchain_sync_status{job='blockchain_metrics'}", "legendFormat": "Sync Status"}]
+      },
+      {
+        "title": "Active Connections",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [{"expr": "blockchain_active_connections{job='blockchain_metrics'}", "legendFormat": "Connections"}],
+        "options": {
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 10, "color": "yellow" },
+              { "value": 20, "color": "green" }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Transaction Count",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [{"expr": "rate(blockchain_transaction_count_total{job='blockchain_metrics'}[5m])", "legendFormat": "TPS"}]
+      }
+    ]
+  },
+  "overwrite": true
+}

@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { EventEmitter } from 'events'
 import * as ed25519 from '@noble/ed25519'
+import CrossChainManager from './cross-chain-manager.js'
 import { createHash } from 'crypto'
 import { encode as uint8ArrayToBase64 } from 'uint8arrays/to-string'
 import { decode as base64ToUint8Array } from 'uint8arrays/from-string'
@@ -16,8 +17,14 @@ class BlockchainNode extends EventEmitter {
             blockTime: 3000, // 3 seconds
             validatorCount: 21, // Number of active validators
             minStake: 100000, // Minimum stake for validator
+            ethereumRPC: config.ethereumRPC,
+            solanaRPC: config.solanaRPC,
+            bridgeAddress: config.bridgeAddress,
             ...config
         }
+        
+        // Initialize cross-chain manager
+        this.crossChainManager = new CrossChainManager(this.config)
         
         // Initialize cryptographic keys
         this.initializeKeys()
@@ -247,6 +254,22 @@ class BlockchainNode extends EventEmitter {
         // Cleanup logic here
         this.emit('stopped', this.getState())
     }
+
+    // Get node status for metrics
+    getNodeStatus() {
+        const lastBlock = this.blocks[this.blocks.length - 1]
+        const previousBlock = this.blocks[this.blocks.length - 2]
+        
+        return {
+            nodeId: this.address,
+            lastBlockTime: lastBlock ? 
+                (previousBlock ? (lastBlock.timestamp - previousBlock.timestamp) / 1000 : 0) : 0,
+            isSynced: true, // TODO: Implement proper sync check
+            peerCount: this.peers.size,
+            newTransactions: this.mempool.size
+        }
+    }
 }
 
 export default BlockchainNode
+export { BlockchainNode }

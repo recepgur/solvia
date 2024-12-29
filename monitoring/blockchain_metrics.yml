@@ -1,9 +1,22 @@
 # Blockchain metrics configuration
 scrape_configs:
   - job_name: 'blockchain_metrics'
+    static_configs: 
+      - targets: ['localhost:9464']  # Solvia metrics exporter
+    metrics_path: '/metrics'
+    scheme: 'http'
+    scrape_interval: 15s
+
+  - job_name: 'node'
     static_configs:
-      - targets: ['localhost:8545']  # Ethereum RPC
-      - targets: ['localhost:8899']  # Solana RPC
+      - targets: ['localhost:9100']  # Node exporter
+    metrics_path: '/metrics'
+    scheme: 'http'
+    scrape_interval: 15s
+
+  - job_name: 'solvia'
+    static_configs:
+      - targets: ['localhost:9090']  # Prometheus itself
     metrics_path: '/metrics'
     scheme: 'http'
     scrape_interval: 15s

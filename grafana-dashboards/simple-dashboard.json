@@ -1,0 +1,18 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Solvia Basic Metrics",
+    "tags": ["blockchain"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Node Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [{"expr": "up", "legendFormat": "Node Status"}]
+      }
+    ],
+    "refresh": "5s"
+  },
+  "overwrite": true
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=Solvia Blockchain Metrics Exporter
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/ubuntu/repos/solvia
+ExecStart=/usr/bin/node src/monitoring/metrics-exporter.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
