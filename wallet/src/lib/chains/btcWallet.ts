@@ -1,6 +1,7 @@
 import { IChainWallet } from './IChainWallet';
 import * as bitcoin from 'bitcoinjs-lib';
 import { networks } from 'bitcoinjs-lib';
+import * as crypto from 'crypto';
 
 class BitcoinWallet implements IChainWallet {
   private network: bitcoin.networks.Network;
@@ -9,17 +10,23 @@ class BitcoinWallet implements IChainWallet {
     this.network = networks.bitcoin; // mainnet by default
   }
 
-  async createWallet(): Promise<any> {
+  async createWallet(): Promise<{ address: string; privateKey: string }> {
     // Generate random bytes for private key
-    const keyPair = bitcoin.ECPair.makeRandom({ network: this.network });
+    const randomBytes = crypto.randomBytes(32);
+    const network = bitcoin.networks.bitcoin;
+    const keyPair = bitcoin.ECPair.fromPrivateKey(randomBytes, { network });
     const { address } = bitcoin.payments.p2pkh({ 
       pubkey: keyPair.publicKey,
       network: this.network,
     });
 
+    if (!address) {
+      throw new Error('Failed to generate Bitcoin address');
+    }
+
     return {
       address,
-      privateKey: keyPair.privateKey?.toString('hex'),
+      privateKey: randomBytes.toString('hex'),
     };
   }
 
@@ -39,25 +46,16 @@ class BitcoinWallet implements IChainWallet {
   }
 
   async sendTransaction(to: string, amount: number): Promise<string> {
-    try {
-      // Note: This is a placeholder. In real implementation, we need:
-      // 1. UTXO management
-      // 2. Fee calculation
-      // 3. Transaction building
-      // 4. Proper signing
-      // 5. Broadcasting to network
-      throw new Error('BTC transaction sending not implemented');
-    } catch (error) {
-      console.error('Error sending BTC:', error);
-      throw error;
-    }
+    // Placeholder implementation - parameters included for interface compliance
+    console.warn(`Bitcoin transaction not implemented. Would send ${amount} to ${to}`);
+    throw new Error('BTC transaction sending not implemented');
   }
 
   validateAddress(address: string): boolean {
     try {
       bitcoin.address.toOutputScript(address, this.network);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

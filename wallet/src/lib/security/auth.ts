@@ -130,9 +130,11 @@ export class AuthService {
 
   private mockAuthenticate(hashedPassword: string): { success: boolean; token: string } {
     // TODO: Replace with actual server authentication
+    // For now, simulate password validation by checking if hash is valid hex
+    const isValidHash = /^[a-f0-9]{64}$/i.test(hashedPassword);
     return {
-      success: true,
-      token: crypto.randomBytes(32).toString('hex')
+      success: isValidHash,
+      token: isValidHash ? crypto.randomBytes(32).toString('hex') : ''
     };
   }
 }

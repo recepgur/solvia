@@ -4,13 +4,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wallet, Send, AlertCircle, History, Settings, Loader2 } from "lucide-react";
+import { Wallet, Send, History, Settings, Loader2 } from "lucide-react";
 import { getPublicKey } from './lib/solanaWallet';
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import { Keypair } from '@solana/web3.js';
 import { ChainType, getChainWallet, getTokenSymbol } from './lib/chains';
+import { Login } from './components/Login';
+import { TokenManager } from './components/TokenManager';
+import { ThemeProvider } from './components/ui/theme-provider';
+import { ThemeToggle } from './components/ui/theme-toggle';
 
 interface ChainWallet {
   address?: string;
@@ -31,6 +36,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 function App() {
+  const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState<ChainType>("solana");
   const [wallet, setWallet] = useState<ChainWallet | Keypair | null>(null);
   const [balance, setBalance] = useState<number>(0);
@@ -72,7 +78,12 @@ function App() {
 
   const checkBalance = async () => {
     if (!wallet) {
-      setError("Please create a wallet first");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please create a wallet first",
+        className: "bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-800",
+      });
       return;
     }
 
@@ -97,9 +108,35 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error,
+        className: "bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-800",
+      });
+    }
+  }, [error, toast]);
+
+  useEffect(() => {
+    if (success) {
+      toast({
+        title: "Success",
+        description: success,
+        className: "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800",
+      });
+    }
+  }, [success, toast]);
+
   const handleSend = async () => {
     if (!wallet) {
-      setError("Please create a wallet first");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please create a wallet first",
+        className: "bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-800",
+      });
       return;
     }
 
@@ -110,7 +147,12 @@ function App() {
     }
 
     if (isNaN(Number(amount)) || Number(amount) <= 0) {
-      setError("Invalid amount");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid amount",
+        className: "bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-800",
+      });
       return;
     }
 
@@ -138,15 +180,21 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/wallet"
-          element={
-            <ProtectedRoute>
-              <div className="min-h-screen bg-gray-100 dark:bg-darkBg p-2 sm:p-4">
-                <Card className="max-w-md mx-auto bg-white dark:bg-darkCard">
+    <ThemeProvider defaultTheme="dark">
+      <Toaster />
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/wallet" />} />
+          <Route
+            path="/wallet"
+            element={
+              <ProtectedRoute>
+                <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4 transition-all duration-300">
+                  <div className="fixed top-0 right-4 mt-4 z-50">
+                    <ThemeToggle />
+                  </div>
+                  <Card className="max-w-md mx-auto bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 animate-in fade-in-50 slide-in-from-bottom-8">
         <CardHeader>
           <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4 sm:gap-2 dark:text-white">
             <div className="flex items-center gap-2">
@@ -185,10 +233,11 @@ function App() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <TokenManager />
+          <div className="space-y-4 mt-6">
             {!wallet ? (
               <Button 
-                className="w-full bg-brandPurple hover:bg-brandPurple/90"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                 onClick={createNewWallet}
               >
                 Create New Wallet
@@ -241,21 +290,23 @@ function App() {
                     className="h-12 sm:h-10 dark:bg-darkBg/50 dark:text-white dark:border-gray-700"
                   />
                   <Button 
-                    className="w-full h-12 sm:h-10 text-base bg-brandPurple hover:bg-brandPurple/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full h-12 sm:h-10 text-base bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                     onClick={() => setIsConfirmDialogOpen(true)}
                     disabled={isLoading}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 sm:h-4 sm:w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-5 w-5 sm:h-4 sm:w-4" />
-                        Send SOLV
-                      </>
-                    )}
+                    <span className="flex items-center">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 sm:h-4 sm:w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-5 w-5 sm:h-4 sm:w-4" />
+                          Send {getTokenSymbol(selectedChain)}
+                        </>
+                      )}
+                    </span>
                   </Button>
                 </div>
               </>
@@ -263,17 +314,7 @@ function App() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
-          {error && (
-            <Alert variant="destructive" className="animate-in fade-in-0 slide-in-from-top-1">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {success && (
-            <Alert className="animate-in fade-in-0 slide-in-from-top-1">
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
+          {/* Toast notifications are now handled via useEffect */}
         </CardFooter>
       </Card>
               </div>
@@ -284,7 +325,7 @@ function App() {
       </Routes>
 
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent className="dark:bg-darkCard">
+        <DialogContent className="dark:bg-darkCard backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
           <DialogHeader>
             <DialogTitle className="dark:text-white">Confirm Transaction</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
@@ -303,7 +344,7 @@ function App() {
               Cancel
             </Button>
             <Button
-              className="bg-brandPurple hover:bg-brandPurple/90"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
               onClick={() => {
                 setIsConfirmDialogOpen(false);
                 handleSend();
@@ -315,6 +356,7 @@ function App() {
         </DialogContent>
       </Dialog>
     </Router>
+    </ThemeProvider>
   );
 }
 

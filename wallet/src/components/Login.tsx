@@ -111,7 +111,7 @@ export const Login: React.FC = () => {
               />
               <Button 
                 type="submit"
-                className="w-full h-12 text-base bg-brandPurple hover:bg-brandPurple/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full h-12 text-base bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (
