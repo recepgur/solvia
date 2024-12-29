@@ -1,13 +1,13 @@
-const { createLibp2p } = require('libp2p')
-const { tcp } = require('@libp2p/tcp')
-const { webSockets } = require('@libp2p/websockets')
-const { noise } = require('@chainsafe/libp2p-noise')
-const { mplex } = require('@libp2p/mplex')
-const { createFromJSON } = require('@libp2p/peer-id-factory')
-const { stdinToStream, streamToConsole } = require('@libp2p/utils/streams')
-const { createEd25519PeerId } = require('@libp2p/peer-id-ed25519')
-const { toString: uint8ArrayToString } = require('uint8arrays/to-string')
-const { fromString: uint8ArrayFromString } = require('uint8arrays/from-string')
+import { createLibp2p } from 'libp2p'
+import { tcp } from '@libp2p/tcp'
+import { webSockets } from '@libp2p/websockets'
+import { noise } from '@chainsafe/libp2p-noise'
+import { mplex } from '@libp2p/mplex'
+import { createFromJSON } from '@libp2p/peer-id-factory'
+import { stdinToStream, streamToConsole } from '@libp2p/utils/streams'
+import { createEd25519PeerId } from '@libp2p/peer-id-ed25519'
+import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 
 class P2PNetwork {
     constructor() {
@@ -167,4 +167,4 @@ class P2PNetwork {
     }
 }
 
-module.exports = P2PNetwork
+export default P2PNetwork

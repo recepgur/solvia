@@ -1,8 +1,8 @@
-const { createHash } = require('crypto')
-const { schnorr } = require('@noble/secp256k1')
-const { createEd25519PeerId } = require('@libp2p/peer-id-ed25519')
-const { encode: uint8ArrayToBase64 } = require('uint8arrays/to-string')
-const { decode: base64ToUint8Array } = require('uint8arrays/from-string')
+import { createHash } from 'crypto'
+import { schnorr } from '@noble/secp256k1'
+import { createEd25519PeerId } from '@libp2p/peer-id-ed25519'
+import { encode as uint8ArrayToBase64 } from 'uint8arrays/to-string'
+import { decode as base64ToUint8Array } from 'uint8arrays/from-string'
 
 class IdentityManager {
     constructor() {
@@ -265,4 +265,4 @@ class IdentityManager {
     }
 }
 
-module.exports = IdentityManager
+export default IdentityManager

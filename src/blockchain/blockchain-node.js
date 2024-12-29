@@ -1,9 +1,9 @@
-const crypto = require('crypto')
-const { EventEmitter } = require('events')
-const ed25519 = require('@noble/ed25519')
-const { createHash } = require('crypto')
-const { encode: uint8ArrayToBase64 } = require('uint8arrays/to-string')
-const { decode: base64ToUint8Array } = require('uint8arrays/from-string')
+import crypto from 'crypto'
+import { EventEmitter } from 'events'
+import * as ed25519 from '@noble/ed25519'
+import { createHash } from 'crypto'
+import { encode as uint8ArrayToBase64 } from 'uint8arrays/to-string'
+import { decode as base64ToUint8Array } from 'uint8arrays/from-string'
 
 class BlockchainNode extends EventEmitter {
     constructor(config = {}) {
@@ -249,4 +249,4 @@ class BlockchainNode extends EventEmitter {
     }
 }
 
-module.exports = BlockchainNode
+export default BlockchainNode

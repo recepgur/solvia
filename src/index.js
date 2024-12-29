@@ -1,9 +1,9 @@
-const express = require('express');
-const { startP2PNetwork } = require('./communication/p2p-network');
-const { initializeWebRTC } = require('./communication/webrtc-manager');
-const { initializeIPFS } = require('./storage/ipfs-manager');
-const { initializeBlockchain } = require('./blockchain/blockchain-node');
-const { initializeIdentity } = require('./identity/identity-manager');
+import express from 'express';
+import { startP2PNetwork } from './communication/p2p-network.js';
+import { initializeWebRTC } from './communication/webrtc-manager.js';
+import { initializeIPFS } from './storage/ipfs-manager.js';
+import { initializeBlockchain } from './blockchain/blockchain-node.js';
+import { initializeIdentity } from './identity/identity-manager.js';
 
 const app = express();
 const port = process.env.PORT || 3000;

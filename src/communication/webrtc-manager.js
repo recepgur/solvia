@@ -1,7 +1,7 @@
-const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
-const { createCipheriv, createDecipheriv, randomBytes } = require('crypto')
-const { encode: uint8ArrayToBase64 } = require('uint8arrays/to-string')
-const { decode: base64ToUint8Array } = require('uint8arrays/from-string')
+import { RTCPeerConnection, RTCSessionDescription } from 'wrtc'
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
+import { encode as uint8ArrayToBase64 } from 'uint8arrays/to-string'
+import { decode as base64ToUint8Array } from 'uint8arrays/from-string'
 
 class WebRTCManager {
     constructor(p2pNetwork) {
@@ -251,4 +251,4 @@ class WebRTCManager {
     }
 }
 
-module.exports = WebRTCManager
+export default WebRTCManager

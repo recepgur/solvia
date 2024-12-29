@@ -1,8 +1,8 @@
-const IPFS = require('ipfs-http-client')
-const { create } = require('kubo-rpc-client')
-const { Crypto } = require('@peculiar/webcrypto')
-const { toString: uint8ArrayToString } = require('uint8arrays/to-string')
-const { fromString: uint8ArrayFromString } = require('uint8arrays/from-string')
+import IPFS from 'ipfs-http-client'
+import { create } from 'kubo-rpc-client'
+import { Crypto } from '@peculiar/webcrypto'
+import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 
 class IPFSManager {
     constructor() {
@@ -237,4 +237,4 @@ class IPFSManager {
     }
 }
 
-module.exports = IPFSManager
+export default IPFSManager

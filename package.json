@@ -2,7 +2,7 @@
   "name": "solvia",
   "version": "1.0.0",
   "description": "Decentralized Communication Platform with Cross-Chain Support",
-  "type": "commonjs",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js"
