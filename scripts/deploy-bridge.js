@@ -7,9 +7,23 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const TIMEOUT = 30000; // 30 seconds timeout
-const ETH_RPC = process.env.ETHEREUM_RPC || 'https://eth-sepolia.g.alchemy.com/v2/demo';
+const TIMEOUT = 60000; // 60 seconds timeout
+const MAX_RETRIES = 3;
+const ETH_RPC = process.env.ETHEREUM_RPC || 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
 const SOL_RPC = process.env.SOLANA_RPC || 'https://api.devnet.solana.com';
+
+async function retryWithBackoff(operation, maxRetries = MAX_RETRIES) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (i === maxRetries - 1) throw error;
+            const delay = Math.min(1000 * Math.pow(2, i), 10000);
+            console.log(`Attempt ${i + 1} failed, retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,18 +35,27 @@ async function withTimeout(promise, ms, operation) {
 }
 
 async function validateNetworkConnection(provider, network) {
-    try {
-        await withTimeout(
-            network === 'ethereum' ? provider.getNetwork() : provider.getVersion(),
-            TIMEOUT,
-            `${network} connection validation`
-        );
-        console.log(`✓ ${network} connection validated`);
-        return true;
-    } catch (error) {
-        console.error(`✗ ${network} connection failed:`, error.message);
+    return retryWithBackoff(async () => {
+        try {
+            const operation = network === 'ethereum' ? 
+                () => provider.getNetwork() :
+                () => provider.getVersion();
+            
+            await withTimeout(
+                operation(),
+                TIMEOUT,
+                `${network} connection validation`
+            );
+            console.log(`✓ ${network} connection validated (attempt successful)`);
+            return true;
+        } catch (error) {
+            console.error(`✗ ${network} connection attempt failed:`, error.message);
+            throw error; // Propagate error for retry mechanism
+        }
+    }).catch(error => {
+        console.error(`✗ ${network} connection failed after all retries:`, error.message);
         return false;
-    }
+    });
 }
 
 async function main() {
@@ -63,7 +86,7 @@ async function main() {
         const artifactPath = path.join(__dirname, '../src/contracts/abi/CrossChainBridge.json');
         const contractArtifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
     
-        // Deploy bridge contract with timeout
+        // Deploy bridge contract with retries and timeout
         console.log('Deploying CrossChainBridge contract...');
         const factory = new ethers.ContractFactory(
             contractArtifact.abi,
@@ -71,19 +94,23 @@ async function main() {
             wallet
         );
 
-        const deploymentPromise = factory.deploy(solanaWallet.publicKey.toString());
-        const bridge = await withTimeout(
-            deploymentPromise,
-            TIMEOUT,
-            'contract deployment'
-        );
+        const bridge = await retryWithBackoff(async () => {
+            console.log('Attempting contract deployment...');
+            const deploymentPromise = factory.deploy(solanaWallet.publicKey.toString());
+            const deployed = await withTimeout(
+                deploymentPromise,
+                TIMEOUT,
+                'contract deployment'
+            );
 
-        console.log('Waiting for deployment confirmation...');
-        await withTimeout(
-            bridge.deployed(),
-            TIMEOUT,
-            'deployment confirmation'
-        );
+            console.log('Waiting for deployment confirmation...');
+            await withTimeout(
+                deployed.deployed(),
+                TIMEOUT,
+                'deployment confirmation'
+            );
+            return deployed;
+        });
 
         const address = await bridge.getAddress();
         console.log('CrossChainBridge deployed to:', address);
