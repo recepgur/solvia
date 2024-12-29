@@ -1,0 +1,15 @@
+[Unit]
+Description=Solvia Blockchain Communication Platform
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solvia
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+Environment=NODE_ENV=production
+Environment=TYPE=module
+
+[Install]
+WantedBy=multi-user.target
