@@ -1,5 +1,4 @@
 import { Buffer } from 'buffer';
-import * as crypto from 'crypto';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -9,8 +8,18 @@ export interface AuthState {
 
 export class AuthService {
   private static readonly TOKEN_KEY = 'wallet_auth_token';
-  private static readonly ENCRYPTION_KEY = crypto.randomBytes(32);
   private static readonly IV_LENGTH = 16;
+  private static readonly ENCRYPTION_KEY: Promise<CryptoKey> = (async () => {
+    const key = new Uint8Array(32);
+    window.crypto.getRandomValues(key);
+    return await crypto.subtle.importKey(
+      'raw',
+      key,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  })();
 
   private static instance: AuthService;
   private authState: AuthState = {
@@ -20,7 +29,10 @@ export class AuthService {
   };
 
   private constructor() {
-    this.loadAuthState();
+    this.loadAuthState().catch(error => {
+      console.error('Failed to load auth state:', error);
+      this.logout();
+    });
   }
 
   public static getInstance(): AuthService {
@@ -30,11 +42,11 @@ export class AuthService {
     return AuthService.instance;
   }
 
-  private loadAuthState(): void {
+  private async loadAuthState(): Promise<void> {
     const storedToken = localStorage.getItem(AuthService.TOKEN_KEY);
     if (storedToken) {
       try {
-        const decrypted = this.decrypt(storedToken);
+        const decrypted = await this.decrypt(storedToken);
         const { token, expiresAt } = JSON.parse(decrypted);
         if (expiresAt && expiresAt > Date.now()) {
           this.authState = {
@@ -68,7 +80,7 @@ export class AuthService {
           expiresAt
         };
         
-        const encrypted = this.encrypt(JSON.stringify(authData));
+        const encrypted = await this.encrypt(JSON.stringify(authData));
         localStorage.setItem(AuthService.TOKEN_KEY, encrypted);
         
         this.authState = {
@@ -108,24 +120,53 @@ export class AuthService {
     return Buffer.from(hash).toString('hex');
   }
 
-  private encrypt(text: string): string {
-    const iv = crypto.randomBytes(AuthService.IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-gcm', AuthService.ENCRYPTION_KEY, iv);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    const authTag = cipher.getAuthTag();
-    return iv.toString('hex') + ':' + encrypted + ':' + authTag.toString('hex');
+  private async encrypt(text: string): Promise<string> {
+    const iv = new Uint8Array(AuthService.IV_LENGTH);
+    window.crypto.getRandomValues(iv);
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const key = await AuthService.ENCRYPTION_KEY;
+    
+    const encrypted = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      data
+    );
+
+    // In AES-GCM, the auth tag is appended to the ciphertext
+    const encryptedArray = new Uint8Array(encrypted);
+    const authTag = encryptedArray.slice(-16); // Last 16 bytes are the auth tag
+    const ciphertext = encryptedArray.slice(0, -16);
+    
+    return Buffer.from(iv).toString('hex') + ':' + 
+           Buffer.from(ciphertext).toString('hex') + ':' + 
+           Buffer.from(authTag).toString('hex');
   }
 
-  private decrypt(text: string): string {
-    const [ivHex, encrypted, authTagHex] = text.split(':');
+  private async decrypt(text: string): Promise<string> {
+    const [ivHex, encryptedHex, authTagHex] = text.split(':');
     const iv = Buffer.from(ivHex, 'hex');
+    const encrypted = Buffer.from(encryptedHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-gcm', AuthService.ENCRYPTION_KEY, iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    
+    // Combine ciphertext and auth tag as expected by subtle.decrypt
+    const data = new Uint8Array([...encrypted, ...authTag]);
+    const key = await AuthService.ENCRYPTION_KEY;
+    
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      data
+    );
+    
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
   }
 
   private mockAuthenticate(hashedPassword: string): { success: boolean; token: string } {
@@ -134,7 +175,11 @@ export class AuthService {
     const isValidHash = /^[a-f0-9]{64}$/i.test(hashedPassword);
     return {
       success: isValidHash,
-      token: isValidHash ? crypto.randomBytes(32).toString('hex') : ''
+      token: isValidHash ? (() => {
+        const tokenBytes = new Uint8Array(32);
+        window.crypto.getRandomValues(tokenBytes);
+        return Buffer.from(tokenBytes).toString('hex');
+      })() : ''
     };
   }
 }

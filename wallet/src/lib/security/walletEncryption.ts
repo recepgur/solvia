@@ -1,31 +1,42 @@
-import * as crypto from 'crypto';
 import { Buffer } from 'buffer';
 
 export class WalletEncryption {
   private static readonly SALT_LENGTH = 16;
   private static readonly IV_LENGTH = 16;
-  private static readonly KEY_LENGTH = 32;
   private static readonly ITERATIONS = 100000;
 
 
   public static async encryptWallet(walletData: string, password: string): Promise<string> {
     try {
-      const salt = crypto.randomBytes(this.SALT_LENGTH);
-      const iv = crypto.randomBytes(this.IV_LENGTH);
+      const salt = new Uint8Array(this.SALT_LENGTH);
+      const iv = new Uint8Array(this.IV_LENGTH);
+      window.crypto.getRandomValues(salt);
+      window.crypto.getRandomValues(iv);
       
       const key = await this.deriveKey(password, salt);
       
-      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-      let encrypted = cipher.update(walletData, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
+      const encoder = new TextEncoder();
+      const data = encoder.encode(walletData);
       
-      const authTag = cipher.getAuthTag();
+      const encrypted = await crypto.subtle.encrypt(
+        {
+          name: 'AES-GCM',
+          iv: iv
+        },
+        key,
+        data
+      );
+      
+      // In AES-GCM, the auth tag is appended to the ciphertext
+      const encryptedArray = new Uint8Array(encrypted);
+      const authTag = encryptedArray.slice(-16); // Last 16 bytes are the auth tag
+      const ciphertext = encryptedArray.slice(0, -16);
       
       // Format: salt:iv:authTag:encrypted
       return Buffer.from(salt).toString('hex') + ':' +
              Buffer.from(iv).toString('hex') + ':' +
              Buffer.from(authTag).toString('hex') + ':' +
-             encrypted;
+             Buffer.from(ciphertext).toString('hex');
     } catch (error) {
       console.error('Encryption failed:', error);
       throw new Error('Failed to encrypt wallet');
@@ -34,40 +45,56 @@ export class WalletEncryption {
 
   public static async decryptWallet(encryptedData: string, password: string): Promise<string> {
     try {
-      const [saltHex, ivHex, authTagHex, encrypted] = encryptedData.split(':');
+      const [saltHex, ivHex, authTagHex, encryptedHex] = encryptedData.split(':');
       
       const salt = Buffer.from(saltHex, 'hex');
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
+      const encrypted = Buffer.from(encryptedHex, 'hex');
       
       const key = await this.deriveKey(password, salt);
       
-      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-      decipher.setAuthTag(authTag);
+      // Combine ciphertext and auth tag as expected by subtle.decrypt
+      const data = new Uint8Array([...encrypted, ...authTag]);
       
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
+      const decrypted = await crypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: iv
+        },
+        key,
+        data
+      );
       
-      return decrypted;
+      const decoder = new TextDecoder();
+      return decoder.decode(decrypted);
     } catch (error) {
       console.error('Decryption failed:', error);
       throw new Error('Failed to decrypt wallet');
     }
   }
 
-  private static async deriveKey(password: string, salt: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      crypto.pbkdf2(
-        password,
-        salt,
-        this.ITERATIONS,
-        this.KEY_LENGTH,
-        'sha512',
-        (err, derivedKey) => {
-          if (err) reject(err);
-          else resolve(derivedKey);
-        }
-      );
-    });
+  private static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+    
+    return crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: this.ITERATIONS,
+        hash: 'SHA-512'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
   }
 }
