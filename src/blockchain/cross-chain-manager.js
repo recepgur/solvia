@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { EventEmitter } from 'events';
+import { bridgeABI } from '../contracts/abi/CrossChainBridge.js';
 
 class CrossChainManager extends EventEmitter {
     constructor(config = {}) {
@@ -111,16 +112,55 @@ class CrossChainManager extends EventEmitter {
     
     // Handle Ethereum bridge transfer
     async handleEthereumBridge(eventId, sender, targetAddress, amount) {
-        // Implement Ethereum-specific bridge logic
-        // This would include verifying the transaction and
-        // executing the transfer on Ethereum
+        try {
+            const status = await this.getBridgeEventStatus(eventId);
+            if (status.processed) {
+                throw new Error('Bridge event already processed');
+            }
+
+            const tx = await this.bridgeContract.connect(this.signer).confirmBridgeEvent(
+                eventId,
+                'ethereum'
+            );
+            
+            await tx.wait();
+            
+            return {
+                success: true,
+                transactionHash: tx.hash
+            };
+        } catch (error) {
+            throw new Error(`Ethereum bridge error: ${error.message}`);
+        }
     }
     
     // Handle Solana bridge transfer
     async handleSolanaBridge(eventId, sender, targetAddress, amount) {
-        // Implement Solana-specific bridge logic
-        // This would include creating and sending transactions
-        // on the Solana network
+        try {
+            const recipientPubKey = new PublicKey(targetAddress);
+            
+            const transaction = new Transaction().add(
+                SystemProgram.transfer({
+                    fromPubkey: this.solanaWallet.publicKey,
+                    toPubkey: recipientPubKey,
+                    lamports: amount
+                })
+            );
+            
+            const signature = await this.solanaConnection.sendTransaction(
+                transaction,
+                [this.solanaWallet]
+            );
+            
+            await this.solanaConnection.confirmTransaction(signature);
+            
+            return {
+                success: true,
+                signature: signature
+            };
+        } catch (error) {
+            throw new Error(`Solana bridge error: ${error.message}`);
+        }
     }
     
     // Initiate cross-chain transfer
@@ -162,4 +202,4 @@ class CrossChainManager extends EventEmitter {
     }
 }
 
-export default CrossChainManager;
+export { CrossChainManager };
