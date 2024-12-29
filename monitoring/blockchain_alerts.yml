@@ -1,0 +1,17 @@
+groups:
+  - name: BlockchainAlerts
+    rules:
+    - alert: HighBlockTime
+      expr: blockchain_block_time_seconds > 30
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High block time detected
+    - alert: NodeSync
+      expr: blockchain_sync_status != 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Node is not in sync
