@@ -1,1 +1,3 @@
 *.tar.gz
+node_modules/
+src.tar.gz
