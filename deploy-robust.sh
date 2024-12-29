@@ -3,9 +3,32 @@
 # Configuration
 MAX_RETRIES=5
 RETRY_DELAY=2
-SERVER="${1:-91.151.88.205}"
-USER="${2:-root}"
-PASS="${3:-Sanane120}"
+VERIFY_ONLY=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --verify-only)
+            VERIFY_ONLY=true
+            shift
+            ;;
+        *)
+            if [[ -z "$SERVER" ]]; then
+                SERVER="$1"
+            elif [[ -z "$USER" ]]; then
+                USER="$1"
+            elif [[ -z "$PASS" ]]; then
+                PASS="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Set defaults if not provided
+SERVER="${SERVER:-91.151.88.205}"
+USER="${USER:-root}"
+PASS="${PASS:-Sanane120}"
 DEPLOY_DIR="/root/solvia"
 
 # Check if sshpass is installed
@@ -14,6 +37,37 @@ if ! command -v sshpass &> /dev/null; then
     sudo apt-get update && sudo apt-get install -y sshpass
 fi
 
+# Verify function
+verify_deployment() {
+    echo "=== Verifying Deployment ==="
+    
+    # Check if service is running
+    if ! ssh_with_retry "systemctl is-active --quiet solvia.service"; then
+        echo "Error: Solvia service is not running"
+        return 1
+    fi
+    
+    # Check blockchain node status
+    if ! ssh_with_retry "curl -s http://localhost:3000/status"; then
+        echo "Error: Blockchain node is not responding"
+        return 1
+    fi
+    
+    # Check cross-chain bridge
+    if ! ssh_with_retry "curl -s http://localhost:3000/bridge/status"; then
+        echo "Error: Cross-chain bridge is not responding"
+        return 1
+    fi
+    
+    # Check monitoring setup
+    if ! ssh_with_retry "systemctl is-active --quiet solvia-metrics.service"; then
+        echo "Warning: Monitoring service is not running"
+    fi
+    
+    echo "=== Verification Complete ==="
+    return 0
+}
+
 # Helper function for SSH commands with retry
 ssh_with_retry() {
     local cmd="$1"
@@ -21,7 +75,7 @@ ssh_with_retry() {
     
     while [ $attempt -le $MAX_RETRIES ]; do
         echo "Attempt $attempt of $MAX_RETRIES: $cmd"
-        sshpass -p "$PASS" ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no $USER@$SERVER "$cmd" && return 0
+        SSHPASS="$PASS" sshpass -e ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$SERVER" "$cmd" && return 0
         attempt=$((attempt + 1))
         sleep $RETRY_DELAY
     done
@@ -44,6 +98,11 @@ scp_with_retry() {
 }
 
 echo "=== Starting Robust Deployment ==="
+
+if [ "$VERIFY_ONLY" = true ]; then
+    verify_deployment
+    exit $?
+fi
 
 # Step 1: Create deployment directory
 echo "Creating deployment directory..."
