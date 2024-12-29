@@ -1,4 +1,4 @@
-const { createLibp2p } = require('@libp2p/libp2p')
+const { createLibp2p } = require('libp2p')
 const { tcp } = require('@libp2p/tcp')
 const { webSockets } = require('@libp2p/websockets')
 const { noise } = require('@chainsafe/libp2p-noise')
