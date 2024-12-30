@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import P2PBrowserNetwork from './utils/p2p-browser';
 import WebRTCBrowserManager from './utils/webrtc-browser';
 import PaymentManager from './utils/PaymentManager';
-import ChatLayout from './components/ChatLayout';
 import Login from './Login';
+import { setLanguage } from './utils/language';
+import { WALLET_CONFIG } from './utils/config';
+
+// Lazy load larger components
+const ChatLayout = React.lazy(() => import('./components/ChatLayout'));
+const PeerManager = React.lazy(() => import('./components/PeerManager'));
 
 function App() {
   const [p2pNetwork, setP2PNetwork] = useState(null);
@@ -13,6 +18,10 @@ function App() {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
+    // Initialize language
+    setLanguage(WALLET_CONFIG.CURRENT_LANGUAGE);
+    document.documentElement.setAttribute('data-language', WALLET_CONFIG.CURRENT_LANGUAGE);
+
     const initializeManagers = async () => {
       try {
         const p2p = new P2PBrowserNetwork();
@@ -100,24 +109,33 @@ function App() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       {!walletConnected ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
-        <ChatLayout
-          selectedPeer={selectedPeer}
-          setSelectedPeer={setSelectedPeer}
-          messages={messages}
-          message={message}
-          setMessage={setMessage}
-          handleSendMessage={handleSendMessage}
-          handleStartCall={handleStartCall}
-          paymentManager={paymentManager}
-          handlePayFee={handlePayFee}
-          p2pNetwork={p2pNetwork}
-        />
+        <div className="container mx-auto p-4 space-y-4">
+          <Suspense fallback={<div className="flex items-center justify-center h-12">Loading peers...</div>}>
+            <PeerManager 
+              currentWallet={paymentManager?.account} 
+            />
+          </Suspense>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading chat...</div>}>
+            <ChatLayout
+              selectedPeer={selectedPeer}
+              setSelectedPeer={setSelectedPeer}
+              messages={messages}
+              message={message}
+              setMessage={setMessage}
+              handleSendMessage={handleSendMessage}
+              handleStartCall={handleStartCall}
+              paymentManager={paymentManager}
+              handlePayFee={handlePayFee}
+              p2pNetwork={p2pNetwork}
+            />
+          </Suspense>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 

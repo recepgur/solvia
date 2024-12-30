@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { API_CONFIG, WALLET_CONFIG, socket } from '../utils/config';
 import { getMessage, setLanguage } from '../utils/language';
+import { handleMobileWalletConnection } from '../utils/mobile';
+import { fetchWithRetry, handleNetworkError } from '../utils/network';
 
 const WalletConnect = ({ onWalletConnect }) => {
     const [currentLanguage, setCurrentLanguage] = useState('tr');
@@ -32,6 +34,9 @@ const WalletConnect = ({ onWalletConnect }) => {
     const connectCoinbase = async () => {
         try {
             if (!isCoinbaseWalletInstalled()) {
+                if (await handleMobileWalletConnection('coinbase')) {
+                    return;
+                }
                 alert(getMessage('COINBASE_NOT_FOUND'));
                 return;
             }
@@ -44,9 +49,10 @@ const WalletConnect = ({ onWalletConnect }) => {
 
             try {
                 // Get challenge from server
-                const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.ETHEREUM}`, {
-                    method: 'GET'
-                });
+                const response = await fetchWithRetry(
+                    `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.ETHEREUM}`,
+                    { method: 'GET' }
+                );
 
                 if (!response.ok) {
                     throw new Error(getMessage('CONNECT_ERROR'));
@@ -97,13 +103,17 @@ const WalletConnect = ({ onWalletConnect }) => {
             }
         } catch (error) {
             console.error('Error connecting to Coinbase wallet:', error);
-            alert(error.message || getMessage('CONNECT_ERROR'));
+            const errorMessage = handleNetworkError(error);
+            alert(errorMessage || getMessage('CONNECT_ERROR'));
         }
     };
 
     const connectTrust = async () => {
         try {
             if (!isTrustWalletInstalled()) {
+                if (await handleMobileWalletConnection('trust')) {
+                    return;
+                }
                 alert(getMessage('TRUST_NOT_FOUND'));
                 return;
             }
@@ -172,13 +182,17 @@ const WalletConnect = ({ onWalletConnect }) => {
             }
         } catch (error) {
             console.error('Error connecting to Trust wallet:', error);
-            alert(error.message || getMessage('CONNECT_ERROR'));
+            const errorMessage = handleNetworkError(error);
+            alert(errorMessage || getMessage('CONNECT_ERROR'));
         }
     };
 
     const connectEthereum = async () => {
         try {
             if (!window.ethereum) {
+                if (await handleMobileWalletConnection(WALLET_CONFIG.TYPES.ETHEREUM)) {
+                    return;
+                }
                 alert(getMessage('METAMASK_NOT_FOUND'));
                 return;
             }
@@ -191,9 +205,10 @@ const WalletConnect = ({ onWalletConnect }) => {
 
             try {
                 // Get challenge from server
-                const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.ETHEREUM}`, {
-                    method: 'GET'
-                });
+                const response = await fetchWithRetry(
+                    `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.ETHEREUM}`,
+                    { method: 'GET' }
+                );
 
                 if (!response.ok) {
                     throw new Error(WALLET_CONFIG.MESSAGES.CONNECT_ERROR);
@@ -246,13 +261,17 @@ const WalletConnect = ({ onWalletConnect }) => {
             }
         } catch (error) {
             console.error('Error connecting to Ethereum wallet:', error);
-            alert(error.message || getMessage('CONNECT_ERROR'));
+            const errorMessage = handleNetworkError(error);
+            alert(errorMessage || getMessage('CONNECT_ERROR'));
         }
     };
 
     const connectSolana = async () => {
         try {
             if (!window.solana) {
+                if (await handleMobileWalletConnection(WALLET_CONFIG.TYPES.SOLANA)) {
+                    return;
+                }
                 alert(getMessage('PHANTOM_NOT_FOUND'));
                 return;
             }
@@ -263,9 +282,10 @@ const WalletConnect = ({ onWalletConnect }) => {
 
             try {
                 // Get challenge from server
-                const challengeResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.SOLANA}`, {
-                    method: 'GET'
-                });
+                const challengeResponse = await fetchWithRetry(
+                    `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHALLENGE}?walletAddress=${address}&walletType=${WALLET_CONFIG.TYPES.SOLANA}`,
+                    { method: 'GET' }
+                );
 
                 if (!challengeResponse.ok) {
                     throw new Error(WALLET_CONFIG.MESSAGES.CONNECT_ERROR);
@@ -316,7 +336,8 @@ const WalletConnect = ({ onWalletConnect }) => {
             }
         } catch (error) {
             console.error('Error connecting to Solana wallet:', error);
-            alert(error.message || getMessage('CONNECT_ERROR'));
+            const errorMessage = handleNetworkError(error);
+            alert(errorMessage || getMessage('CONNECT_ERROR'));
         }
     };
 

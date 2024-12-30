@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Language support */
+.wallet-text .en { display: none; }
+.wallet-text .tr { display: inline; }
+
+/* Language toggle styles */
+[data-language="en"] .wallet-text .en { display: inline; }
+[data-language="en"] .wallet-text .tr { display: none; }
+
+/* WhatsApp-like styling */
+.wallet-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.text-red-500 {
+  font-size: 0.75rem;
+}
+
 @layer base {
   :root {
     --primary: 230 60% 50%;

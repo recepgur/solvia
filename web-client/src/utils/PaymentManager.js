@@ -126,7 +126,7 @@ class PaymentManager {
             const tokenProgramId = new PublicKey(PROGRAM_IDS.TOKEN_PROGRAM);
             
             // Servis sağlayıcının cüzdan adresi (fee collector)
-            const feePubkey = new PublicKey(PROGRAM_IDS.FEE_COLLECTOR); // Ücret toplayıcı cüzdan adresi
+            const feePubkey = new PublicKey(PROGRAM_IDS.FEE_COLLECTOR);
             
             // Kullanıcının token hesabını al
             const fromTokenAccount = await getAssociatedTokenAddress(
@@ -144,7 +144,26 @@ class PaymentManager {
                 tokenProgramId
             );
 
+            // Token hesap bakiyesini kontrol et
+            try {
+                const balance = await this.solanaConnection.getTokenAccountBalance(fromTokenAccount);
+                const currentBalance = balance.value.uiAmount;
+                const requiredAmount = feeAmount / Math.pow(10, SOLVIO_TOKEN.DECIMALS);
+                
+                if (currentBalance < requiredAmount) {
+                    throw new Error(`Yetersiz SOLV bakiyesi. Gerekli: ${requiredAmount} SOLV, Mevcut: ${currentBalance} SOLV`);
+                }
+            } catch (error) {
+                if (error.message.includes('Yetersiz SOLV')) {
+                    throw error;
+                }
+                console.log('Token hesabı henüz oluşturulmamış');
+            }
+
             const transaction = new Transaction();
+            const recentBlockhash = await this.solanaConnection.getRecentBlockhash();
+            transaction.recentBlockhash = recentBlockhash.blockhash;
+            transaction.feePayer = fromPubkey;
 
             // Eğer kullanıcının token hesabı yoksa oluştur
             try {
@@ -174,15 +193,38 @@ class PaymentManager {
                 )
             );
 
-            const signature = await window.solana.signAndSendTransaction(transaction);
-            await this.solanaConnection.confirmTransaction(signature.signature);
+            let retries = 3;
+            let signature;
+            
+            while (retries > 0) {
+                try {
+                    signature = await window.solana.signAndSendTransaction(transaction);
+                    const confirmation = await this.solanaConnection.confirmTransaction(
+                        signature.signature,
+                        'confirmed'
+                    );
+                    
+                    if (confirmation.value.err) {
+                        throw new Error('İşlem onaylanmadı');
+                    }
+                    
+                    break;
+                } catch (error) {
+                    retries--;
+                    if (retries === 0) {
+                        throw new Error(`İşlem ${error.message} nedeniyle başarısız oldu`);
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
 
             return {
                 signature: signature.signature,
                 feeType,
                 amount: feeAmount / Math.pow(10, SOLVIO_TOKEN.DECIMALS),
                 token: SOLVIO_TOKEN.SYMBOL,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                status: 'success'
             };
         } catch (error) {
             console.error('Solana ödemesi işlenirken hata:', error);
