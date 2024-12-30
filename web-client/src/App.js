@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import P2PBrowserNetwork from './utils/p2p-browser';
 import WebRTCBrowserManager from './utils/webrtc-browser';
-import WalletConnect from './components/WalletConnect';
 import PaymentManager from './utils/PaymentManager';
 import ChatLayout from './components/ChatLayout';
 import Login from './Login';
@@ -94,12 +93,8 @@ function App() {
   };
 
   const [walletConnected, setWalletConnected] = useState(false);
-  const [walletType, setWalletType] = useState(null);
-  const [walletAccount, setWalletAccount] = useState(null);
 
   const handleLoginSuccess = async (type, account) => {
-    setWalletType(type);
-    setWalletAccount(account);
     await handleWalletConnect(type, account);
     setWalletConnected(true);
   };

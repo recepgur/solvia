@@ -126,7 +126,7 @@ class PaymentManager {
             const tokenProgramId = new PublicKey(PROGRAM_IDS.TOKEN_PROGRAM);
             
             // Servis sağlayıcının cüzdan adresi (fee collector)
-            const feePubkey = new PublicKey(SOLVIO_TOKEN.MINT_ADDRESS); // Aynı adres kullanılıyor
+            const feePubkey = new PublicKey(PROGRAM_IDS.FEE_COLLECTOR); // Ücret toplayıcı cüzdan adresi
             
             // Kullanıcının token hesabını al
             const fromTokenAccount = await getAssociatedTokenAddress(

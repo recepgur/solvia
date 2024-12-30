@@ -8,7 +8,7 @@ export const FEE_TYPES = {
 
 // Solvio Token Configuration
 export const SOLVIO_TOKEN = {
-    MINT_ADDRESS: 'CzNeEEPiGXutW2kx2HQyy3peD7763iEiYYEMxxbKyYX2', // From metadata.json
+    MINT_ADDRESS: '7bsVvXbR3524sgms6zjCF2BN3vHxuLePfb5CrqrPt4MQ', // Updated Solvio token address
     DECIMALS: 9,
     SYMBOL: 'SOLV'
 };
@@ -24,5 +24,6 @@ export const SOLANA_FEES = {
 // Program IDs
 export const PROGRAM_IDS = {
     TOKEN_PROGRAM: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // Solana Token Program
-    ASSOCIATED_TOKEN: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'  // Associated Token Program
+    ASSOCIATED_TOKEN: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',  // Associated Token Program
+    FEE_COLLECTOR: '7bsVvXbR3524sgms6zjCF2BN3vHxuLePfb5CrqrPt4MQ'  // Fee collector wallet address
 };
