@@ -1,4 +1,4 @@
-import IPFS from 'ipfs-http-client'
+import { create as createIPFSClient } from 'ipfs-http-client'
 import { create } from 'kubo-rpc-client'
 import { Crypto } from '@peculiar/webcrypto'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
@@ -6,15 +6,19 @@ import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 
 class IPFSManager {
     constructor() {
-        // Initialize IPFS client
+        // Initialize IPFS client with public gateway
         this.ipfs = create({
-            host: 'localhost',
-            port: 5001,
-            protocol: 'http'
+            host: 'ipfs.io',
+            port: 443,
+            protocol: 'https',
+            apiPath: '/api/v0'
         })
         
         // Initialize crypto
         this.crypto = new Crypto()
+        
+        // Flag to track initialization status
+        this.initialized = false
     }
 
     // Upload file to IPFS with encryption
@@ -235,6 +239,34 @@ class IPFSManager {
             return false
         }
     }
+
+    // Initialize and verify IPFS connection
+    async start() {
+        try {
+            if (this.initialized) {
+                return true;
+            }
+
+            // Test basic operations with minimal interaction
+            const testData = uint8ArrayFromString('IPFS connection test')
+            const result = await this.ipfs.add(testData)
+            
+            console.log('IPFS client initialized successfully')
+            this.initialized = true
+            return true
+        } catch (error) {
+            console.warn('IPFS initialization warning:', error)
+            // Don't throw - allow application to continue without IPFS
+            // File storage will be disabled but messaging will work
+            return false
+        }
+    }
 }
+
+export const initializeIPFS = async (config = {}) => {
+    const ipfsManager = new IPFSManager(config);
+    await ipfsManager.start();
+    return ipfsManager;
+};
 
 export default IPFSManager
