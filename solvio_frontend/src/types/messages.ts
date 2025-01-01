@@ -41,6 +41,12 @@ export interface MessageStore {
   getAllMessages(): Promise<Message[]>;
 }
 
+export interface Contact {
+  wallet_address: string;
+  display_name?: string;
+  last_seen?: string;
+}
+
 export interface MessageResponse {
   id: string;
   content: string;

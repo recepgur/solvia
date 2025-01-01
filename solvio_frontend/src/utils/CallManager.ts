@@ -5,6 +5,12 @@ interface CallOptions {
   wallet_address: string;
 }
 
+interface PendingOffer extends RTCSessionDescriptionInit {
+  call_id: string;
+  sender_address: string;
+  data: string;
+}
+
 export enum CallStatus {
   IDLE = 'idle',
   CALLING = 'calling',
@@ -18,11 +24,12 @@ export class CallManager extends EventEmitter {
   private peer: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
-  private wallet_address: string;
   private currentCallId: string | null = null;
   private currentRecipient: string | null = null;
   private status: CallStatus = CallStatus.IDLE;
-  private pendingOffer: any = null;
+  private pendingOffer: PendingOffer | null = null;
+  // @ts-expect-error - Used in WebSocket URL construction
+  private readonly wallet_address: string;
 
   constructor(options: CallOptions) {
     super();
@@ -130,12 +137,18 @@ export class CallManager extends EventEmitter {
       this.emit('statusChange', this.status);
       
     } catch (error) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       console.error('Error starting call:', error);
-      this.emit('error', error);
+      this.emit('error', {
+        message: isMobile 
+          ? 'Please grant microphone and camera permissions in your mobile settings.' 
+          : 'Error accessing media devices. Please check your permissions.',
+        originalError: error
+      });
     }
   }
 
-  private async handleOffer(message: any) {
+  private async handleOffer(message: PendingOffer) {
     try {
       this.currentCallId = message.call_id;
       this.currentRecipient = message.sender_address;
@@ -194,7 +207,7 @@ export class CallManager extends EventEmitter {
     }
   }
 
-  private async handleAnswer(message: any) {
+  private async handleAnswer(message: { data: string }) {
     try {
       const answer = JSON.parse(message.data);
       await this.peer!.setRemoteDescription(new RTCSessionDescription(answer));
@@ -206,7 +219,7 @@ export class CallManager extends EventEmitter {
     }
   }
 
-  private async handleIceCandidate(message: any) {
+  private async handleIceCandidate(message: { data: { candidate: RTCIceCandidateInit } }) {
     try {
       if (this.peer) {
         await this.peer.addIceCandidate(new RTCIceCandidate(message.data.candidate));
@@ -217,7 +230,7 @@ export class CallManager extends EventEmitter {
     }
   }
 
-  private async handleHangup(message: any) {
+  private async handleHangup(_message: unknown) {
     this.endCall();
   }
 

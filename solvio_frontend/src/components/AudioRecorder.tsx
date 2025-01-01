@@ -73,7 +73,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onSend, className }) => {
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 p-2 md:p-0 touch-none ${className}`}>
       {!isRecording && !audioBlob && (
         <Button
           variant="ghost"
@@ -103,7 +103,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onSend, className }) => {
 
       {audioBlob && !isRecording && (
         <>
-          <audio controls src={URL.createObjectURL(audioBlob)} className="h-8" />
+          <audio 
+            controls 
+            src={URL.createObjectURL(audioBlob)} 
+            className="h-8 w-full max-w-[200px] md:max-w-[300px] touch-manipulation" 
+          />
           <Button
             variant="ghost"
             size="icon"
