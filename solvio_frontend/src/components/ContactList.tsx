@@ -76,10 +76,10 @@ export function ContactList({
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <Card className="h-full overflow-hidden max-h-[100vh] md:max-h-none">
+      <CardHeader className="py-2 md:py-4">
         <div className="flex justify-between items-center">
-          <CardTitle>Contacts</CardTitle>
+          <CardTitle className="text-sm md:text-base">Contacts</CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="icon">

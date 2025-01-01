@@ -202,8 +202,8 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
               await window.solana.connect();
               const response = await window.solana.request({ method: 'connect' });
               address = response.publicKey;
-            } catch (err: any) {
-              if (err.code === 4001) {
+            } catch (err: unknown) {
+              if ((err as { code?: number }).code === 4001) {
                 throw { type: 'user_rejected', message: 'User rejected the connection request' };
               }
               throw err;
@@ -216,10 +216,10 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
             try {
               const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts'
-              });
+              }) as string[];
               address = accounts[0];
-            } catch (err: any) {
-              if (err.code === 4001) {
+            } catch (err: unknown) {
+              if ((err as { code?: number }).code === 4001) {
                 throw { type: 'user_rejected', message: 'User rejected the connection request' };
               }
               throw err;
@@ -232,10 +232,10 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
             try {
               const accounts = await window.trustwallet.ethereum.request({
                 method: 'eth_requestAccounts'
-              });
+              }) as string[];
               address = accounts[0];
-            } catch (err: any) {
-              if (err.code === 4001) {
+            } catch (err: unknown) {
+              if ((err as { code?: number }).code === 4001) {
                 throw { type: 'user_rejected', message: 'User rejected the connection request' };
               }
               throw err;
@@ -248,10 +248,10 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
             try {
               const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts'
-              });
+              }) as string[];
               address = accounts[0];
-            } catch (err: any) {
-              if (err.code === 4001) {
+            } catch (err: unknown) {
+              if ((err as { code?: number }).code === 4001) {
                 throw { type: 'user_rejected', message: 'User rejected the connection request' };
               }
               throw err;

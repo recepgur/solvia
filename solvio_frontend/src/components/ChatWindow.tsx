@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
-import { Message } from '../types/messages';
+import { MobileNav } from '@/components/MobileNav';
+import { Message, ChainType, CrossChainStatus, Contact } from '../types/messages';
 import { messageStore } from '../utils/MessageStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,9 +15,10 @@ import AudioRecorder from './AudioRecorder';
 interface ChatWindowProps {
   walletAddress: string;
   selectedContact?: string;
+  onSelectContact: (contact: Contact) => void;
 }
 
-export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) {
+export function ChatWindow({ walletAddress, selectedContact, onSelectContact }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSyncing, setSyncing] = useState(false);
@@ -72,6 +74,10 @@ export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) 
       message_type: 'text',
       status: 'pending',
       offline: !navigator.onLine,
+      origin_chain: ChainType.SOLANA,
+      destination_chain: ChainType.SOLANA,
+      cross_chain_status: CrossChainStatus.CONFIRMED,
+      delivery_confirmed: false,
     };
 
     // Store message locally first
@@ -113,12 +119,19 @@ export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) 
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <CardTitle>{selectedContact}</CardTitle>
+    <Card className="h-full flex flex-col max-h-[100vh] md:max-h-none">
+      <CardHeader className="py-2 md:py-4 flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MobileNav
+            walletAddress={walletAddress}
+            onSelectContact={(contact: Contact) => onSelectContact(contact)}
+            selectedContact={selectedContact}
+          />
+          <CardTitle className="text-sm md:text-base truncate">{selectedContact}</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <ScrollArea className="flex-1 mb-4">
+      <CardContent className="flex-1 flex flex-col p-2 md:p-6 overflow-y-auto">
+        <ScrollArea className="flex-1 mb-2 md:mb-4">
           {isSyncing && (
             <div className="text-center text-sm text-gray-500 py-2">
               Syncing messages...
@@ -132,11 +145,11 @@ export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) 
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`mb-2 p-2 rounded-lg ${
+              className={`mb-2 p-2 md:p-3 rounded-lg ${
                 message.sender_address === walletAddress
                   ? 'bg-blue-500 text-white ml-auto'
                   : 'bg-gray-100'
-              } max-w-[80%]`}
+              } max-w-[85%] md:max-w-[75%] text-sm md:text-base`}
             >
               {message.message_type === 'voice' ? (
                 <div className="flex flex-col gap-2">
@@ -158,8 +171,9 @@ export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) 
             </div>
           ))}
         </ScrollArea>
-        <div className="flex gap-2">
+        <div className="flex gap-2 sticky bottom-0 bg-background p-2 md:p-0 border-t md:border-0">
           <Input
+            className="text-sm md:text-base h-10 md:h-12"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
@@ -178,6 +192,10 @@ export function ChatWindow({ walletAddress, selectedContact }: ChatWindowProps) 
                 status: 'pending',
                 offline: !navigator.onLine,
                 upload_progress: 0,
+                origin_chain: ChainType.SOLANA,
+                destination_chain: ChainType.SOLANA,
+                cross_chain_status: CrossChainStatus.CONFIRMED,
+                delivery_confirmed: false,
               };
               
               setMessages(prev => [...prev, tempMessage]);

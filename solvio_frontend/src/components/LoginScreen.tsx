@@ -56,19 +56,19 @@ export function LoginScreen() {
         </div>
       </div>
       
-      <div className="max-w-5xl w-full space-y-12 relative z-10">
+      <div className="max-w-5xl w-full space-y-8 md:space-y-12 relative z-10 px-4 md:px-6">
         <div className="text-center space-y-4">
-          <div className="space-y-2 backdrop-blur-sm bg-background/80 p-6 rounded-lg">
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Solvio</h1>
-            <p className="text-xl text-muted-foreground">
+          <div className="space-y-2 backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Welcome to Solvio</h1>
+            <p className="text-base md:text-xl text-muted-foreground">
               The next generation of decentralized communication
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-0 w-full">
           {features.map((feature, index) => (
-            <div key={index} className="transform transition-all duration-300 hover:scale-105">
+            <div key={index} className="transform transition-all duration-300 hover:scale-105 w-full">
               <FeatureCard
                 icon={feature.icon}
                 title={feature.title}

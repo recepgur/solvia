@@ -3,15 +3,15 @@ declare interface Window {
     isPhantom?: boolean;
     connect(): Promise<{ publicKey: string }>;
     disconnect(): Promise<void>;
-    on(event: string, callback: Function): void;
+    on(event: string, callback: (result: unknown) => void): void;
     request(params: { method: string }): Promise<{ publicKey: string }>;
   };
   ethereum?: {
     isMetaMask?: boolean;
     isCoinbaseWallet?: boolean;
-    request(params: { method: string; params?: any[] }): Promise<any>;
-    on(event: string, callback: Function): void;
-    removeListener(event: string, callback: Function): void;
+    request(params: { method: string; params?: unknown[] }): Promise<unknown>;
+    on(event: string, callback: (result: unknown) => void): void;
+    removeListener(event: string, callback: (result: unknown) => void): void;
     selectedAddress: string | null;
     chainId: string;
     enable(): Promise<string[]>;
@@ -22,7 +22,7 @@ declare interface Window {
       disconnect(): Promise<void>;
     };
     ethereum?: {
-      request(params: { method: string; params?: any[] }): Promise<any>;
+      request(params: { method: string; params?: unknown[] }): Promise<unknown>;
       selectedAddress: string | null;
     };
   };
