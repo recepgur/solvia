@@ -25,7 +25,7 @@ const TOAST_ACTIONS = {
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const;
 
-type ToastActionType = typeof TOAST_ACTIONS[keyof typeof TOAST_ACTIONS];
+// Action types are handled directly in the reducer
 
 let count = 0
 

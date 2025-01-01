@@ -35,7 +35,7 @@ class MessageStore {
 
   private async initDB() {
     this.db = await openDB<MessageDB>('solvio-messages', 1, {
-      upgrade(db) {
+      upgrade(db: IDBPDatabase<MessageDB>) {
         const store = db.createObjectStore('messages', { keyPath: 'id' });
         store.createIndex('by-status', 'status');
         store.createIndex('by-recipient', 'recipient_address');

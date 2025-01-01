@@ -29,6 +29,7 @@ function App() {
           <ChatWindow
             walletAddress={walletAddress}
             selectedContact={selectedContact}
+            onSelectContact={(contact) => setSelectedContact(contact.wallet_address)}
           />
         </div>
       </div>

@@ -54,7 +54,7 @@ export class CallManager extends EventEmitter {
             await this.handleIceCandidate(message);
             break;
           case 'hangup':
-            await this.handleHangup(message);
+            await this.handleHangup();
             break;
         }
       }
