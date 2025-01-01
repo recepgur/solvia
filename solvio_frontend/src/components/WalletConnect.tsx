@@ -584,7 +584,12 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
                 </span>
               )}
               {walletStates[wallet.type].isConnected && (
-                <span className="text-sm whitespace-nowrap">Connected: {walletStates[wallet.type].address?.slice(0, 6)}...</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-green-600 dark:text-green-500">Connected</span>
+                  <span className="text-sm text-muted-foreground">
+                    {walletStates[wallet.type].address?.slice(0, 6)}...{walletStates[wallet.type].address?.slice(-4)}
+                  </span>
+                </div>
               )}
               {!wallet.installed && !walletStates[wallet.type].isConnected && (
                 <div className="flex items-center gap-2 flex-shrink-0">

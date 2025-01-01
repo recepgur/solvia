@@ -47,29 +47,30 @@ const networkAnimationStyles = `
 .network-node {
   width: 12px;
   height: 12px;
-  background: hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary) / 0.5);
   border-radius: 50%;
   position: absolute;
+  box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
   animation: 
-    float 15s infinite cubic-bezier(0.4, 0, 0.2, 1),
+    float 20s infinite cubic-bezier(0.4, 0, 0.2, 1),
     nodeGradient 4s infinite ease-in-out;
 }
 
 .network-node::after {
   content: '';
   position: absolute;
-  inset: -4px;
-  background: hsl(var(--primary) / 0.2);
+  inset: -6px;
+  background: hsl(var(--primary) / 0.3);
   border-radius: 50%;
-  animation: pulse 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation: pulse 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .network-line {
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg, 
-    hsl(var(--primary) / 0.1),
-    hsl(var(--primary) / 0.3),
-    hsl(var(--primary) / 0.1)
+    hsl(var(--primary) / 0.2),
+    hsl(var(--primary) / 0.5),
+    hsl(var(--primary) / 0.2)
   );
   position: absolute;
   transform-origin: left;
@@ -140,10 +141,10 @@ export function LoginScreen() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background overflow-hidden relative">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background/95 overflow-hidden relative">
       {/* Network animation container */}
       <style>{networkAnimationStyles}</style>
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-gradient-to-br from-background/50 via-background/30 to-background/50">
         <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded' : ''}`} id="network-particles">
           {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (
             <div
