@@ -119,6 +119,11 @@ class MessageStore {
     if (!this.db) await this.initDB();
     return this.db!.getAll('messages');
   }
+
+  async handleMessageExpired(messageId: string) {
+    if (!this.db) await this.initDB();
+    await this.db!.delete('messages', messageId);
+  }
 }
 
 export const messageStore = new MessageStore();

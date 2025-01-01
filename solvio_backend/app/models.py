@@ -46,6 +46,8 @@ class Message(BaseModel):
     offline: bool = False
     retry_count: int = 0
     last_retry: Optional[datetime] = None
+    ttl_seconds: Optional[int] = None
+    expiration_time: Optional[datetime] = None
     
     # Cross-chain messaging fields
     origin_chain: ChainType
@@ -129,6 +131,8 @@ class GroupMessage(BaseModel):
     status: MessageStatus = MessageStatus.PENDING
     encrypted_content: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    ttl_seconds: Optional[int] = None
+    expiration_time: Optional[datetime] = None
 
 class Database:
     def __init__(self):

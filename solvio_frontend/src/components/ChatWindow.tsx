@@ -51,9 +51,16 @@ export function ChatWindow({ walletAddress, selectedContact, onSelectContact }: 
     // Connect to WebSocket
     const wsConnection = new WebSocket(`ws://${import.meta.env.VITE_BACKEND_URL.replace('http://', '')}/messages/real-time?wallet_address=${walletAddress}`);
     
-    wsConnection.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      setMessages(prev => [...prev, message]);
+    wsConnection.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'message_expired') {
+        await messageStore.handleMessageExpired(data.message_id);
+        setMessages(prev => prev.filter(msg => msg.id !== data.message_id));
+        return;
+      }
+      
+      setMessages(prev => [...prev, data]);
     };
 
     return () => {

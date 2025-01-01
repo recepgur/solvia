@@ -1,4 +1,5 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, UploadFile, File, Request
+from fastapi_utils.tasks import repeat_every
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from typing import Dict, List, Optional
@@ -29,6 +30,44 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 app = FastAPI()
+
+# Setup message cleanup job
+@app.on_event("startup")
+@repeat_every(seconds=60)
+async def cleanup_expired_messages():
+    now = datetime.utcnow()
+    expired_messages = []
+    
+    # Check regular messages
+    for msg_id, msg in db.messages.items():
+        if msg.ttl_seconds and msg.expiration_time:
+            if now >= msg.expiration_time:
+                expired_messages.append(("message", msg_id))
+    
+    # Check group messages
+    for msg_id, msg in db.group_messages.items():
+        if msg.ttl_seconds and msg.expiration_time:
+            if now >= msg.expiration_time:
+                expired_messages.append(("group_message", msg_id))
+    
+    # Remove expired messages and notify clients
+    for msg_type, msg_id in expired_messages:
+        if msg_type == "message" and msg_id in db.messages:
+            del db.messages[msg_id]
+        elif msg_type == "group_message" and msg_id in db.group_messages:
+            del db.group_messages[msg_id]
+            
+        # Notify connected clients about expired messages
+        notification = {
+            "type": "message_expired",
+            "message_id": msg_id,
+            "message_type": msg_type
+        }
+        for websocket in manager.active_connections.values():
+            try:
+                await websocket.send_json(notification)
+            except Exception as e:
+                print(f"Failed to notify client about expired message: {e}")
 
 # Import routers
 from .routers import cross_chain, groups
@@ -169,6 +208,7 @@ async def get_user_profile(user: UserProfile = Depends(get_current_user)):
 # Messaging endpoints
 @app.post("/messages/send")
 async def send_message(
+    request: Request,
     content: str,
     recipient_address: str,
     wallet_address: str,
