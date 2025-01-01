@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wallet, AlertCircle, ExternalLink } from 'lucide-react';
+import { NFTInput } from './NFTInput';
 
 type WalletType = 'phantom' | 'metamask' | 'trustwallet' | 'coinbase';
 
@@ -25,6 +26,8 @@ interface WalletState {
   address: string | null;
   chainId?: string | number;
   balance?: string;
+  hasNFTAccess?: boolean;
+  nftMintAddress?: string;
 }
 
 interface WalletInfo {
@@ -46,11 +49,12 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState<WalletType | null>(null);
   const [error, setError] = useState<WalletError | null>(null);
+  const [nftMintAddress, setNftMintAddress] = useState<string>('');
   const [walletStates, setWalletStates] = useState<Record<WalletType, WalletState>>({
-    phantom: { isConnected: false, address: null },
-    metamask: { isConnected: false, address: null },
-    trustwallet: { isConnected: false, address: null },
-    coinbase: { isConnected: false, address: null },
+    phantom: { isConnected: false, address: null, hasNFTAccess: false },
+    metamask: { isConnected: false, address: null, hasNFTAccess: false },
+    trustwallet: { isConnected: false, address: null, hasNFTAccess: false },
+    coinbase: { isConnected: false, address: null, hasNFTAccess: false },
   });
 
   // Function to check if wallets are installed
@@ -260,6 +264,35 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
           throw { type: 'unknown', message: `Failed to connect to ${walletType}` };
         }
 
+        // Verify NFT ownership if mint address is provided
+        if (nftMintAddress) {
+          try {
+            const response = await fetch('/auth/connect-wallet', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                wallet_address: address,
+                nft_mint_address: nftMintAddress,
+              }),
+            });
+
+            const data = await response.json();
+            if (!data.nft_verified) {
+              throw {
+                type: 'unsupported_chain',
+                message: 'NFT ownership verification failed. Access denied.',
+              };
+            }
+          } catch (err) {
+            throw {
+              type: 'unsupported_chain',
+              message: 'NFT verification failed. Please try again.',
+            };
+          }
+        }
+
         // Get chain ID for Ethereum-based wallets
         let chainId: string | null = null;
         if (walletType !== 'phantom' && window.ethereum) {
@@ -319,6 +352,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <NFTInput value={nftMintAddress} onChange={setNftMintAddress} />
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />

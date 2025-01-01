@@ -42,6 +42,9 @@ class UserProfile(BaseModel):
     display_name: Optional[str] = None
     status: Optional[str] = None
     contacts: List[Contact] = []
+    has_nft_access: bool = False
+    nft_mint_address: Optional[str] = None
+    nft_verified_at: Optional[datetime] = None
 
 # In-memory database
 class CallSignalType(str, Enum):

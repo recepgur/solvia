@@ -13,6 +13,8 @@ from .models import (
     Message, Contact, UserProfile, MessageStatus, MessageType,
     CallSignal, CallState, CallSignalType, ICECandidate, db
 )
+from solana.rpc.api import Client
+from solders.pubkey import Pubkey
 
 # Create media directory if it doesn't exist
 MEDIA_DIR = Path("media/voice_messages")
@@ -92,10 +94,52 @@ async def healthz():
 
 # Authentication endpoints
 @app.post("/auth/connect-wallet")
-async def connect_wallet(wallet_address: str):
+async def connect_wallet(wallet_address: str, nft_mint_address: Optional[str] = None):
     if wallet_address not in db.users:
         db.users[wallet_address] = UserProfile(wallet_address=wallet_address)
-    return {"status": "connected", "user": db.users[wallet_address]}
+    
+    user = db.users[wallet_address]
+    
+    # If NFT mint address is provided, verify ownership
+    if nft_mint_address:
+        try:
+            # Initialize Solana client
+            client = Client("https://api.mainnet-beta.solana.com")
+            
+            # Convert addresses to Pubkey objects
+            wallet_pubkey = Pubkey.from_string(wallet_address)
+            nft_pubkey = Pubkey.from_string(nft_mint_address)
+            
+            # Get token accounts by owner
+            token_accounts = client.get_token_accounts_by_owner(
+                wallet_pubkey,
+                {"mint": nft_pubkey}
+            )
+            
+            # Check if the wallet owns the NFT
+            has_nft = len(token_accounts.value) > 0
+            
+            # Update user profile
+            user.has_nft_access = has_nft
+            user.nft_mint_address = nft_mint_address if has_nft else None
+            user.nft_verified_at = datetime.utcnow() if has_nft else None
+            
+            return {
+                "status": "connected",
+                "user": user,
+                "nft_verified": has_nft
+            }
+            
+        except Exception as e:
+            print(f"NFT verification failed: {str(e)}")
+            return {
+                "status": "connected",
+                "user": user,
+                "nft_verified": False,
+                "error": "NFT verification failed"
+            }
+    
+    return {"status": "connected", "user": user}
 
 @app.get("/auth/user-profile")
 async def get_user_profile(user: UserProfile = Depends(get_current_user)):
