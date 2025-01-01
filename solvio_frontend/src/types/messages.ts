@@ -1,3 +1,17 @@
+export enum ChainType {
+  SOLANA = 'solana',
+  ETHEREUM = 'ethereum',
+  POLYGON = 'polygon',
+  BSC = 'bsc'
+}
+
+export enum CrossChainStatus {
+  PENDING = 'pending',
+  BRIDGING = 'bridging',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed'
+}
+
 export interface Message {
   id: string;
   content: string;
@@ -9,6 +23,14 @@ export interface Message {
   upload_progress?: number;
   status: 'pending' | 'sent' | 'delivered' | 'read';
   offline: boolean;
+  
+  // Cross-chain messaging fields
+  origin_chain: ChainType;
+  destination_chain: ChainType;
+  cross_chain_status: CrossChainStatus;
+  bridge_tx_hash?: string;
+  delivery_confirmed: boolean;
+  bridge_fee?: number;
 }
 
 export interface MessageStore {

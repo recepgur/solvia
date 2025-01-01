@@ -11,10 +11,12 @@ from pathlib import Path
 
 from .models import (
     Message, Contact, UserProfile, MessageStatus, MessageType,
-    CallSignal, CallState, CallSignalType, ICECandidate, db
+    CallSignal, CallState, CallSignalType, ICECandidate, db,
+    ChainType, CrossChainStatus
 )
 from solana.rpc.api import Client
 from solders.pubkey import Pubkey
+from .services.bridge_service import bridge_service
 
 # Create media directory if it doesn't exist
 MEDIA_DIR = Path("media/voice_messages")
@@ -27,6 +29,10 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 app = FastAPI()
+
+# Import routers
+from .routers import cross_chain
+app.include_router(cross_chain.router)
 
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
@@ -153,8 +159,14 @@ async def send_message(
     wallet_address: str,
     message_type: MessageType = MessageType.TEXT,
     media_url: Optional[str] = None,
+    origin_chain: ChainType = ChainType.SOLANA,
+    destination_chain: Optional[ChainType] = None,
     user: UserProfile = Depends(get_current_user)
 ):
+    # If destination_chain not specified, assume same as origin
+    if destination_chain is None:
+        destination_chain = origin_chain
+
     message = Message(
         id=str(uuid.uuid4()),
         sender_address=wallet_address,
@@ -162,19 +174,44 @@ async def send_message(
         content=content,
         message_type=message_type,
         media_url=media_url,
-        status=MessageStatus.PENDING
+        status=MessageStatus.PENDING,
+        origin_chain=origin_chain,
+        destination_chain=destination_chain,
+        cross_chain_status=(
+            CrossChainStatus.PENDING 
+            if origin_chain != destination_chain 
+            else CrossChainStatus.CONFIRMED
+        )
     )
     db.messages[message.id] = message
+
+    # Handle cross-chain messaging if needed
+    if origin_chain != destination_chain:
+        try:
+            tx_hash = await bridge_service.send_cross_chain_message(message)
+            if tx_hash:
+                message.bridge_tx_hash = tx_hash
+                message.cross_chain_status = CrossChainStatus.BRIDGING
+                message.status = MessageStatus.SENT
+            else:
+                message.cross_chain_status = CrossChainStatus.FAILED
+                message.status = MessageStatus.PENDING
+        except Exception as e:
+            print(f"Failed to send cross-chain message: {e}")
+            message.cross_chain_status = CrossChainStatus.FAILED
+            message.status = MessageStatus.PENDING
+            return message
     
-    # Try to send via WebSocket if recipient is online
-    try:
-        await manager.send_message(message, recipient_address)
-        message.status = MessageStatus.DELIVERED
-        message.offline = False
-    except Exception as e:
-        print(f"Failed to deliver message: {e}")
-        message.status = MessageStatus.SENT
-        message.offline = True
+    # Try to send via WebSocket if recipient is online and on same chain
+    if origin_chain == destination_chain:
+        try:
+            await manager.send_message(message, recipient_address)
+            message.status = MessageStatus.DELIVERED
+            message.offline = False
+        except Exception as e:
+            print(f"Failed to deliver message: {e}")
+            message.status = MessageStatus.SENT
+            message.offline = True
     
     db.messages[message.id] = message  # Update message status in DB
     return message

@@ -3,6 +3,12 @@ from typing import Optional, List, Dict
 from datetime import datetime
 from enum import Enum
 
+class ChainType(str, Enum):
+    SOLANA = "solana"
+    ETHEREUM = "ethereum"
+    POLYGON = "polygon"
+    BSC = "bsc"
+
 class MessageType(str, Enum):
     TEXT = "text"
     VOICE = "voice"
@@ -13,6 +19,12 @@ class MessageStatus(str, Enum):
     SENT = "sent"
     DELIVERED = "delivered"
     READ = "read"
+
+class CrossChainStatus(str, Enum):
+    PENDING = "pending"
+    BRIDGING = "bridging"
+    CONFIRMED = "confirmed"
+    FAILED = "failed"
 
 class Message(BaseModel):
     model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
@@ -29,6 +41,14 @@ class Message(BaseModel):
     offline: bool = False
     retry_count: int = 0
     last_retry: Optional[datetime] = None
+    
+    # Cross-chain messaging fields
+    origin_chain: ChainType
+    destination_chain: ChainType
+    cross_chain_status: CrossChainStatus = CrossChainStatus.PENDING
+    bridge_tx_hash: Optional[str] = None
+    delivery_confirmed: bool = False
+    bridge_fee: Optional[float] = None
 
 class Contact(BaseModel):
     model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
