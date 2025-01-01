@@ -285,7 +285,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
                 message: 'NFT ownership verification failed. Access denied.',
               };
             }
-          } catch (err) {
+          } catch {
             throw {
               type: 'unsupported_chain',
               message: 'NFT verification failed. Please try again.',
@@ -297,9 +297,10 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
         let chainId: string | null = null;
         if (walletType !== 'phantom' && window.ethereum) {
           try {
-            chainId = await window.ethereum.request({ method: 'eth_chainId' });
-          } catch (err) {
-            console.warn('Failed to get chain ID:', err);
+            const response = await window.ethereum.request({ method: 'eth_chainId' }) as string;
+            chainId = response;
+          } catch (error) {
+            console.warn('Failed to get chain ID:', error);
           }
         }
         

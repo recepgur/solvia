@@ -230,7 +230,7 @@ export class CallManager extends EventEmitter {
     }
   }
 
-  private async handleHangup(_message: unknown) {
+  private async handleHangup() {
     this.endCall();
   }
 
