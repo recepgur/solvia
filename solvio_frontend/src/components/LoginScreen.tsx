@@ -1,6 +1,81 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WalletConnect } from "./WalletConnect";
 import { MessageSquare, Shield, Wallet, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+
+// CSS for network animation
+const networkAnimationStyles = `
+.network-container {
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.network-container.loaded {
+  opacity: 1;
+}
+
+.network-node {
+  filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.2));
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(15px, -15px) rotate(90deg); }
+  50% { transform: translate(0, -30px) rotate(180deg); }
+  75% { transform: translate(-15px, -15px) rotate(270deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.8); opacity: 0.1; }
+  100% { transform: scale(1); opacity: 0.3; }
+}
+
+@keyframes connectLine {
+  0% { transform: scaleX(0) translateY(0); opacity: 0; }
+  50% { transform: scaleX(1) translateY(-10px); opacity: 0.3; }
+  100% { transform: scaleX(0) translateY(0); opacity: 0; }
+}
+
+@keyframes nodeGradient {
+  0% { background: hsl(var(--primary) / 0.2); }
+  50% { background: hsl(var(--primary) / 0.4); }
+  100% { background: hsl(var(--primary) / 0.2); }
+}
+
+.network-node {
+  width: 12px;
+  height: 12px;
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 50%;
+  position: absolute;
+  animation: 
+    float 15s infinite cubic-bezier(0.4, 0, 0.2, 1),
+    nodeGradient 4s infinite ease-in-out;
+}
+
+.network-node::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: hsl(var(--primary) / 0.2);
+  border-radius: 50%;
+  animation: pulse 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.network-line {
+  height: 1px;
+  background: linear-gradient(90deg, 
+    hsl(var(--primary) / 0.1),
+    hsl(var(--primary) / 0.3),
+    hsl(var(--primary) / 0.1)
+  );
+  position: absolute;
+  transform-origin: left;
+  filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.2));
+  animation: connectLine 4s infinite ease-in-out;
+}`;
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -24,6 +99,23 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 }
 
 export function LoginScreen() {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    
+    // Add smooth entrance animation
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, []);
   const features = [
     {
       icon: <MessageSquare className="w-6 h-6 text-primary" />,
@@ -49,10 +141,34 @@ export function LoginScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background overflow-hidden relative">
-      {/* Network particle animation container - will be animated with framer-motion */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="relative w-full h-full" id="network-particles">
-          {/* Particle nodes will be rendered here */}
+      {/* Network animation container */}
+      <style>{networkAnimationStyles}</style>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded' : ''}`} id="network-particles">
+          {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="network-node"
+              style={{
+                left: `${Math.random() * 80 + 10}%`,
+                top: `${Math.random() * 80 + 10}%`,
+                animationDelay: `${i * 0.5}s`
+              }}
+            />
+          ))}
+          {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="network-line"
+              style={{
+                left: `${Math.random() * 60 + 20}%`,
+                top: `${Math.random() * 60 + 20}%`,
+                width: '100px',
+                transform: `rotate(${Math.random() * 360}deg)`,
+                animationDelay: `${i * 0.7}s`
+              }}
+            />
+          ))}
         </div>
       </div>
       

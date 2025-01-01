@@ -48,15 +48,37 @@ export function ChatWindow({ walletAddress, selectedContact, onSelectContact }: 
   useEffect(() => {
     if (!selectedContact) return;
 
-    // Connect to WebSocket
-    const wsConnection = new WebSocket(`ws://${import.meta.env.VITE_BACKEND_URL.replace('http://', '')}/messages/real-time?wallet_address=${walletAddress}`);
+    // Connect to WebSocket with proper protocol
+    const wsUrl = `${import.meta.env.VITE_BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://')}/messages/real-time?wallet_address=${walletAddress}`;
+    const wsConnection = new WebSocket(wsUrl);
     
     wsConnection.onmessage = async (event) => {
       const data = JSON.parse(event.data);
       
       if (data.type === 'message_expired') {
-        await messageStore.handleMessageExpired(data.message_id);
-        setMessages(prev => prev.filter(msg => msg.id !== data.message_id));
+        try {
+          await messageStore.handleMessageExpired(data.message_id);
+          setMessages(prev => prev.filter(msg => msg.id !== data.message_id));
+          // Notify user about message expiration
+          console.log(`Message ${data.message_id} has expired and been removed`);
+        } catch (error) {
+          console.error('Failed to handle message expiration:', error);
+        }
+        return;
+      }
+      
+      // Handle cross-chain message status updates
+      if (data.type === 'cross_chain_update') {
+        setMessages(prev => prev.map(msg => 
+          msg.id === data.message_id 
+            ? {
+                ...msg,
+                cross_chain_status: data.cross_chain_status,
+                bridge_tx_hash: data.bridge_tx_hash,
+                delivery_confirmed: data.delivery_confirmed
+              }
+            : msg
+        ));
         return;
       }
       

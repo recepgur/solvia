@@ -49,6 +49,7 @@ declare interface Window {
     isSolflare?: boolean;
     connect(): Promise<{ publicKey: string }>;
     disconnect(): Promise<void>;
+    request(params: { method: string }): Promise<{ publicKey: string }>;
   };
   WalletLink?: {
     isConnected: boolean;

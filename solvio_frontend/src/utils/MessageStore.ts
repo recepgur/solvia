@@ -1,16 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-
-interface Message {
-  id: string;
-  content: string;
-  sender_address: string;
-  recipient_address: string;
-  timestamp: string;
-  message_type?: 'text' | 'voice';
-  media_url?: string;
-  status: 'pending' | 'sent' | 'delivered' | 'read';
-  offline: boolean;
-}
+import { Message, CrossChainStatus } from '../types/messages';
 
 interface MessageDB extends DBSchema {
   messages: {
@@ -19,6 +8,7 @@ interface MessageDB extends DBSchema {
     indexes: {
       'by-status': string;
       'by-recipient': string;
+      'by-chain-status': CrossChainStatus;
     };
   };
 }
@@ -39,6 +29,7 @@ class MessageStore {
         const store = db.createObjectStore('messages', { keyPath: 'id' });
         store.createIndex('by-status', 'status');
         store.createIndex('by-recipient', 'recipient_address');
+        store.createIndex('by-chain-status', 'cross_chain_status');
       },
     });
   }
@@ -68,33 +59,59 @@ class MessageStore {
 
   async syncPendingMessages() {
     const pendingMessages = await this.getPendingMessages();
+    const maxRetries = 3;
     
     for (const message of pendingMessages) {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/messages/send`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: message.content,
-            recipient_address: message.recipient_address,
-            wallet_address: message.sender_address,
-            message_type: message.message_type,
-            media_url: message.media_url,
-          }),
-        });
-
-        if (response.ok) {
-          // Update message status to sent
-          await this.db!.put('messages', {
-            ...message,
-            status: 'sent',
-            offline: false,
+      let retries = 0;
+      while (retries < maxRetries) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/messages/send`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: message.content,
+              recipient_address: message.recipient_address,
+              wallet_address: message.sender_address,
+              message_type: message.message_type,
+              media_url: message.media_url,
+              origin_chain: message.origin_chain,
+              destination_chain: message.destination_chain,
+            }),
           });
+
+          if (response.ok) {
+            const result = await response.json();
+            // Update message status and cross-chain info
+            await this.db!.put('messages', {
+              ...message,
+              status: 'sent',
+              offline: false,
+              cross_chain_status: result.cross_chain_status || message.cross_chain_status,
+              bridge_tx_hash: result.bridge_tx_hash,
+              delivery_confirmed: result.delivery_confirmed || false,
+            });
+            break; // Success, exit retry loop
+          } else {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+        } catch (error) {
+          console.error(`Failed to sync message (attempt ${retries + 1}/${maxRetries}):`, error);
+          retries++;
+          if (retries === maxRetries) {
+            // Mark as failed after max retries
+            await this.db!.put('messages', {
+              ...message,
+              status: 'pending',
+              offline: true,
+              cross_chain_status: CrossChainStatus.FAILED,
+            });
+          } else {
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+          }
         }
-      } catch (error) {
-        console.error('Failed to sync message:', error);
       }
     }
   }
