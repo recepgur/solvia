@@ -12,7 +12,7 @@ from pathlib import Path
 from .models import (
     Message, Contact, UserProfile, MessageStatus, MessageType,
     CallSignal, CallState, CallSignalType, ICECandidate, db,
-    ChainType, CrossChainStatus
+    ChainType, CrossChainStatus, Group, GroupMessage
 )
 from solana.rpc.api import Client
 from solders.pubkey import Pubkey
@@ -31,8 +31,9 @@ class DateTimeEncoder(json.JSONEncoder):
 app = FastAPI()
 
 # Import routers
-from .routers import cross_chain
+from .routers import cross_chain, groups
 app.include_router(cross_chain.router)
+app.include_router(groups.router)
 
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
@@ -47,6 +48,20 @@ app.add_middleware(
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
+        
+    async def broadcast_group_message(self, message: GroupMessage):
+        """Broadcast a message to all members of a group."""
+        if message.group_id in db.groups:
+            group = db.groups[message.group_id]
+            for member_address in group.members:
+                if member_address in self.active_connections:
+                    websocket = self.active_connections[member_address]
+                    message_dict = message.model_dump()
+                    try:
+                        json_str = json.dumps(message_dict, cls=DateTimeEncoder)
+                        await websocket.send_text(json_str)
+                    except Exception as e:
+                        print(f"Failed to send group message to {member_address}: {e}")
 
     async def connect(self, websocket: WebSocket, wallet_address: str):
         await websocket.accept()
@@ -397,6 +412,23 @@ async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
         while True:
             data = await websocket.receive_text()
             message_data = json.loads(data)
+            
+            # Handle group messages
+            if message_data.get("type") == "group_message":
+                group_id = message_data.get("group_id")
+                if group_id in db.groups:
+                    group = db.groups[group_id]
+                    if wallet_address in group.members:
+                        message = GroupMessage(
+                            id=str(uuid.uuid4()),
+                            group_id=group_id,
+                            sender_address=wallet_address,
+                            content=message_data.get("content"),
+                            message_type=MessageType.TEXT,
+                            status=MessageStatus.SENT
+                        )
+                        db.group_messages[message.id] = message
+                        await manager.broadcast_group_message(message)
             
             if message_data.get("type") == "call_signal":
                 signal = CallSignal(

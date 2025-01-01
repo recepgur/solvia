@@ -13,6 +13,11 @@ class MessageType(str, Enum):
     TEXT = "text"
     VOICE = "voice"
     CALL = "call"
+    FILE = "file"
+
+class GroupRole(str, Enum):
+    ADMIN = "admin"
+    MEMBER = "member"
 
 class MessageStatus(str, Enum):
     PENDING = "pending"
@@ -65,6 +70,7 @@ class UserProfile(BaseModel):
     has_nft_access: bool = False
     nft_mint_address: Optional[str] = None
     nft_verified_at: Optional[datetime] = None
+    groups: List[str] = []  # List of group IDs the user is a member of
 
 # In-memory database
 class CallSignalType(str, Enum):
@@ -100,6 +106,30 @@ class ICECandidate(BaseModel):
     candidate: dict
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
+class Group(BaseModel):
+    model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
+    
+    id: str
+    name: str
+    creator_address: str
+    members: Dict[str, GroupRole]
+    encryption_key: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class GroupMessage(BaseModel):
+    model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
+    
+    id: str
+    group_id: str
+    sender_address: str
+    content: str
+    message_type: MessageType = MessageType.TEXT
+    media_url: Optional[str] = None
+    status: MessageStatus = MessageStatus.PENDING
+    encrypted_content: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
 class Database:
     def __init__(self):
         self.messages: Dict[str, Message] = {}
@@ -108,6 +138,8 @@ class Database:
         self.calls: Dict[str, CallState] = {}
         self.call_signals: Dict[str, List[CallSignal]] = {}
         self.ice_candidates: Dict[str, List[ICECandidate]] = {}
+        self.groups: Dict[str, Group] = {}
+        self.group_messages: Dict[str, GroupMessage] = {}
 
 # Global in-memory database instance
 db = Database()
