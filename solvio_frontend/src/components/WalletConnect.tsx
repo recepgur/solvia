@@ -53,8 +53,14 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   const [isChecking, setIsChecking] = useState(true);
   const [availableWallets, setAvailableWallets] = useState<WalletInfo[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
-  // Force mobile detection for testing
-  const [isMobileDevice] = useState(() => true);
+  // Proper mobile detection based on user agent
+  const [isMobileDevice] = useState(() => {
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+    const isInAppBrowser = /fbav|fban|line|instagram|kakaotalk|naver|zalo|snapchat|viber|whatsapp/i.test(userAgent);
+    const isMobile = /iphone|ipad|android|mobile/i.test(userAgent);
+    console.log('Mobile Detection:', { userAgent, isInAppBrowser, isMobile });
+    return isMobile;
+  });
   
   // Enhanced error messages in Turkish
   const getErrorMessage = (type: WalletErrorType, walletType: WalletType): string => {
@@ -80,15 +86,27 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     
     const initializeWalletDetection = async () => {
       try {
-        // Initial delay to allow wallet extensions to initialize
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Increased initial delay to ensure proper wallet extension initialization
+        await new Promise(resolve => setTimeout(resolve, 3500));
         
         if (!mounted) return;
         
-        // Check wallet availability after delay
+        // Check wallet availability after initial delay
         const wallets = checkWalletAvailability();
-        console.log('Detected wallets after delay:', wallets);
+        console.log('Initial wallet detection:', wallets);
         setAvailableWallets(wallets);
+
+        // Add retry detection after additional delay
+        setTimeout(() => {
+          if (!mounted) return;
+          const retryWallets = checkWalletAvailability();
+          console.log('Retry wallet detection:', retryWallets);
+          // Only update if we found more wallets
+          if (retryWallets.length > wallets.length) {
+            console.log('Found additional wallets on retry');
+            setAvailableWallets(retryWallets);
+          }
+        }, 3000);
       } catch (error) {
         console.error('Wallet detection error:', error);
       } finally {
@@ -407,19 +425,38 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
       if (deepLink) {
         window.open(deepLink, '_blank');
         
-        // Set error after a delay if wallet is not detected
+        // Enhanced timeout and detection for mobile deep linking
         setTimeout(() => {
           const provider = window.solana || window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
+          console.log('Deep link provider check:', { 
+            hasSolana: !!window.solana,
+            hasEthereum: !!window.ethereum,
+            hasTrust: !!window.trustwallet,
+            hasCoinbase: !!window.coinbaseWalletExtension,
+            walletType
+          });
+          
           if (!provider) {
-            const error: WalletError = {
-              type: 'not_installed',
-              message: getErrorMessage('not_installed', walletType),
-              walletType
-            };
-            setError(error);
-            onError?.(error);
+            // Double-check after a short delay before showing error
+            setTimeout(() => {
+              const retryProvider = window.solana || window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
+              if (!retryProvider) {
+                console.log('No provider found after retry');
+                const error: WalletError = {
+                  type: 'not_installed',
+                  message: getErrorMessage('not_installed', walletType),
+                  walletType
+                };
+                setError(error);
+                onError?.(error);
+              } else {
+                console.log('Provider found on second check after deep link');
+              }
+            }, 2000);
+          } else {
+            console.log('Provider found after deep link');
           }
-        }, 3000);
+        }, 5000);
         return;
       }
     }
