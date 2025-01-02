@@ -140,11 +140,18 @@ export function LoginScreen() {
     }
   ];
 
+  useEffect(() => {
+    // Inject network animation styles
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = networkAnimationStyles;
+    document.head.appendChild(styleTag);
+    return () => styleTag.remove();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background/95 overflow-hidden relative">
       {/* Network animation container */}
-      <style>{networkAnimationStyles}</style>
-      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-gradient-to-br from-background/50 via-background/30 to-background/50">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded' : ''}`} id="network-particles">
           {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (
             <div
