@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wallet, AlertCircle, ExternalLink } from 'lucide-react';
+import { Wallet, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { NFTInput } from './NFTInput';
 
 type WalletType = 'phantom' | 'metamask' | 'trustwallet' | 'coinbase' | 'solflare';
@@ -46,8 +46,15 @@ interface WalletConnectProps {
 }
 
 export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnectProps) {
-  // Initialize window object safely
+  // Initialize window object safely and show loading state
   if (typeof window === 'undefined') return null;
+  
+  // Show loading animation while checking wallet availability
+  const [isChecking, setIsChecking] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsChecking(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState<WalletType | null>(null);
   const [error, setError] = useState<WalletError | null>(null);
@@ -535,6 +542,12 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
           <CardDescription className="text-sm md:text-base">
             Choose your preferred wallet to connect. Supported chains: Solana, Ethereum, Polygon, BSC
           </CardDescription>
+          {isChecking && (
+            <div className="flex items-center justify-center mt-4 space-x-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">Checking wallet availability...</span>
+            </div>
+          )}
         </CardHeader>
       <CardContent className="space-y-4">
         {/* Only show NFT input if at least one compatible wallet is installed */}
