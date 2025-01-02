@@ -8,74 +8,90 @@ const networkAnimationStyles = `
 .network-container {
   opacity: 0;
   transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
 }
 
 .network-container.loaded {
   opacity: 1;
 }
 
-.network-node {
-  filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.2));
-}
-
 @keyframes float {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(15px, -15px) rotate(90deg); }
-  50% { transform: translate(0, -30px) rotate(180deg); }
-  75% { transform: translate(-15px, -15px) rotate(270deg); }
-  100% { transform: translate(0, 0) rotate(360deg); }
+  0% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(15px, -15px) scale(1.1); }
+  50% { transform: translate(0, -30px) scale(1); }
+  75% { transform: translate(-15px, -15px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.8); opacity: 0.1; }
-  100% { transform: scale(1); opacity: 0.3; }
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.5); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 0.6; }
 }
 
 @keyframes connectLine {
-  0% { transform: scaleX(0) translateY(0); opacity: 0; }
-  50% { transform: scaleX(1) translateY(-10px); opacity: 0.3; }
-  100% { transform: scaleX(0) translateY(0); opacity: 0; }
+  0% { transform: scaleX(0.3) translateY(0); opacity: 0.2; }
+  50% { transform: scaleX(1) translateY(-5px); opacity: 0.8; }
+  100% { transform: scaleX(0.3) translateY(0); opacity: 0.2; }
 }
 
-@keyframes nodeGradient {
-  0% { background: hsl(var(--primary) / 0.2); }
-  50% { background: hsl(var(--primary) / 0.4); }
-  100% { background: hsl(var(--primary) / 0.2); }
+@keyframes messageFloat {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.1); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 .network-node {
-  width: 12px;
-  height: 12px;
-  background: hsl(var(--primary) / 0.5);
+  width: 24px;
+  height: 24px;
+  background: hsl(var(--primary));
   border-radius: 50%;
   position: absolute;
-  box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  box-shadow: 
+    0 0 20px hsl(var(--primary)),
+    0 0 40px hsl(var(--primary) / 0.5);
   animation: 
-    float 20s infinite cubic-bezier(0.4, 0, 0.2, 1),
-    nodeGradient 4s infinite ease-in-out;
+    float 10s infinite cubic-bezier(0.4, 0, 0.2, 1),
+    messageFloat 3s infinite ease-in-out;
+  z-index: 20;
+}
+
+.network-node::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--primary) / 0.4) 0%,
+    transparent 70%
+  );
+  animation: pulse 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .network-node::after {
   content: '';
   position: absolute;
-  inset: -6px;
-  background: hsl(var(--primary) / 0.3);
-  border-radius: 50%;
-  animation: pulse 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  inset: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.9;
 }
 
 .network-line {
-  height: 2px;
+  height: 3px;
   background: linear-gradient(90deg, 
-    hsl(var(--primary) / 0.2),
-    hsl(var(--primary) / 0.5),
-    hsl(var(--primary) / 0.2)
+    transparent,
+    hsl(var(--primary)),
+    transparent
   );
   position: absolute;
   transform-origin: left;
-  filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.2));
-  animation: connectLine 4s infinite ease-in-out;
+  box-shadow: 0 0 15px hsl(var(--primary));
+  animation: connectLine 3s infinite ease-in-out;
+  z-index: 15;
 }`;
 
 interface FeatureCardProps {
