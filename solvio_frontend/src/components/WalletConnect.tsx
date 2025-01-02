@@ -49,13 +49,60 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   // Initialize window object safely and show loading state
   if (typeof window === 'undefined') return null;
   
-  // Show loading animation while checking wallet availability
+  // State for wallet detection process
   const [isChecking, setIsChecking] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => setIsChecking(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  const [availableWallets, setAvailableWallets] = useState<WalletInfo[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isMobileDevice] = useState(() => /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()));
+  
+  // Enhanced error messages in Turkish
+  const getErrorMessage = (type: WalletErrorType, walletType: WalletType): string => {
+    switch (type) {
+      case 'not_installed':
+        return `Lütfen ${walletType} cüzdanını yükleyin ve tekrar deneyin.`;
+      case 'user_rejected':
+        return 'Bağlantı reddedildi. Lütfen tekrar deneyin.';
+      case 'already_connected':
+        return `${walletType} zaten bağlı.`;
+      case 'network_error':
+        return 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
+      case 'unsupported_chain':
+        return 'Desteklenmeyen ağ. Lütfen doğru ağa geçin.';
+      default:
+        return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+    }
+  };
+
+  // Enhanced wallet detection with proper timing
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeWalletDetection = async () => {
+      try {
+        // Initial delay to allow wallet extensions to initialize
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        if (!mounted) return;
+        
+        // Check wallet availability after delay
+        const wallets = checkWalletAvailability();
+        console.log('Detected wallets after delay:', wallets);
+        setAvailableWallets(wallets);
+      } catch (error) {
+        console.error('Wallet detection error:', error);
+      } finally {
+        if (mounted) {
+          setIsChecking(false);
+        }
+      }
+    };
+    
+    initializeWalletDetection();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const [connectingWallet, setConnectingWallet] = useState<WalletType | null>(null);
   const [error, setError] = useState<WalletError | null>(null);
   const [nftMintAddress, setNftMintAddress] = useState<string>('');
@@ -69,20 +116,55 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
 
   // Function to check if wallets are installed
   const checkWalletAvailability = (): WalletInfo[] => {
-    // Enhanced mobile environment detection
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isInAppBrowser = /FBAV|FBAN|Line|Instagram|KAKAOTALK|NAVER|zalo|Snapchat|Viber|WhatsApp/i.test(navigator.userAgent);
-    const isTrustWalletBrowser = /Trust\/|TrustWallet\//i.test(navigator.userAgent);
-    const isMetaMaskBrowser = /MetaMask\/|MetaMaskMobile\//i.test(navigator.userAgent);
-    const isCoinbaseBrowser = /CoinbaseBrowser\//i.test(navigator.userAgent);
-
-    console.log('Environment Detection:', {
+    // Enhanced mobile environment detection with additional checks
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobile = /iphone|ipad|ipod|android/i.test(userAgent);
+    const isInAppBrowser = /fbav|fban|line|instagram|kakaotalk|naver|zalo|snapchat|viber|whatsapp/i.test(userAgent);
+    
+    // Enhanced wallet-specific browser detection
+    const isTrustWalletBrowser = /trust\/|trustwallet\/|trust wallet/i.test(userAgent);
+    const isMetaMaskBrowser = /metamask\/|metamaskmobile\/|metamask mobile/i.test(userAgent);
+    const isCoinbaseBrowser = /coinbasebrowser\/|coinbase wallet/i.test(userAgent);
+    const isPhantomBrowser = /phantom\/|phantommobile\/|phantom mobile/i.test(userAgent);
+    const isSolflareBrowser = /solflare\/|solflare mobile/i.test(userAgent);
+    
+    // Additional environment checks
+    const isBrave = 'brave' in navigator;
+    const hasEthereumProvider = Boolean(window.ethereum);
+    const hasSolanaProvider = Boolean(window.solana);
+    const hasSolflareProvider = Boolean(window.solflare);
+    const hasTrustProvider = Boolean(window.trustwallet);
+    const hasCoinbaseProvider = Boolean(window.coinbaseWalletExtension);
+    
+    // Deep environment logging
+    console.log('Enhanced Environment Detection:', {
+      userAgent,
       isMobile,
       isInAppBrowser,
-      isTrustWalletBrowser,
-      isMetaMaskBrowser,
-      isCoinbaseBrowser,
-      userAgent: navigator.userAgent
+      browserSpecific: {
+        isTrustWalletBrowser,
+        isMetaMaskBrowser,
+        isCoinbaseBrowser,
+        isPhantomBrowser,
+        isSolflareBrowser,
+        isBrave
+      },
+      providers: {
+        ethereum: hasEthereumProvider,
+        solana: hasSolanaProvider,
+        solflare: hasSolflareProvider,
+        trust: hasTrustProvider,
+        coinbase: hasCoinbaseProvider
+      },
+      providerDetails: {
+        ethereum: window.ethereum?.isMetaMask ? 'MetaMask' : 
+                 window.ethereum?.isTrust ? 'Trust' : 
+                 window.ethereum?.isCoinbaseWallet ? 'Coinbase' : 
+                 hasEthereumProvider ? 'Unknown' : 'None',
+        solana: window.solana?.isPhantom ? 'Phantom' : 
+                window.solflare?.isSolflare ? 'Solflare' : 
+                hasSolanaProvider ? 'Unknown' : 'None'
+      }
     });
 
     // Enhanced Phantom detection (includes mobile deep linking and Solflare)
@@ -96,63 +178,69 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
       dappEnabled: document.querySelector('meta[name="dapp-enabled"]') !== null
     });
 
+    // Enhanced wallet detection using comprehensive checks
     const isPhantomInstalled = typeof window !== 'undefined' && (
       window.solana?.isPhantom === true ||
       (isMobile && !isInAppBrowser && (
-        window.solflare?.isSolflare === true ||
+        isPhantomBrowser ||
         window.solana?.provider?.isPhantom === true ||
+        (hasSolanaProvider && window.solana?.isPhantom) ||
+        document.querySelector('meta[name="dapp-enabled"]') !== null
+      ))
+    );
+
+    const isSolflareInstalled = typeof window !== 'undefined' && (
+      window.solflare?.isSolflare === true ||
+      (isMobile && !isInAppBrowser && (
+        isSolflareBrowser ||
+        (hasSolflareProvider && window.solflare?.isSolflare) ||
         document.querySelector('meta[name="dapp-enabled"]') !== null
       ))
     );
     
-    // Enhanced MetaMask detection (includes mobile detection and in-app browser)
-    console.log('Checking MetaMask availability:', {
-      windowExists: typeof window !== 'undefined',
-      ethereumObject: window.ethereum,
-      isMetaMask: window.ethereum?.isMetaMask,
-      providerMetaMask: window.ethereum?.provider?.isMetaMask,
-      mobileCheck: isMobile && !isInAppBrowser
-    });
-
     const isMetaMaskInstalled = typeof window !== 'undefined' && (
-      window.ethereum?.isMetaMask === true ||
+      (window.ethereum?.isMetaMask === true && !window.ethereum?.isBraveWallet) ||
       (isMobile && !isInAppBrowser && (
         isMetaMaskBrowser ||
+        (hasEthereumProvider && window.ethereum?.isMetaMask && !window.ethereum?.isBraveWallet) ||
         window.ethereum?.provider?.isMetaMask === true ||
-        window.ethereum?.provider?.isMetaMask ||
         document.querySelector('meta[name="dapp-enabled"]') !== null
       ))
     );
     
-    // Enhanced Trust Wallet detection (includes mobile browser and in-app detection)
     const isTrustWalletInstalled = typeof window !== 'undefined' && (
       window.trustwallet?.isTrust === true ||
       window.ethereum?.isTrust === true ||
       (isMobile && !isInAppBrowser && (
         isTrustWalletBrowser ||
-        window.ethereum?.provider?.isTrust === true ||
-        window.trustwallet?.ethereum?.isTrust === true ||
-        window.trustwallet?.solana?.isTrust === true ||
+        (hasTrustProvider && (
+          window.trustwallet?.ethereum?.isTrust === true ||
+          window.trustwallet?.solana?.isTrust === true
+        )) ||
+        (hasEthereumProvider && window.ethereum?.isTrust) ||
         document.querySelector('meta[name="dapp-enabled"]') !== null
       ))
     );
     
-    // Enhanced Coinbase Wallet detection (includes mobile WalletLink and in-app browser)
     const isCoinbaseWalletInstalled = typeof window !== 'undefined' && (
       window.coinbaseWalletExtension?.isConnected ||
       window.ethereum?.isCoinbaseWallet === true ||
       (isMobile && !isInAppBrowser && (
         isCoinbaseBrowser ||
-        window.ethereum?.provider?.isCoinbaseWallet === true ||
+        (hasCoinbaseProvider && window.coinbaseWalletExtension?.isConnected) ||
+        (hasEthereumProvider && window.ethereum?.isCoinbaseWallet) ||
         window.WalletLink !== undefined ||
-        window.ethereum?.provider?.isCoinbaseWallet ||
         document.querySelector('meta[name="dapp-enabled"]') !== null
       ))
     );
 
-    // Log final detection results
+    // Log final detection results with enhanced Solana wallet info
     console.log('Final wallet detection results:', {
-      phantom: isPhantomInstalled,
+      solana: {
+        phantom: isPhantomInstalled,
+        solflare: isSolflareInstalled,
+        combined: isPhantomInstalled || isSolflareInstalled
+      },
       metamask: isMetaMaskInstalled,
       trustwallet: isTrustWalletInstalled,
       coinbase: isCoinbaseWalletInstalled
@@ -160,29 +248,18 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
 
     return [
       {
-        name: 'Phantom',
+        name: 'Solana Wallet',
         type: 'phantom',
         icon: (
           <svg viewBox="0 0 128 128" className="w-5 h-5 flex-shrink-0">
             <path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64c11.2 0 21.7-2.9 30.8-7.9L48.4 55.3v36.6h-6.8V41.8h6.8l50.5 75.8C116.4 106.2 128 86.5 128 64c0-35.3-28.7-64-64-64zm22.1 84.6l-7.5-11.3V41.8h7.5v42.8z" fill="currentColor"/>
           </svg>
         ),
-        installed: Boolean(isPhantomInstalled),
+        installed: Boolean(isPhantomInstalled || isSolflareInstalled),
         installUrl: 'https://phantom.app/',
         supportedChains: ['solana']
       },
-      {
-        name: 'Solflare',
-        type: 'solflare',
-        icon: (
-          <svg viewBox="0 0 96 96" className="w-5 h-5">
-            <path d="M48 0C21.5 0 0 21.5 0 48s21.5 48 48 48 48-21.5 48-48S74.5 0 48 0zm0 84c-19.9 0-36-16.1-36-36s16.1-36 36-36 36 16.1 36 36-16.1 36-36 36z" fill="currentColor"/>
-          </svg>
-        ),
-        installed: Boolean(window.solflare?.isSolflare),
-        installUrl: 'https://solflare.com/',
-        supportedChains: ['solana']
-      },
+
       {
         name: 'MetaMask',
         type: 'metamask',
@@ -293,12 +370,59 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     }
   };
 
+  const getMobileDeepLink = (walletType: WalletType): string | null => {
+    if (!isMobileDevice) return null;
+
+    const currentUrl = window.location.href;
+    const encodedUrl = encodeURIComponent(currentUrl);
+
+    switch (walletType) {
+      case 'phantom':
+        return /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase())
+          ? `https://phantom.app/ul/browse/${encodedUrl}`
+          : `https://phantom.app/ul/v1/connect?dapp_url=${encodedUrl}`;
+      case 'metamask':
+        return `https://metamask.app.link/dapp/${encodedUrl}`;
+      case 'trustwallet':
+        return `https://link.trustwallet.com/open_url?url=${encodedUrl}`;
+      case 'coinbase':
+        return `https://go.cb-w.com/dapp?cb_url=${encodedUrl}`;
+      case 'solflare':
+        return `https://solflare.com/ul/v1/connect?dapp_url=${encodedUrl}`;
+      default:
+        return null;
+    }
+  };
+
   const handleConnect = async (walletType: WalletType) => {
+    // Check for mobile deep linking first
+    if (isMobileDevice) {
+      const deepLink = getMobileDeepLink(walletType);
+      if (deepLink) {
+        window.open(deepLink, '_blank');
+        
+        // Set error after a delay if wallet is not detected
+        setTimeout(() => {
+          const provider = window.solana || window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
+          if (!provider) {
+            const error: WalletError = {
+              type: 'not_installed',
+              message: getErrorMessage('not_installed', walletType),
+              walletType
+            };
+            setError(error);
+            onError?.(error);
+          }
+        }, 3000);
+        return;
+      }
+    }
+
     // Don't connect if already connected
     if (walletStates[walletType].isConnected) {
       const walletError: WalletError = {
         type: 'already_connected',
-        message: `${walletType} is already connected.`,
+        message: getErrorMessage('already_connected', walletType),
         walletType
       };
       setError(walletError);
@@ -529,8 +653,6 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     }
   };
 
-  const wallets = checkWalletAvailability();
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 overflow-x-hidden">
       <Card className="w-full max-w-md mx-auto mt-8 overflow-hidden">
@@ -551,7 +673,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
         </CardHeader>
       <CardContent className="space-y-4">
         {/* Only show NFT input if at least one compatible wallet is installed */}
-        {wallets.some(w => w.installed) && (
+        {availableWallets.some(w => w.installed) && (
           <div className="space-y-2">
             <NFTInput value={nftMintAddress} onChange={setNftMintAddress} />
             <p className="text-sm text-muted-foreground">
@@ -567,7 +689,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
           </Alert>
         )}
 
-        {!wallets.some(w => w.installed) && (
+        {!availableWallets.some(w => w.installed) && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -577,7 +699,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
         )}
         
         <div className="grid gap-2">
-          {wallets.map((wallet) => (
+          {availableWallets.map((wallet) => (
             <Button
               key={wallet.type}
               disabled={isConnecting || (!wallet.installed && !walletStates[wallet.type].isConnected)}

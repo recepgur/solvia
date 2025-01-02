@@ -15,10 +15,12 @@ declare interface Window {
     isMetaMask?: boolean;
     isCoinbaseWallet?: boolean;
     isTrust?: boolean;
+    isBraveWallet?: boolean;
     provider?: {
       isMetaMask?: boolean;
       isCoinbaseWallet?: boolean;
       isTrust?: boolean;
+      isBraveWallet?: boolean;
     };
     request(params: { method: string; params?: unknown[] }): Promise<unknown>;
     on(event: string, callback: (result: unknown) => void): void;
