@@ -165,8 +165,11 @@ export function LoginScreen() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background/95 overflow-hidden relative">
-      {/* Network animation container */}
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
+      {/* Gradient background with enhanced visibility */}
+      <div className="absolute inset-0 bg-gradient-radial from-primary/10 via-background to-primary/5" />
+      
+      {/* Network animation container with improved z-index */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded' : ''}`} id="network-particles">
           {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (

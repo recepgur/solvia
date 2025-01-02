@@ -46,6 +46,8 @@ interface WalletConnectProps {
 }
 
 export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnectProps) {
+  // Initialize window object safely
+  if (typeof window === 'undefined') return null;
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState<WalletType | null>(null);
   const [error, setError] = useState<WalletError | null>(null);
