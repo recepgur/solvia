@@ -54,23 +54,51 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   const [availableWallets, setAvailableWallets] = useState<WalletInfo[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   // Proper mobile detection based on user agent
+  // Force mobile mode for testing if URL has forceMobile parameter
   const [isMobileDevice] = useState(() => {
+    const forceMobile = new URLSearchParams(window.location.search).get('forceMobile') === 'true';
+    if (forceMobile) {
+      console.log('Forcing mobile mode for testing');
+      return true;
+    }
+    
     const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
     const isInAppBrowser = /fbav|fban|line|instagram|kakaotalk|naver|zalo|snapchat|viber|whatsapp/i.test(userAgent);
     const isMobile = /iphone|ipad|android|mobile/i.test(userAgent);
-    console.log('Mobile Detection:', { userAgent, isInAppBrowser, isMobile });
+    console.log('Mobile Detection:', { userAgent, isInAppBrowser, isMobile, forceMobile });
     return isMobile;
   });
   
   // Enhanced error messages in Turkish
   const getErrorMessage = (type: WalletErrorType, walletType: WalletType): string => {
+    const walletNames = {
+      phantom: 'Phantom',
+      metamask: 'MetaMask',
+      trustwallet: 'Trust Wallet',
+      coinbase: 'Coinbase Wallet',
+      solflare: 'Solflare'
+    };
+    
+    // Enhanced Turkish error messages
+    const errorMessages = {
+      not_installed: `${walletType === 'phantom' || walletType === 'solflare' ? 'Solana' : ''} Cüzdan yüklü değil. Lütfen ${walletNames[walletType]} cüzdanını yükleyin ve tekrar deneyin.`,
+      user_rejected: `Bağlantı reddedildi. Lütfen ${walletNames[walletType]} cüzdanınızı kontrol edin ve tekrar deneyin.`,
+      already_connected: `${walletNames[walletType]} cüzdanı zaten bağlı.`,
+      network_error: 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
+      unsupported_chain: 'Desteklenmeyen ağ. Lütfen doğru ağa geçiş yapın.',
+      unknown: `${walletNames[walletType]} bağlantısı başarısız oldu. Lütfen tekrar deneyin.`
+    };
+    
+    return errorMessages[type] || errorMessages.unknown;
+    const walletName = walletNames[walletType] || walletType;
+    
     switch (type) {
       case 'not_installed':
-        return `Lütfen ${walletType} cüzdanını yükleyin ve tekrar deneyin.`;
+        return `${walletName} cüzdanı yüklü değil. Lütfen ${walletName} cüzdanını yükleyin ve tekrar deneyin.`;
       case 'user_rejected':
         return 'Bağlantı reddedildi. Lütfen tekrar deneyin.';
       case 'already_connected':
-        return `${walletType} zaten bağlı.`;
+        return `${walletName} zaten bağlı.`;
       case 'network_error':
         return 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
       case 'unsupported_chain':
@@ -419,44 +447,70 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   };
 
   const handleConnect = async (walletType: WalletType) => {
+    console.log('Starting wallet connection:', { walletType, isMobileDevice });
+    
     // Check for mobile deep linking first
     if (isMobileDevice) {
+      console.log('Mobile device detected, attempting deep linking');
       const deepLink = getMobileDeepLink(walletType);
       if (deepLink) {
         window.open(deepLink, '_blank');
         
-        // Enhanced timeout and detection for mobile deep linking
-        setTimeout(() => {
-          const provider = window.solana || window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
-          console.log('Deep link provider check:', { 
+        // Enhanced timeout and detection for mobile deep linking with multiple retries
+        let retryCount = 0;
+        const maxRetries = 5; // Increased retries
+        const checkProvider = () => {
+          // Enhanced provider check based on wallet type
+          let provider;
+          if (walletType === 'phantom' || walletType === 'solflare') {
+            provider = window.solana;
+            // Additional check for Solflare
+            if (walletType === 'solflare' && window.solflare) {
+              provider = window.solflare;
+            }
+          } else {
+            provider = window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
+          }
+
+          console.log(`Deep link provider check (attempt ${retryCount + 1}/${maxRetries}):`, { 
             hasSolana: !!window.solana,
+            hasSolflare: !!window.solflare,
             hasEthereum: !!window.ethereum,
             hasTrust: !!window.trustwallet,
             hasCoinbase: !!window.coinbaseWalletExtension,
-            walletType
+            walletType,
+            retryCount
           });
           
           if (!provider) {
-            // Double-check after a short delay before showing error
-            setTimeout(() => {
-              const retryProvider = window.solana || window.ethereum || window.trustwallet || window.coinbaseWalletExtension;
-              if (!retryProvider) {
-                console.log('No provider found after retry');
-                const error: WalletError = {
-                  type: 'not_installed',
-                  message: getErrorMessage('not_installed', walletType),
-                  walletType
-                };
-                setError(error);
-                onError?.(error);
-              } else {
-                console.log('Provider found on second check after deep link');
-              }
-            }, 2000);
+            if (retryCount < maxRetries - 1) {
+              retryCount++;
+              setTimeout(checkProvider, 5000); // Increased delay to 5 seconds
+            } else {
+              console.log('No provider found after all retries');
+              const error: WalletError = {
+                type: 'not_installed',
+                message: `${walletType === 'phantom' || walletType === 'solflare' ? 'Solana' : ''} Cüzdan yüklü değil. Lütfen ${
+                  walletType === 'phantom' ? 'Phantom' :
+                  walletType === 'solflare' ? 'Solflare' :
+                  walletType === 'metamask' ? 'MetaMask' :
+                  walletType === 'trustwallet' ? 'Trust Wallet' :
+                  'Coinbase Wallet'
+                } cüzdanını yükleyin ve tekrar deneyin.`,
+                walletType
+              };
+              setError(error);
+              onError?.(error);
+            }
           } else {
             console.log('Provider found after deep link');
+            // Clear any existing error if provider is found
+            setError(null);
           }
-        }, 5000);
+        };
+        
+        // Start checking after longer initial delay
+        setTimeout(checkProvider, 5000);
         return;
       }
     }

@@ -134,6 +134,14 @@ interface LoginScreenProps {
 export function LoginScreen({ children }: LoginScreenProps) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Handle wallet connection errors
+  const handleWalletError = (error: { type: string; message: string }) => {
+    setError(error.message);
+    // Auto-hide error after 5 seconds
+    setTimeout(() => setError(null), 5000);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -181,12 +189,29 @@ export function LoginScreen({ children }: LoginScreenProps) {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden relative">
       {/* Enhanced gradient background with communication theme */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-radial from-[#FF1493]/95 via-[#00FF00]/80 to-[#1E90FF]/90 animate-pulse" />
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg,#FF1493/0.8,#00FF00/0.7,#1E90FF/0.8)] animate-spin-slow opacity-100" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/70 via-[#00FF00]/60 to-[#1E90FF]/70 animate-gradient" />
+        
+        {/* Enhanced loading and error states with mobile optimization */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+            <div className="animate-spin rounded-full h-24 w-24 sm:h-32 sm:w-32 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        )}
+        
+        {/* Mobile-optimized error message display */}
+        {error && (
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-center z-50">
+            <div className="bg-red-500/90 text-white px-4 py-3 rounded-lg shadow-lg max-w-md w-full">
+              <p className="text-sm sm:text-base font-medium text-center">{error}</p>
+            </div>
+          </div>
+        )}
+        
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,20,147,0.2),rgba(0,255,0,0.15),rgba(30,144,255,0.2))] animate-pulse-slow" />
       </div>
       
@@ -248,11 +273,10 @@ export function LoginScreen({ children }: LoginScreenProps) {
             onConnect={(address, walletType) => {
               console.log(`Connected to ${walletType} with address ${address}`);
             }}
-            onError={(error) => {
-              console.error('Wallet connection error:', error);
-            }}
+            onError={handleWalletError}
             onDisconnect={() => {
               console.log('Wallet disconnected');
+              setError(null);
             }}
           />
         </div>
