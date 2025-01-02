@@ -115,7 +115,11 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
   );
 }
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  children: React.ReactNode;
+}
+
+export function LoginScreen({ children }: LoginScreenProps) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -166,12 +170,12 @@ export function LoginScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
-      {/* Gradient background with enhanced visibility */}
-      <div className="absolute inset-0 bg-gradient-radial from-primary/10 via-background to-primary/5" />
+      {/* Enhanced gradient background with communication theme */}
+      <div className="absolute inset-0 bg-gradient-radial from-primary/30 via-background/90 to-primary/20 animate-pulse" />
       
-      {/* Network animation container with improved z-index */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded' : ''}`} id="network-particles">
+      {/* Network animation container with improved visibility */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+        <div className={`relative w-full h-full network-container ${!isLoading ? 'loaded scale-110' : ''}`} id="network-particles">
           {Array.from({ length: windowWidth < 768 ? 6 : 12 }).map((_, i) => (
             <div
               key={i}
@@ -207,6 +211,9 @@ export function LoginScreen() {
               The next generation of decentralized communication
             </p>
           </div>
+        </div>
+        <div className="backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
+          {children}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-0 w-full">

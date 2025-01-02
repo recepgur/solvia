@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { WalletConnect } from './components/WalletConnect';
+import { LoginScreen } from './components/LoginScreen';
 import { ChatWindow } from './components/ChatWindow';
 import { ContactList } from './components/ContactList';
 
@@ -9,9 +10,9 @@ function App() {
 
   if (!walletAddress) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <LoginScreen>
         <WalletConnect onConnect={setWalletAddress} />
-      </div>
+      </LoginScreen>
     );
   }
 
