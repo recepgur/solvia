@@ -44,12 +44,13 @@ const networkAnimationStyles = `
 .network-node {
   width: 24px;
   height: 24px;
-  background: hsl(var(--primary));
+  background: linear-gradient(45deg, hsl(var(--primary)), purple, blue);
   border-radius: 50%;
   position: absolute;
   box-shadow: 
     0 0 20px hsl(var(--primary)),
-    0 0 40px hsl(var(--primary) / 0.5);
+    0 0 40px purple,
+    0 0 60px blue;
   animation: 
     float 10s infinite cubic-bezier(0.4, 0, 0.2, 1),
     messageFloat 3s infinite ease-in-out;
@@ -102,8 +103,8 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <Card className="flex flex-col items-center p-6 text-center relative overflow-hidden group">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    <Card className="flex flex-col items-center p-6 text-center relative overflow-hidden group transform transition-all duration-300 hover:scale-105">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/10 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse" />
       <div className="mb-4 p-3 rounded-full bg-primary/10 transition-transform duration-300 group-hover:-translate-y-1">
         {icon}
       </div>
@@ -171,7 +172,10 @@ export function LoginScreen({ children }: LoginScreenProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
       {/* Enhanced gradient background with communication theme */}
-      <div className="absolute inset-0 bg-gradient-radial from-primary/30 via-background/90 to-primary/20 animate-pulse" />
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-radial from-primary/40 via-purple-500/20 to-blue-500/30 animate-pulse" />
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg,theme(colors.primary/0.2),theme(colors.purple.500/0.1),theme(colors.blue.500/0.2))] animate-spin-slow opacity-70" />
+      </div>
       
       {/* Network animation container with improved visibility */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -206,10 +210,8 @@ export function LoginScreen({ children }: LoginScreenProps) {
       <div className="max-w-5xl w-full space-y-8 md:space-y-12 relative z-10 px-4 md:px-6">
         <div className="text-center space-y-4">
           <div className="space-y-2 backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
-            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Welcome to Solvio</h1>
-            <p className="text-base md:text-xl text-muted-foreground">
-              The next generation of decentralized communication
-            </p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent animate-gradient mb-4">Welcome to Solvio</h1>
+            <p className="text-lg md:text-2xl bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">The next generation of decentralized communication</p>
           </div>
         </div>
         <div className="backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
