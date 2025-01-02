@@ -7,13 +7,23 @@ import { useEffect, useState } from "react";
 const networkAnimationStyles = `
 .network-container {
   opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
 .network-container.loaded {
   opacity: 1;
+  animation: container-glow 3s infinite alternate;
 }
+
+@keyframes container-glow {
+  from {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  }
+  to {
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+  }
 
 @keyframes float {
   0% { transform: translate(0, 0) scale(1); }
@@ -42,19 +52,20 @@ const networkAnimationStyles = `
 }
 
 .network-node {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(45deg, hsl(var(--primary)), purple, blue);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(45deg, #FF3366, #33FF99, #3366FF);
   border-radius: 50%;
   position: absolute;
   box-shadow: 
-    0 0 20px hsl(var(--primary)),
-    0 0 40px purple,
-    0 0 60px blue;
+    0 0 40px #FF3366,
+    0 0 60px #33FF99,
+    0 0 80px #3366FF;
   animation: 
     float 10s infinite cubic-bezier(0.4, 0, 0.2, 1),
-    messageFloat 3s infinite ease-in-out;
+    messageFloat 2.5s infinite ease-in-out;
   z-index: 20;
+  opacity: 1;
 }
 
 .network-node::before {
@@ -103,9 +114,9 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <Card className="flex flex-col items-center p-6 text-center relative overflow-hidden group transform transition-all duration-300 hover:scale-105">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/10 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse" />
-      <div className="mb-4 p-3 rounded-full bg-primary/10 transition-transform duration-300 group-hover:-translate-y-1">
+    <Card className="flex flex-col items-center p-6 text-center relative overflow-hidden group transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-purple-500/20 to-blue-500/30 opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse-glow" />
+      <div className="mb-4 p-3 rounded-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:bg-gradient-to-tr group-hover:from-primary/30 group-hover:via-purple-500/20 group-hover:to-blue-500/30">
         {icon}
       </div>
       <CardHeader className="p-0 mb-2 relative z-10">
@@ -173,8 +184,10 @@ export function LoginScreen({ children }: LoginScreenProps) {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
       {/* Enhanced gradient background with communication theme */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-radial from-primary/40 via-purple-500/20 to-blue-500/30 animate-pulse" />
-        <div className="absolute inset-0 bg-[conic-gradient(from_0deg,theme(colors.primary/0.2),theme(colors.purple.500/0.1),theme(colors.blue.500/0.2))] animate-spin-slow opacity-70" />
+        <div className="absolute inset-0 bg-gradient-radial from-[#FF1493]/95 via-[#00FF00]/80 to-[#1E90FF]/90 animate-pulse" />
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg,#FF1493/0.8,#00FF00/0.7,#1E90FF/0.8)] animate-spin-slow opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/70 via-[#00FF00]/60 to-[#1E90FF]/70 animate-gradient" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,20,147,0.2),rgba(0,255,0,0.15),rgba(30,144,255,0.2))] animate-pulse-slow" />
       </div>
       
       {/* Network animation container with improved visibility */}
@@ -210,8 +223,8 @@ export function LoginScreen({ children }: LoginScreenProps) {
       <div className="max-w-5xl w-full space-y-8 md:space-y-12 relative z-10 px-4 md:px-6">
         <div className="text-center space-y-4">
           <div className="space-y-2 backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent animate-gradient mb-4">Welcome to Solvio</h1>
-            <p className="text-lg md:text-2xl bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">The next generation of decentralized communication</p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-[#FF3366] via-[#33FF99] to-[#3366FF] bg-clip-text text-transparent animate-gradient mb-4 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">Welcome to Solvio</h1>
+            <p className="text-lg md:text-2xl bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent animate-pulse drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">The next generation of decentralized communication</p>
           </div>
         </div>
         <div className="backdrop-blur-sm bg-background/80 p-4 md:p-6 rounded-lg">
