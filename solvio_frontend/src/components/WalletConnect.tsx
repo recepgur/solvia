@@ -53,7 +53,8 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
   const [isChecking, setIsChecking] = useState(true);
   const [availableWallets, setAvailableWallets] = useState<WalletInfo[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isMobileDevice] = useState(() => /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()));
+  // Force mobile detection for testing
+  const [isMobileDevice] = useState(() => true);
   
   // Enhanced error messages in Turkish
   const getErrorMessage = (type: WalletErrorType, walletType: WalletType): string => {
@@ -116,10 +117,15 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
 
   // Function to check if wallets are installed
   const checkWalletAvailability = (): WalletInfo[] => {
-    // Enhanced mobile environment detection with additional checks
+    // Use isMobileDevice state for consistent mobile detection
     const userAgent = navigator.userAgent.toLowerCase();
-    const isMobile = /iphone|ipad|ipod|android/i.test(userAgent);
     const isInAppBrowser = /fbav|fban|line|instagram|kakaotalk|naver|zalo|snapchat|viber|whatsapp/i.test(userAgent);
+    
+    console.log('Mobile Detection:', {
+      isMobileDevice,
+      userAgent,
+      isInAppBrowser
+    });
     
     // Enhanced wallet-specific browser detection
     const isTrustWalletBrowser = /trust\/|trustwallet\/|trust wallet/i.test(userAgent);
@@ -139,7 +145,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     // Deep environment logging
     console.log('Enhanced Environment Detection:', {
       userAgent,
-      isMobile,
+      isMobileDevice,
       isInAppBrowser,
       browserSpecific: {
         isTrustWalletBrowser,
@@ -181,7 +187,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     // Enhanced wallet detection using comprehensive checks
     const isPhantomInstalled = typeof window !== 'undefined' && (
       window.solana?.isPhantom === true ||
-      (isMobile && !isInAppBrowser && (
+      (isMobileDevice && !isInAppBrowser && (
         isPhantomBrowser ||
         window.solana?.provider?.isPhantom === true ||
         (hasSolanaProvider && window.solana?.isPhantom) ||
@@ -191,7 +197,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
 
     const isSolflareInstalled = typeof window !== 'undefined' && (
       window.solflare?.isSolflare === true ||
-      (isMobile && !isInAppBrowser && (
+      (isMobileDevice && !isInAppBrowser && (
         isSolflareBrowser ||
         (hasSolflareProvider && window.solflare?.isSolflare) ||
         document.querySelector('meta[name="dapp-enabled"]') !== null
@@ -200,7 +206,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     
     const isMetaMaskInstalled = typeof window !== 'undefined' && (
       (window.ethereum?.isMetaMask === true && !window.ethereum?.isBraveWallet) ||
-      (isMobile && !isInAppBrowser && (
+      (isMobileDevice && !isInAppBrowser && (
         isMetaMaskBrowser ||
         (hasEthereumProvider && window.ethereum?.isMetaMask && !window.ethereum?.isBraveWallet) ||
         window.ethereum?.provider?.isMetaMask === true ||
@@ -211,7 +217,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     const isTrustWalletInstalled = typeof window !== 'undefined' && (
       window.trustwallet?.isTrust === true ||
       window.ethereum?.isTrust === true ||
-      (isMobile && !isInAppBrowser && (
+      (isMobileDevice && !isInAppBrowser && (
         isTrustWalletBrowser ||
         (hasTrustProvider && (
           window.trustwallet?.ethereum?.isTrust === true ||
@@ -225,7 +231,7 @@ export function WalletConnect({ onConnect, onError, onDisconnect }: WalletConnec
     const isCoinbaseWalletInstalled = typeof window !== 'undefined' && (
       window.coinbaseWalletExtension?.isConnected ||
       window.ethereum?.isCoinbaseWallet === true ||
-      (isMobile && !isInAppBrowser && (
+      (isMobileDevice && !isInAppBrowser && (
         isCoinbaseBrowser ||
         (hasCoinbaseProvider && window.coinbaseWalletExtension?.isConnected) ||
         (hasEthereumProvider && window.ethereum?.isCoinbaseWallet) ||
