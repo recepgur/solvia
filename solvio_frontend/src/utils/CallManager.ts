@@ -28,7 +28,7 @@ export class CallManager extends EventEmitter {
   private currentRecipient: string | null = null;
   private status: CallStatus = CallStatus.IDLE;
   private pendingOffer: PendingOffer | null = null;
-  // @ts-expect-error - Used in WebSocket URL construction
+  // WebSocket URL construction
   private readonly wallet_address: string;
 
   constructor(options: CallOptions) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WalletConnect } from './components/WalletConnect';
+import WalletConnect from './components/WalletConnect';
 import { LoginScreen } from './components/LoginScreen';
 import { ChatWindow } from './components/ChatWindow';
 import { ContactList } from './components/ContactList';

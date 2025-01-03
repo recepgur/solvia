@@ -57,3 +57,15 @@ export interface MessageResponse {
   media_url?: string;
   status: string;
 }
+
+export interface Transaction {
+  type: string;
+  contentHash: string;
+  senderProof: string;
+  recipientHash: string;
+  timestamp: string;
+  signature: string;
+  status?: 'pending' | 'confirmed' | 'failed';
+  chain?: ChainType;
+  bridgeId?: string;
+}

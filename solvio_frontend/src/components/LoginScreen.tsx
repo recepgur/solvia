@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { WalletConnect } from "./WalletConnect";
+import WalletConnect from "./WalletConnect";
+import { WalletType } from "@/types/wallet";
 import { MessageSquare, Shield, Wallet, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -270,7 +271,7 @@ export function LoginScreen({ children }: LoginScreenProps) {
 
         <div className="max-w-md mx-auto transform transition-all duration-300">
           <WalletConnect
-            onConnect={(address, walletType) => {
+            onConnect={(address: string, walletType: WalletType) => {
               console.log(`Connected to ${walletType} with address ${address}`);
             }}
             onError={handleWalletError}

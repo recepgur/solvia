@@ -1,3 +1,24 @@
+interface SolanaRequestParams {
+  method: string;
+}
+
+interface SolanaConnectRequest extends SolanaRequestParams {
+  method: 'connect';
+}
+
+interface EthereumRequestParams {
+  method: string;
+  params?: unknown[];
+}
+
+interface EthChainIdRequest extends EthereumRequestParams {
+  method: 'eth_chainId';
+}
+
+interface EthAccountsRequest extends EthereumRequestParams {
+  method: 'eth_requestAccounts';
+}
+
 declare interface Window {
   solana?: {
     isPhantom?: boolean;
@@ -5,7 +26,8 @@ declare interface Window {
     connect(): Promise<{ publicKey: string }>;
     disconnect(): Promise<void>;
     on(event: string, callback: (result: unknown) => void): void;
-    request(params: { method: string }): Promise<{ publicKey: string }>;
+    request(params: SolanaConnectRequest): Promise<{ publicKey: string }>;
+    request(params: SolanaRequestParams): Promise<{ publicKey: string }>;
     provider?: {
       isPhantom?: boolean;
       isSolflare?: boolean;
@@ -22,9 +44,11 @@ declare interface Window {
       isTrust?: boolean;
       isBraveWallet?: boolean;
     };
-    request(params: { method: string; params?: unknown[] }): Promise<unknown>;
-    on(event: string, callback: (result: unknown) => void): void;
-    removeListener(event: string, callback: (result: unknown) => void): void;
+    request(params: EthChainIdRequest): Promise<string>;
+    request(params: EthAccountsRequest): Promise<string[]>;
+    request(params: EthereumRequestParams): Promise<unknown>;
+    on(event: 'chainChanged' | 'accountsChanged' | string, callback: (result: unknown) => void): void;
+    removeListener(event: 'chainChanged' | 'accountsChanged' | string, callback: (result: unknown) => void): void;
     selectedAddress: string | null;
     chainId: string;
     enable(): Promise<string[]>;
@@ -37,7 +61,7 @@ declare interface Window {
       isTrust?: boolean;
     };
     ethereum?: {
-      request(params: { method: string; params?: unknown[] }): Promise<unknown>;
+      request(params: EthereumRequestParams): Promise<unknown>;
       selectedAddress: string | null;
       isTrust?: boolean;
     };
@@ -51,11 +75,7 @@ declare interface Window {
     isSolflare?: boolean;
     connect(): Promise<{ publicKey: string }>;
     disconnect(): Promise<void>;
-    request(params: { method: string }): Promise<{ publicKey: string }>;
-  };
-  WalletLink?: {
-    isConnected: boolean;
-    connect(): Promise<{ address: string }>;
-    disconnect(): Promise<void>;
+    request(params: SolanaConnectRequest): Promise<{ publicKey: string }>;
+    request(params: SolanaRequestParams): Promise<{ publicKey: string }>;
   };
 }
