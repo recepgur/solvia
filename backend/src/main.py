@@ -1,11 +1,17 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from typing import Dict, Set
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict, Set, List
+from pydantic import BaseModel
 import json
 import logging
 import os
 from datetime import datetime
+import base58
+from nacl.signing import VerifyKey
+from solana.publickey import PublicKey
+from solana.rpc.api import Client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,27 +19,132 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Solvia İletişim Platformu")
 
+# CORS ayarları
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Wallet doğrulama için model
+class WalletAuthRequest(BaseModel):
+    walletAddress: str
+    signature: str
+    message: str
+
+@app.post("/api/auth/wallet")
+async def wallet_auth(request: WalletAuthRequest):
+    try:
+        # Cüzdan adresini doğrula
+        wallet = PublicKey(request.walletAddress)
+        
+        # İmzayı doğrula
+        try:
+            signature_bytes = base58.b58decode(request.signature)
+            message_bytes = request.message.encode('utf-8')
+            
+            # Cüzdan public key'ini verify key'e dönüştür
+            verify_key = VerifyKey(bytes(wallet))
+            verify_key.verify(message_bytes, signature_bytes)
+            
+            return {
+                "status": "success",
+                "wallet": str(wallet),
+                "message": "Cüzdan doğrulaması başarılı"
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=401,
+                detail="İmza doğrulaması başarısız: Geçersiz imza"
+            )
+            
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail="Geçersiz cüzdan adresi"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Sunucu hatası: {str(e)}"
+        )
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="../../static"), name="static")
+
+class MessageStorage:
+    def __init__(self):
+        self.messages: Dict[str, List[Dict]] = {}
+        self.direct_messages: Dict[str, Dict[str, List[Dict]]] = {}  # sender -> {receiver -> [messages]}
+    
+    def store_message(self, sender: str, content: str, message_type: str = "chat") -> Dict:
+        if sender not in self.messages:
+            self.messages[sender] = []
+        
+        message = {
+            "type": message_type,
+            "sender": sender,
+            "content": content,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.messages[sender].append(message)
+        return message
+    
+    def store_direct_message(self, sender: str, receiver: str, content: str) -> Dict:
+        if sender not in self.direct_messages:
+            self.direct_messages[sender] = {}
+        if receiver not in self.direct_messages[sender]:
+            self.direct_messages[sender][receiver] = []
+        
+        message = {
+            "type": "direct",
+            "sender": sender,
+            "receiver": receiver,
+            "content": content,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.direct_messages[sender][receiver].append(message)
+        return message
+    
+    def get_messages(self, wallet_address: str, limit: int = 50) -> List[Dict]:
+        messages = self.messages.get(wallet_address, [])
+        return messages[-limit:]
+    
+    def get_direct_messages(self, sender: str, receiver: str, limit: int = 50) -> List[Dict]:
+        if sender not in self.direct_messages or receiver not in self.direct_messages[sender]:
+            return []
+        messages = self.direct_messages[sender][receiver]
+        return messages[-limit:]
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.peer_connections: Dict[str, Set[str]] = {}
+        self.message_storage = MessageStorage()
         
-    async def connect(self, client_id: str, websocket: WebSocket):
+    async def connect(self, wallet_address: str, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections[client_id] = websocket
-        self.peer_connections[client_id] = set()
-        await self.broadcast_message(
-            client_id,
-            {
-                "type": "chat",
-                "sender": "Sistem",
-                "content": f"Yeni kullanıcı bağlandı"
-            }
+        self.active_connections[wallet_address] = websocket
+        self.peer_connections[wallet_address] = set()
+        
+        # Send message history to the newly connected user
+        recent_messages = self.message_storage.get_messages(wallet_address)
+        if recent_messages:
+            await websocket.send_json({
+                "type": "message_history",
+                "messages": recent_messages
+            })
+        
+        # Notify about new connection
+        system_message = self.message_storage.store_message(
+            wallet_address,
+            f"Cüzdan {wallet_address[:8]}... bağlandı",
+            "system"
         )
-        logger.info(f"Client connected: {client_id}")
+        await self.broadcast_message(wallet_address, system_message)
+        logger.info(f"Wallet connected: {wallet_address}")
         
     async def disconnect(self, client_id: str):
         if client_id in self.active_connections:
@@ -58,6 +169,16 @@ class ConnectionManager:
             logger.info(f"Client disconnected: {client_id}")
     
     async def broadcast_message(self, sender_id: str, message: dict):
+        # Store the message if it's a chat or system message
+        if message["type"] in ["chat", "system"]:
+            stored_message = self.message_storage.store_message(
+                sender_id,
+                message["content"],
+                message["type"]
+            )
+            # Update message with stored version (includes timestamp)
+            message.update(stored_message)
+        
         disconnected_clients = set()
         for client_id, connection in self.active_connections.items():
             if client_id != sender_id:
@@ -74,6 +195,16 @@ class ConnectionManager:
     async def send_direct_message(self, sender_id: str, target_id: str, message: dict):
         if target_id in self.active_connections:
             try:
+                # Store direct messages
+                if message["type"] == "chat":
+                    stored_message = self.message_storage.store_direct_message(
+                        sender_id,
+                        target_id,
+                        message["content"]
+                    )
+                    # Update message with stored version
+                    message.update(stored_message)
+                
                 await self.active_connections[target_id].send_json(message)
             except Exception as e:
                 logger.error(f"Error sending direct message to {target_id}: {str(e)}")
@@ -85,19 +216,27 @@ manager = ConnectionManager()
 async def get_index():
     return FileResponse("../../frontend/src/index.html")
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
-    await manager.connect(client_id, websocket)
+@app.websocket("/ws/{wallet_address}")
+async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
+    # Cüzdan adresini doğrula
     try:
+        wallet = PublicKey(wallet_address)
+    except ValueError:
+        await websocket.close(code=1008, reason="Geçersiz cüzdan adresi")
+        return
+        
+    await manager.connect(str(wallet), websocket)
+    try:
+        wallet_str = str(wallet)
         while True:
             message = await websocket.receive_json()
             
             if message["type"] == "chat":
                 await manager.broadcast_message(
-                    client_id,
+                    wallet_str,
                     {
                         "type": "chat",
-                        "sender": "Kullanıcı " + client_id[:4],
+                        "sender": wallet_str[:8] + "...",  # Show first 8 chars of wallet
                         "content": message["content"]
                     }
                 )
@@ -106,24 +245,24 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 # Handle WebRTC signaling
                 target_id = message.get("target")
                 if target_id:
-                    message["sender"] = client_id
-                    await manager.send_direct_message(client_id, target_id, message)
+                    message["sender"] = wallet_str
+                    await manager.send_direct_message(wallet_str, target_id, message)
             
             elif message["type"] == "call-ended":
                 # Notify peers about call end
-                for peer_id in manager.peer_connections[client_id]:
+                for peer_id in manager.peer_connections[wallet_str]:
                     await manager.send_direct_message(
-                        client_id,
+                        wallet_str,
                         peer_id,
                         {"type": "call-ended"}
                     )
-                manager.peer_connections[client_id].clear()
+                manager.peer_connections[wallet_str].clear()
             
     except WebSocketDisconnect:
-        await manager.disconnect(client_id)
+        await manager.disconnect(wallet_str)
     except Exception as e:
-        logger.error(f"Error in websocket connection for {client_id}: {str(e)}")
-        await manager.disconnect(client_id)
+        logger.error(f"Error in websocket connection for {wallet_str}: {str(e)}")
+        await manager.disconnect(wallet_str)
 
 if __name__ == "__main__":
     import uvicorn

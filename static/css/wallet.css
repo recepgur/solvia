@@ -1,0 +1,32 @@
+.wallet-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.wallet-status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+#connectWalletBtn {
+    background-color: #9945FF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#connectWalletBtn:hover {
+    background-color: #7D3ACD;
+}
+
+.chat-container {
+    display: none;
+}

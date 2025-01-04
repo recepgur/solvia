@@ -1,16 +1,29 @@
 class WebSocketHandler {
     constructor() {
         this.ws = null;
-        this.clientId = Math.random().toString(36).substr(2, 9);
+        this.walletAddress = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000; // Start with 1 second
-        this.connect();
+        
+        // Check for existing wallet connection
+        const savedWallet = localStorage.getItem('walletAddress');
+        if (savedWallet) {
+            this.walletAddress = savedWallet;
+            this.connect();
+        }
     }
 
     connect() {
+        if (!this.walletAddress) {
+            console.error('Cüzdan bağlantısı gerekli');
+            document.getElementById('status').innerHTML = 
+                '<span class="error">Lütfen önce cüzdanınızı bağlayın</span>';
+            return;
+        }
+
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/${this.clientId}`;
+        const wsUrl = `${protocol}//${window.location.host}/ws/${this.walletAddress}`;
         
         this.ws = new WebSocket(wsUrl);
         
@@ -53,15 +66,22 @@ class WebSocketHandler {
         this.ws.onclose = () => {
             document.getElementById('status').textContent = 'Bağlantı kesildi';
             
-            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            // Only attempt reconnection if we have a valid wallet
+            if (this.walletAddress && this.reconnectAttempts < this.maxReconnectAttempts) {
+                document.getElementById('status').textContent = 
+                    `Yeniden bağlanılıyor... (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`;
+                
                 setTimeout(() => {
                     this.reconnectAttempts++;
                     this.reconnectDelay *= 2; // Exponential backoff
                     this.connect();
                 }, this.reconnectDelay);
+            } else if (!this.walletAddress) {
+                document.getElementById('status').innerHTML = 
+                    '<span class="error">Cüzdan bağlantısı gerekli. Lütfen cüzdanınızı bağlayın.</span>';
             } else {
                 document.getElementById('status').innerHTML = 
-                    '<span class="error">Bağlantı kurulamadı. Lütfen sayfayı yenileyin.</span>';
+                    '<span class="error">Bağlantı kurulamadı. Lütfen sayfayı yenileyin veya cüzdanınızı tekrar bağlayın.</span>';
             }
         };
         
@@ -82,13 +102,33 @@ class WebSocketHandler {
     }
 }
 
-// Initialize handlers
-window.wsHandler = new WebSocketHandler();
+// Initialize handlers after wallet connection
+let wsHandler = null;
+
+function initializeHandlers(walletAddress) {
+    if (wsHandler) {
+        // Close existing connection if any
+        if (wsHandler.ws) {
+            wsHandler.ws.close();
+        }
+    }
+    
+    wsHandler = new WebSocketHandler();
+    wsHandler.walletAddress = walletAddress;
+    wsHandler.connect();
+    window.wsHandler = wsHandler;
+}
 
 // Global event listeners
 window.startVideoCall = () => window.rtcHandler.startCall();
 window.endCall = () => window.rtcHandler.endCall();
 window.sendMessage = () => window.chatHandler.sendMessage();
+
+// Listen for wallet connection events
+document.addEventListener('walletConnected', (event) => {
+    const { walletAddress } = event.detail;
+    initializeHandlers(walletAddress);
+});
 
 // Initialize media devices on page load
 window.addEventListener('load', async () => {

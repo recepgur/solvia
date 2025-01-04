@@ -4,11 +4,20 @@
     <title>Solvia İletişim Platformu</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/wallet.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@project-serum/sol-wallet-adapter@latest/dist/index.umd.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Solvia İletişim Platformu</h1>
+        <div id="walletContainer" class="wallet-container">
+            <button id="connectWalletBtn" class="btn primary">
+                <i class="fas fa-wallet"></i> Cüzdanı Bağla
+            </button>
+            <div id="walletStatus" class="wallet-status">Cüzdan bağlantısı bekleniyor...</div>
+        </div>
         <div id="status" class="status">Bağlantı bekleniyor...</div>
         
         <div class="video-container" id="videoContainer">
@@ -32,20 +41,52 @@
         </div>
 
         <div class="chat-container">
-            <div id="messages" class="messages"></div>
-            <div class="message-input">
-                <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." 
-                       onkeypress="if(event.key === 'Enter') sendMessage()">
-                <button onclick="sendMessage()" class="btn primary">
-                    <i class="fas fa-paper-plane"></i> Gönder
-                </button>
+            <div class="contacts-panel">
+                <div class="contacts-header">
+                    <h3>Cüzdanlar</h3>
+                    <button id="addContactBtn" class="btn secondary">
+                        <i class="fas fa-plus"></i> Yeni
+                    </button>
+                </div>
+                <div id="contactsList" class="contacts-list">
+                    <!-- Cüzdanlar buraya dinamik olarak eklenecek -->
+                </div>
+            </div>
+            <div class="chat-panel">
+                <div class="current-chat-header">
+                    <span id="currentChatTitle">Genel Sohbet</span>
+                </div>
+                <div id="messages" class="messages"></div>
+                <div class="message-input">
+                    <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." 
+                           onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="btn primary">
+                        <i class="fas fa-paper-plane"></i> Gönder
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="/static/js/walletAuth.js"></script>
     <script src="/static/js/webrtc.js"></script>
+    <script src="/static/js/contacts.js"></script>
     <script src="/static/js/chat.js"></script>
     <script src="/static/js/main.js"></script>
+    <script>
+        document.getElementById('connectWalletBtn').addEventListener('click', async () => {
+            try {
+                const auth = await window.walletAuth.connect();
+                document.getElementById('walletStatus').textContent = 
+                    `Bağlı Cüzdan: ${auth.publicKey.slice(0, 4)}...${auth.publicKey.slice(-4)}`;
+                
+                localStorage.setItem('walletAddress', auth.publicKey);
+                document.querySelector('.chat-container').style.display = 'block';
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    </script>
 </body>
 </html>
