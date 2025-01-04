@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solvia İletişim Platformu</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <h1>Solvia İletişim Platformu</h1>
+        <div id="status" class="status">Bağlantı bekleniyor...</div>
+        
+        <div class="video-container" id="videoContainer">
+            <div class="video-wrapper">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="video-label">Siz</div>
+            </div>
+            <div class="video-wrapper">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="video-label">Karşı Taraf</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startCall" class="btn primary" onclick="startVideoCall()">
+                <i class="fas fa-video"></i> Görüntülü Arama Başlat
+            </button>
+            <button id="endCall" class="btn danger" onclick="endCall()" disabled>
+                <i class="fas fa-phone-slash"></i> Aramayı Sonlandır
+            </button>
+        </div>
+
+        <div class="chat-container">
+            <div id="messages" class="messages"></div>
+            <div class="message-input">
+                <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." 
+                       onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()" class="btn primary">
+                    <i class="fas fa-paper-plane"></i> Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="/static/js/webrtc.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
