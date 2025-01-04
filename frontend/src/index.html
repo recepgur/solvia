@@ -98,8 +98,25 @@
             </div>
         </div>
         
+        <!-- Camera Permission Dialog -->
+        <div class="camera-permission-dialog" id="cameraPermissionDialog">
+            <h3>Kamera ve Mikrofon İzni</h3>
+            <p>Solvia'nın kameranıza ve mikrofonunuza erişmesine izin verin. Bu izin olmadan görüntülü arama yapamazsınız.</p>
+            <div class="camera-permission-actions">
+                <button class="cancel" onclick="window.webRTCHandler.denyPermission()">İptal</button>
+                <button class="allow" onclick="window.webRTCHandler.requestPermission()">İzin Ver</button>
+            </div>
+        </div>
+
         <!-- Video Call Container -->
         <div class="video-container" id="videoContainer">
+            <div class="video-header">
+                <div class="call-info">
+                    <i class="fas fa-arrow-left" onclick="window.webRTCHandler.minimizeCall()"></i>
+                    <span class="caller-name">Görüntülü Arama</span>
+                </div>
+                <div class="call-duration" id="callDuration">00:00</div>
+            </div>
             <div class="video-wrapper">
                 <video id="localVideo" autoplay muted playsinline></video>
                 <div class="video-label">Siz</div>
@@ -109,7 +126,13 @@
                 <div class="video-label">Karşı Taraf</div>
             </div>
             <div class="video-controls">
-                <button id="endCall" class="btn danger" onclick="endCall()">
+                <button class="control-btn" onclick="window.webRTCHandler.toggleCamera()">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="control-btn" onclick="window.webRTCHandler.toggleMic()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="control-btn danger" onclick="window.webRTCHandler.endCall()">
                     <i class="fas fa-phone-slash"></i>
                 </button>
             </div>

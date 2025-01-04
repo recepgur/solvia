@@ -1,7 +1,16 @@
 class WebRTCHandler {
     constructor() {
+        this.localVideo = document.getElementById('localVideo');
+        this.remoteVideo = document.getElementById('remoteVideo');
+        this.videoContainer = document.getElementById('videoContainer');
+        this.permissionDialog = document.getElementById('cameraPermissionDialog');
+        this.callDurationElement = document.getElementById('callDuration');
         this.localStream = null;
         this.peerConnection = null;
+        this.callDurationInterval = null;
+        this.callStartTime = null;
+        this.isCameraEnabled = true;
+        this.isMicEnabled = true;
         this.configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -10,23 +19,97 @@ class WebRTCHandler {
         };
     }
 
+    showPermissionDialog() {
+        this.permissionDialog.style.display = 'block';
+    }
+
+    hidePermissionDialog() {
+        this.permissionDialog.style.display = 'none';
+    }
+
+    async denyPermission() {
+        this.hidePermissionDialog();
+        if (this.currentCall) {
+            await this.endCall();
+        }
+    }
+
+    async requestPermission() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { echoCancellation: true, noiseSuppression: true },
+                video: { 
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user'
+                }
+            });
+            this.hidePermissionDialog();
+            this.localStream = stream;
+            if (this.localVideo) {
+                this.localVideo.srcObject = stream;
+            }
+            return true;
+        } catch (error) {
+            console.error('Kamera izni alınamadı:', error);
+            alert('Kamera ve mikrofon izni verilmedi. Görüntülü arama yapılamıyor.');
+            this.hidePermissionDialog();
+            return false;
+        }
+    }
+
+    startCallDurationTimer() {
+        this.callStartTime = Date.now();
+        this.callDurationInterval = setInterval(() => {
+            const duration = Math.floor((Date.now() - this.callStartTime) / 1000);
+            const minutes = Math.floor(duration / 60).toString().padStart(2, '0');
+            const seconds = (duration % 60).toString().padStart(2, '0');
+            if (this.callDurationElement) {
+                this.callDurationElement.textContent = `${minutes}:${seconds}`;
+            }
+        }, 1000);
+    }
+
+    stopCallDurationTimer() {
+        if (this.callDurationInterval) {
+            clearInterval(this.callDurationInterval);
+            this.callDurationInterval = null;
+        }
+        if (this.callDurationElement) {
+            this.callDurationElement.textContent = '00:00';
+        }
+    }
+
     async initializeMediaDevices() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-            document.getElementById('startCall').disabled = false;
-            return true;
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { echoCancellation: true, noiseSuppression: true },
+                video: { 
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user'
+                }
+            });
+            return stream;
         } catch (error) {
             document.getElementById('status').innerHTML = 
                 `<span class="error">Kamera/mikrofon erişimi hatası: ${error.message}</span>`;
-            document.getElementById('startCall').disabled = true;
-            return false;
+            throw error;
         }
     }
 
     async startCall() {
         try {
-            this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('localVideo').srcObject = this.localStream;
+            if (!this.localStream) {
+                this.showPermissionDialog();
+                const permissionGranted = await this.requestPermission();
+                if (!permissionGranted) {
+                    return;
+                }
+            }
+            
+            this.videoContainer.style.display = 'block';
+            this.startCallDurationTimer();
             
             this.peerConnection = new RTCPeerConnection(this.configuration);
             
@@ -148,7 +231,7 @@ class WebRTCHandler {
         }
     }
 
-    endCall() {
+    async endCall() {
         if (this.localStream) {
             this.localStream.getTracks().forEach(track => track.stop());
             this.localStream = null;
@@ -159,12 +242,48 @@ class WebRTCHandler {
             this.peerConnection = null;
         }
         
-        document.getElementById('localVideo').srcObject = null;
-        document.getElementById('remoteVideo').srcObject = null;
-        document.getElementById('startCall').disabled = false;
-        document.getElementById('endCall').disabled = true;
+        if (this.localVideo) this.localVideo.srcObject = null;
+        if (this.remoteVideo) this.remoteVideo.srcObject = null;
+        
+        this.videoContainer.style.display = 'none';
+        this.stopCallDurationTimer();
+        this.isCameraEnabled = true;
+        this.isMicEnabled = true;
         
         window.wsHandler.send({ type: 'call-ended' });
+    }
+
+    async toggleCamera() {
+        if (this.localStream) {
+            const videoTrack = this.localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                this.isCameraEnabled = !this.isCameraEnabled;
+                videoTrack.enabled = this.isCameraEnabled;
+                const cameraBtn = document.querySelector('.control-btn i.fa-video');
+                if (cameraBtn) {
+                    cameraBtn.className = this.isCameraEnabled ? 'fas fa-video' : 'fas fa-video-slash';
+                }
+            }
+        }
+    }
+
+    async toggleMic() {
+        if (this.localStream) {
+            const audioTrack = this.localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                this.isMicEnabled = !this.isMicEnabled;
+                audioTrack.enabled = this.isMicEnabled;
+                const micBtn = document.querySelector('.control-btn i.fa-microphone');
+                if (micBtn) {
+                    micBtn.className = this.isMicEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+                }
+            }
+        }
+    }
+
+    minimizeCall() {
+        // For now, just end the call when minimizing
+        this.endCall();
     }
 
     handleCallEnded() {
