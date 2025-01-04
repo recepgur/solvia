@@ -429,24 +429,95 @@ video {
     padding: 10px;
 }
 
-.contact-item {
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 8px;
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
     cursor: pointer;
     transition: background-color 0.2s;
-    background-color: white;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
-.contact-item:hover {
+.chat-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.chat-item.active {
     background-color: #f0f2f5;
 }
 
-.contact-item .wallet-address {
+.chat-avatar {
+    width: 49px;
+    height: 49px;
+    border-radius: 50%;
+    background-color: var(--whatsapp-light-teal);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.chat-avatar i {
+    font-size: 24px;
+}
+
+.chat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.chat-name {
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-time {
+    font-size: 12px;
+    color: #667781;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+
+.chat-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.last-message {
+    color: #667781;
     font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.unread-count {
+    background-color: var(--whatsapp-light-green);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    padding: 0 6px;
 }
 
 .chat-panel {
