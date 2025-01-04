@@ -10,8 +10,27 @@ import os
 from datetime import datetime
 import base58
 from nacl.signing import VerifyKey
-from solana.publickey import PublicKey
+from solana.transaction import Transaction
 from solana.rpc.api import Client
+
+class PublicKey:
+    def __init__(self, key):
+        self.key = key
+        self._bytes = None
+        if isinstance(key, str):
+            self._bytes = base58.b58decode(key)
+    
+    @staticmethod
+    def from_string(address):
+        return PublicKey(address)
+        
+    def __str__(self):
+        return self.key
+        
+    def __bytes__(self):
+        if self._bytes is None:
+            raise ValueError("Cannot convert PublicKey to bytes")
+        return self._bytes
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -21,11 +21,17 @@ class WebSocketHandler {
                 '<span class="error">Lütfen önce cüzdanınızı bağlayın</span>';
             return;
         }
+        
+        // Initialize chat handler with wallet address
+        if (window.chatHandler) {
+            window.chatHandler.walletAddress = this.walletAddress;
+        }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/${this.walletAddress}`;
         
-        this.ws = new WebSocket(wsUrl);
+        const backendUrl = 'wss://user:c2c1cd94f1d2e506ad047a20a316445b@merhaba-greeting-app-tunnel-nbcjvr06.devinapps.com';
+        this.ws = new WebSocket(`${backendUrl}/ws/${this.walletAddress}`);
         
         this.ws.onopen = () => {
             document.getElementById('status').textContent = 'Bağlandı';

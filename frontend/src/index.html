@@ -7,18 +7,66 @@
     <link rel="stylesheet" href="/static/css/wallet.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <script src="https://unpkg.com/@project-serum/sol-wallet-adapter@latest/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-base@latest/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-phantom@latest/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-solflare@latest/lib/index.iife.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Solvia İletişim Platformu</h1>
-        <div id="walletContainer" class="wallet-container">
-            <button id="connectWalletBtn" class="btn primary">
-                <i class="fas fa-wallet"></i> Cüzdanı Bağla
-            </button>
-            <div id="walletStatus" class="wallet-status">Cüzdan bağlantısı bekleniyor...</div>
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <h1>Solvia İletişim Platformu</h1>
+            <p>Merkeziyetsiz iletişime başlamak için cüzdanınızı bağlayın</p>
+            <div class="wallet-container">
+                <button id="connectWalletBtn" class="btn primary">
+                    <i class="fas fa-wallet"></i> Cüzdan ile Giriş Yap
+                </button>
+                <div id="walletStatus" class="wallet-status">Cüzdan bağlantısı bekleniyor...</div>
+            </div>
         </div>
-        <div id="status" class="status">Bağlantı bekleniyor...</div>
+    </div>
+    
+    <div id="mainApp" class="app-container" style="display: none;">
+        <!-- Left sidebar for contacts -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div id="userWallet" class="user-wallet"></div>
+                <div class="header-icons">
+                    <i class="fas fa-sync-alt" id="refreshBtn"></i>
+                    <i class="fas fa-plus" id="newChatBtn"></i>
+                </div>
+            </div>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Kişi ara veya yeni sohbet">
+                </div>
+            </div>
+            
+            <div class="contacts-list" id="contactsList">
+                <!-- Contacts will be added here dynamically -->
+            </div>
+        </div>
+
+        <!-- Main chat area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div id="currentChatTitle">Sohbet</div>
+                <div class="chat-header-icons">
+                    <i class="fas fa-video" id="startVideoBtn"></i>
+                    <i class="fas fa-phone" id="startAudioBtn"></i>
+                </div>
+            </div>
+
+            <div id="messages" class="messages-container"></div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Mesaj yazın...">
+                <button id="sendMessageBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
         
         <div class="video-container" id="videoContainer">
             <div class="video-wrapper">
@@ -82,7 +130,8 @@
                     `Bağlı Cüzdan: ${auth.publicKey.slice(0, 4)}...${auth.publicKey.slice(-4)}`;
                 
                 localStorage.setItem('walletAddress', auth.publicKey);
-                document.querySelector('.chat-container').style.display = 'block';
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
             } catch (err) {
                 alert(err.message);
             }

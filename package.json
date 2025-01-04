@@ -7,7 +7,9 @@
   "dependencies": {
     "@metaplex-foundation/js": "^0.19.4",
     "@solana/web3.js": "^1.87.6",
-    "bs58": "^5.0.0"
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3",
+    "ipfs-http-client": "^60.0.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -6,8 +6,12 @@ class WalletAuth {
 
     async connect() {
         try {
-            const wallet = window.solana;
-            if (!wallet) {
+            let wallet;
+            if (window.solana?.isPhantom) {
+                wallet = window.solana;
+            } else if (window.solflare?.isSolflare) {
+                wallet = window.solflare;
+            } else {
                 throw new Error('Lütfen Phantom veya Solflare cüzdanını yükleyin!');
             }
 
