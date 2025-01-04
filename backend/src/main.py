@@ -56,38 +56,61 @@ class WalletAuthRequest(BaseModel):
 @app.post("/api/auth/wallet")
 async def wallet_auth(request: WalletAuthRequest):
     try:
-        # Cüzdan adresini doğrula
-        wallet = PublicKey(request.walletAddress)
+        # Validate wallet address format
+        try: 
+            wallet = PublicKey(request.walletAddress)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Geçersiz cüzdan adresi formatı. Lütfen doğru bir Solana cüzdan adresi girin."
+            )
         
-        # İmzayı doğrula
+        # Validate signature
         try:
-            signature_bytes = base58.b58decode(request.signature)
+            # Decode base58 signature
+            try:
+                signature_bytes = base58.b58decode(request.signature)
+            except Exception:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Geçersiz imza formatı. İmza base58 formatında olmalıdır."
+                )
+            
             message_bytes = request.message.encode('utf-8')
             
-            # Cüzdan public key'ini verify key'e dönüştür
-            verify_key = VerifyKey(bytes(wallet))
-            verify_key.verify(message_bytes, signature_bytes)
+            # Convert wallet public key to verify key
+            try:
+                verify_key = VerifyKey(bytes(wallet))
+                verify_key.verify(message_bytes, signature_bytes)
+            except Exception:
+                raise HTTPException(
+                    status_code=401,
+                    detail="İmza doğrulaması başarısız. Lütfen mesajı doğru şekilde imzaladığınızdan emin olun."
+                )
             
             return {
                 "status": "success",
                 "wallet": str(wallet),
-                "message": "Cüzdan doğrulaması başarılı"
+                "message": "Cüzdan doğrulaması başarılı",
+                "timestamp": datetime.now().isoformat()
             }
+            
+        except HTTPException:
+            raise
         except Exception as e:
+            logger.error(f"Unexpected error during signature verification: {str(e)}")
             raise HTTPException(
-                status_code=401,
-                detail="İmza doğrulaması başarısız: Geçersiz imza"
+                status_code=500,
+                detail="Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin."
             )
             
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Geçersiz cüzdan adresi"
-        )
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Unexpected error in wallet auth: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Sunucu hatası: {str(e)}"
+            detail="Sunucu hatası. Lütfen daha sonra tekrar deneyin."
         )
 
 # Mount static files

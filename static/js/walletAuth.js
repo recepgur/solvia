@@ -42,14 +42,18 @@ class WalletAuth {
         
         try {
             const signature = await this.wallet.signMessage(messageBytes, "utf8");
+            // Convert signature to base58 format for backend
             return {
                 message,
-                signature: Buffer.from(signature.signature).toString('hex'),
+                signature: bs58.encode(signature.signature),
                 publicKey: this.publicKey
             };
         } catch (err) {
             console.error('İmza hatası:', err);
-            throw new Error('Mesaj imzalanırken hata oluştu');
+            if (err.code === 4001) {
+                throw new Error('Kullanıcı imzalamayı reddetti');
+            }
+            throw new Error('Mesaj imzalanırken hata oluştu. Lütfen tekrar deneyin.');
         }
     }
 
@@ -63,15 +67,22 @@ class WalletAuth {
                 body: JSON.stringify(auth)
             });
 
+            const result = await response.json();
+            
             if (!response.ok) {
-                throw new Error('Sunucu doğrulama hatası');
+                throw new Error(result.detail || 'Sunucu doğrulama hatası');
             }
 
-            const result = await response.json();
+            // Store authentication in localStorage
+            localStorage.setItem('walletAuth', JSON.stringify({
+                publicKey: this.publicKey,
+                timestamp: Date.now()
+            }));
+
             return result;
         } catch (err) {
             console.error('Doğrulama hatası:', err);
-            throw new Error('İmza doğrulaması başarısız');
+            throw new Error(err.message || 'İmza doğrulaması başarısız. Lütfen tekrar deneyin.');
         }
     }
 
