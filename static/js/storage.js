@@ -3,33 +3,78 @@ import { Buffer } from 'buffer';
 
 class DecentralizedStorage {
     constructor() {
-        // Connect to local IPFS node or Infura IPFS gateway
-        this.ipfs = create({
-            host: 'ipfs.infura.io',
-            port: 5001,
-            protocol: 'https'
-        });
+        // Connect to primary IPFS gateway with fallback options
+        this.ipfsGateways = [
+            { host: 'ipfs.infura.io', port: 5001, protocol: 'https' },
+            { host: 'ipfs.io', port: 5001, protocol: 'https' },
+            { host: 'dweb.link', port: 443, protocol: 'https' }
+        ];
+        
+        this.currentGatewayIndex = 0;
+        this.initializeIpfs();
         
         // Initialize encryption key from wallet
         this.initializeEncryption();
     }
     
+    async initializeIpfs() {
+        try {
+            const gateway = this.ipfsGateways[this.currentGatewayIndex];
+            this.ipfs = create(gateway);
+            await this.ipfs.version(); // Test connection
+        } catch (error) {
+            console.error('IPFS bağlantı hatası:', error);
+            if (this.currentGatewayIndex < this.ipfsGateways.length - 1) {
+                this.currentGatewayIndex++;
+                await this.initializeIpfs();
+            } else {
+                alert('IPFS ağına bağlanılamıyor. Lütfen daha sonra tekrar deneyin.');
+            }
+        }
+    }
+    
     async initializeEncryption() {
-        // Use wallet for encryption key derivation
-        const walletAddress = localStorage.getItem('walletAddress');
-        if (!walletAddress) return;
-        
-        // Create a deterministic key from wallet address
-        const encoder = new TextEncoder();
-        const data = encoder.encode(walletAddress);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        this.encryptionKey = await crypto.subtle.importKey(
-            'raw',
-            hashBuffer,
-            { name: 'AES-GCM' },
-            false,
-            ['encrypt', 'decrypt']
-        );
+        try {
+            // Try to load saved encryption key
+            const savedKey = localStorage.getItem('encryptionKey');
+            if (savedKey) {
+                const keyData = Buffer.from(savedKey, 'base64');
+                this.encryptionKey = await crypto.subtle.importKey(
+                    'raw',
+                    keyData,
+                    { name: 'AES-GCM' },
+                    true, // Make key extractable for backup
+                    ['encrypt', 'decrypt']
+                );
+                return;
+            }
+            
+            // Generate new key from wallet address
+            const walletAddress = localStorage.getItem('walletAddress');
+            if (!walletAddress) {
+                alert('Cüzdan bağlantısı gerekli.');
+                return;
+            }
+            
+            // Create a deterministic key from wallet address
+            const encoder = new TextEncoder();
+            const data = encoder.encode(walletAddress);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            this.encryptionKey = await crypto.subtle.importKey(
+                'raw',
+                hashBuffer,
+                { name: 'AES-GCM' },
+                true, // Make key extractable for backup
+                ['encrypt', 'decrypt']
+            );
+            
+            // Save key for future use
+            const exportedKey = await crypto.subtle.exportKey('raw', this.encryptionKey);
+            localStorage.setItem('encryptionKey', Buffer.from(exportedKey).toString('base64'));
+        } catch (error) {
+            console.error('Şifreleme anahtarı oluşturma hatası:', error);
+            alert('Şifreleme anahtarı oluşturulamadı. Lütfen sayfayı yenileyin.');
+        }
     }
     
     async encryptMessage(message) {
@@ -63,38 +108,103 @@ class DecentralizedStorage {
         return JSON.parse(decoder.decode(decryptedData));
     }
     
-    async storeMessage(message) {
-        try {
-            // Encrypt message before storing
-            const encryptedMessage = await this.encryptMessage(message);
-            
-            // Store encrypted message on IPFS
-            const { cid } = await this.ipfs.add(JSON.stringify(encryptedMessage));
-            return cid.toString();
-            
-        } catch (error) {
-            console.error('Error storing message:', error);
-            throw error;
+    async storeMessage(message, retryCount = 3) {
+        for (let i = 0; i < retryCount; i++) {
+            try {
+                // Encrypt message before storing
+                const encryptedMessage = await this.encryptMessage(message);
+                
+                // Store encrypted message on IPFS
+                const { cid } = await this.ipfs.add(JSON.stringify(encryptedMessage));
+                return cid.toString();
+                
+            } catch (error) {
+                console.error(`Mesaj kaydetme denemesi ${i + 1}/${retryCount} başarısız:`, error);
+                
+                if (i === retryCount - 1) {
+                    alert('Mesaj kaydedilemedi. Lütfen internet bağlantınızı kontrol edin.');
+                    throw new Error('Maksimum deneme sayısına ulaşıldı');
+                }
+                
+                // Try next gateway
+                await this.initializeIpfs();
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+            }
         }
     }
     
-    async retrieveMessage(cid) {
-        try {
-            // Retrieve encrypted message from IPFS
-            const stream = await this.ipfs.cat(cid);
-            let data = '';
-            
-            for await (const chunk of stream) {
-                data += chunk.toString();
+    async retrieveMessage(cid, retryCount = 3) {
+        for (let i = 0; i < retryCount; i++) {
+            try {
+                // Retrieve encrypted message from IPFS
+                const stream = await this.ipfs.cat(cid);
+                let data = '';
+                
+                for await (const chunk of stream) {
+                    data += chunk.toString();
+                }
+                
+                // Decrypt and return message
+                const encryptedMessage = JSON.parse(data);
+                return await this.decryptMessage(encryptedMessage);
+                
+            } catch (error) {
+                console.error(`Mesaj alma denemesi ${i + 1}/${retryCount} başarısız:`, error);
+                
+                if (i === retryCount - 1) {
+                    alert('Mesaj alınamadı. Lütfen internet bağlantınızı kontrol edin.');
+                    throw new Error('Maksimum deneme sayısına ulaşıldı');
+                }
+                
+                // Try next gateway
+                await this.initializeIpfs();
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
             }
+        }
+    }
+    
+    async backupEncryptionKey() {
+        try {
+            const exportedKey = await crypto.subtle.exportKey('raw', this.encryptionKey);
+            const keyString = Buffer.from(exportedKey).toString('base64');
             
-            // Decrypt and return message
-            const encryptedMessage = JSON.parse(data);
-            return await this.decryptMessage(encryptedMessage);
+            // Create backup file
+            const blob = new Blob([keyString], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
             
+            // Trigger download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'solvia-encryption-key.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Şifreleme anahtarınız başarıyla yedeklendi. Güvenli bir yerde saklayın.');
         } catch (error) {
-            console.error('Error retrieving message:', error);
-            throw error;
+            console.error('Anahtar yedekleme hatası:', error);
+            alert('Şifreleme anahtarı yedeklenemedi.');
+        }
+    }
+    
+    async restoreEncryptionKey(keyString) {
+        try {
+            const keyData = Buffer.from(keyString, 'base64');
+            this.encryptionKey = await crypto.subtle.importKey(
+                'raw',
+                keyData,
+                { name: 'AES-GCM' },
+                true,
+                ['encrypt', 'decrypt']
+            );
+            
+            // Save restored key
+            localStorage.setItem('encryptionKey', keyString);
+            alert('Şifreleme anahtarınız başarıyla geri yüklendi.');
+        } catch (error) {
+            console.error('Anahtar geri yükleme hatası:', error);
+            alert('Şifreleme anahtarı geri yüklenemedi. Geçerli bir yedek dosyası kullandığınızdan emin olun.');
         }
     }
     

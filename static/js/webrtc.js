@@ -81,21 +81,12 @@ class WebRTCHandler {
     }
 
     async initializeMediaDevices() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { echoCancellation: true, noiseSuppression: true },
-                video: { 
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    facingMode: 'user'
-                }
-            });
-            return stream;
-        } catch (error) {
-            document.getElementById('status').innerHTML = 
-                `<span class="error">Kamera/mikrofon erişimi hatası: ${error.message}</span>`;
-            throw error;
+        this.showPermissionDialog();
+        const permissionGranted = await this.requestPermission();
+        if (!permissionGranted) {
+            throw new Error('Kamera izni reddedildi');
         }
+        return this.localStream;
     }
 
     async startCall() {
@@ -169,8 +160,12 @@ class WebRTCHandler {
     async handleOffer(message) {
         try {
             if (!this.localStream) {
-                this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('localVideo').srcObject = this.localStream;
+                this.showPermissionDialog();
+                const permissionGranted = await this.requestPermission();
+                if (!permissionGranted) {
+                    window.wsHandler.send({ type: 'call-rejected', reason: 'permission-denied' });
+                    return;
+                }
             }
             
             this.peerConnection = new RTCPeerConnection(this.configuration);
@@ -301,6 +296,16 @@ class WebRTCHandler {
         document.getElementById('remoteVideo').srcObject = null;
         document.getElementById('startCall').disabled = false;
         document.getElementById('endCall').disabled = true;
+    }
+
+    handleCallRejected(reason) {
+        if (reason === 'permission-denied') {
+            alert('Karşı taraf kamera izni vermedi. Arama sonlandırıldı.');
+        } else {
+            alert('Arama reddedildi.');
+        }
+        this.endCall();
+        document.getElementById('status').innerHTML = '<span class="error">Arama reddedildi</span>';
     }
 }
 
