@@ -1,9 +1,14 @@
 :root {
-    --primary-color: #4CAF50;
+    --whatsapp-teal: #075E54;
+    --whatsapp-light-teal: #128C7E;
+    --whatsapp-light-green: #25D366;
     --danger-color: #f44336;
-    --text-color: #333;
-    --bg-color: #f5f5f5;
-    --border-color: #ddd;
+    --text-color: #111b21;
+    --bg-color: #f0f2f5;
+    --chat-bg: #efeae2;
+    --message-out: #e7ffdb;
+    --message-in: #ffffff;
+    --border-color: #e9edef;
 }
 
 * {
@@ -218,21 +223,49 @@ body {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-    .sidebar {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    .sidebar.show {
-        transform: translateX(0);
-    }
-
-    .chat-area {
+    .main-container {
         width: 100%;
+    }
+
+    .chat-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--bg-color);
+        z-index: 1000;
+    }
+
+    .bottom-nav {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        z-index: 100;
+    }
+
+    .fab-button {
+        position: fixed;
+        right: 16px;
+        bottom: 72px;
+        background: var(--whatsapp-light-green);
+        z-index: 101;
+    }
+
+    .chat-list {
+        margin-bottom: 60px;
+    }
+
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 99;
+        background: var(--whatsapp-teal);
+        color: white;
     }
 }
 
@@ -257,22 +290,48 @@ h1 {
 }
 
 .video-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: black;
+    z-index: 2000;
+    padding: 16px;
+}
+
+.video-container.active {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .video-wrapper {
     flex: 1;
     position: relative;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 video {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
     background-color: #000;
-    border-radius: 10px;
-    aspect-ratio: 16/9;
+}
+
+.video-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    z-index: 2001;
 }
 
 .video-label {
@@ -310,12 +369,12 @@ video {
 }
 
 .btn.primary {
-    background-color: var(--primary-color);
+    background-color: var(--whatsapp-light-teal);
     color: white;
 }
 
 .btn.primary:hover {
-    background-color: #45a049;
+    background-color: var(--whatsapp-teal);
 }
 
 .btn.danger {

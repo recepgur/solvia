@@ -26,48 +26,79 @@
     </div>
     
     <div id="mainApp" class="app-container" style="display: none;">
-        <!-- Left sidebar for contacts -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div id="userWallet" class="user-wallet"></div>
-                <div class="header-icons">
-                    <i class="fas fa-sync-alt" id="refreshBtn"></i>
-                    <i class="fas fa-plus" id="newChatBtn"></i>
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1>Solvia</h1>
+                <div class="header-actions">
+                    <i class="fas fa-search" id="searchBtn"></i>
+                    <i class="fas fa-ellipsis-v" id="menuBtn"></i>
                 </div>
             </div>
-            
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Kişi ara veya yeni sohbet">
-                </div>
+
+            <!-- Chat List -->
+            <div class="chat-list" id="chatList">
+                <!-- Chats will be added here dynamically -->
             </div>
-            
-            <div class="contacts-list" id="contactsList">
-                <!-- Contacts will be added here dynamically -->
+
+            <!-- Floating Action Button -->
+            <div class="fab-button" id="newChatBtn">
+                <i class="fas fa-comment"></i>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-items">
+                    <div class="nav-item active">
+                        <i class="fas fa-comment"></i>
+                        <span>Sohbetler</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <span>Aramalar</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Ayarlar</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Main chat area -->
-        <div class="chat-area">
+        <!-- Chat Screen (Initially Hidden) -->
+        <div class="chat-screen" id="chatScreen" style="display: none;">
             <div class="chat-header">
-                <div id="currentChatTitle">Sohbet</div>
-                <div class="chat-header-icons">
+                <div class="back-button">
+                    <i class="fas fa-arrow-left" id="backToChats"></i>
+                </div>
+                <div class="chat-contact">
+                    <div class="contact-avatar"></div>
+                    <div class="contact-info">
+                        <div class="contact-name" id="currentChatTitle">Sohbet</div>
+                        <div class="contact-status">çevrimiçi</div>
+                    </div>
+                </div>
+                <div class="chat-actions">
                     <i class="fas fa-video" id="startVideoBtn"></i>
                     <i class="fas fa-phone" id="startAudioBtn"></i>
+                    <i class="fas fa-ellipsis-v"></i>
                 </div>
             </div>
 
-            <div id="messages" class="messages-container"></div>
+            <div class="messages" id="messagesContainer"></div>
 
-            <div class="input-area">
-                <input type="text" id="messageInput" placeholder="Mesaj yazın...">
-                <button id="sendMessageBtn">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+            <div class="message-input">
+                <div class="input-container">
+                    <i class="fas fa-smile"></i>
+                    <input type="text" id="messageInput" placeholder="Mesaj yazın...">
+                    <i class="fas fa-paperclip"></i>
+                    <i class="fas fa-paper-plane" id="sendMessageBtn"></i>
+                </div>
             </div>
         </div>
         
+        <!-- Video Call Container -->
         <div class="video-container" id="videoContainer">
             <div class="video-wrapper">
                 <video id="localVideo" autoplay muted playsinline></video>
@@ -77,41 +108,10 @@
                 <video id="remoteVideo" autoplay playsinline></video>
                 <div class="video-label">Karşı Taraf</div>
             </div>
-        </div>
-
-        <div class="controls">
-            <button id="startCall" class="btn primary" onclick="startVideoCall()">
-                <i class="fas fa-video"></i> Görüntülü Arama Başlat
-            </button>
-            <button id="endCall" class="btn danger" onclick="endCall()" disabled>
-                <i class="fas fa-phone-slash"></i> Aramayı Sonlandır
-            </button>
-        </div>
-
-        <div class="chat-container">
-            <div class="contacts-panel">
-                <div class="contacts-header">
-                    <h3>Cüzdanlar</h3>
-                    <button id="addContactBtn" class="btn secondary">
-                        <i class="fas fa-plus"></i> Yeni
-                    </button>
-                </div>
-                <div id="contactsList" class="contacts-list">
-                    <!-- Cüzdanlar buraya dinamik olarak eklenecek -->
-                </div>
-            </div>
-            <div class="chat-panel">
-                <div class="current-chat-header">
-                    <span id="currentChatTitle">Genel Sohbet</span>
-                </div>
-                <div id="messages" class="messages"></div>
-                <div class="message-input">
-                    <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." 
-                           onkeypress="if(event.key === 'Enter') sendMessage()">
-                    <button onclick="sendMessage()" class="btn primary">
-                        <i class="fas fa-paper-plane"></i> Gönder
-                    </button>
-                </div>
+            <div class="video-controls">
+                <button id="endCall" class="btn danger" onclick="endCall()">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
             </div>
         </div>
     </div>
