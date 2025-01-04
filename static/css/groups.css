@@ -1,0 +1,163 @@
+/* Group Settings Dialog */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.group-settings-dialog {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.group-settings-dialog h3 {
+    margin: 0 0 20px;
+    color: #008069;
+    font-size: 1.2em;
+}
+
+.group-avatar {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.group-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    object-fit: cover;
+}
+
+.group-avatar i {
+    font-size: 60px;
+    color: #008069;
+    background: #e9edef;
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.change-avatar-btn {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    color: #008069;
+    cursor: pointer;
+}
+
+.group-description {
+    margin-bottom: 20px;
+}
+
+.group-description textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 10px 0;
+    resize: vertical;
+}
+
+.save-description-btn {
+    background: #008069;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.group-members-list {
+    margin-bottom: 20px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.member-item span {
+    flex: 1;
+}
+
+.admin-badge {
+    background: #e9edef;
+    color: #008069;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin: 0 10px;
+}
+
+.remove-member-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.group-admin-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.group-admin-controls button {
+    flex: 1;
+    background: #008069;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.close-settings-btn {
+    width: 100%;
+    background: #f0f0f0;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* Group List Item Styles */
+.contact-item.group {
+    position: relative;
+}
+
+.contact-item.group .contact-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-item.group .contact-name i {
+    color: #008069;
+    margin-right: 8px;
+}
+
+.group-members {
+    font-size: 0.8em;
+    color: #667781;
+}
