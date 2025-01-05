@@ -28,10 +28,19 @@ class WebSocketHandler {
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Ensure we have a valid wallet address
+        if (!this.walletAddress || this.walletAddress.length < 32) {
+            console.error('Geçerli bir cüzdan adresi gerekli');
+            document.getElementById('status').innerHTML = 
+                '<span class="error">Geçerli bir cüzdan adresi gerekli</span>';
+            return;
+        }
+
         const wsUrl = `${protocol}//${window.location.host}/ws/${this.walletAddress}`;
+        console.log('Attempting WebSocket connection to:', wsUrl);
         
-        const backendUrl = 'wss://user:c2c1cd94f1d2e506ad047a20a316445b@merhaba-greeting-app-tunnel-nbcjvr06.devinapps.com';
-        this.ws = new WebSocket(`${backendUrl}/ws/${this.walletAddress}`);
+        // Use the dynamically constructed WebSocket URL
+        this.ws = new WebSocket(wsUrl);
         
         this.ws.onopen = () => {
             document.getElementById('status').textContent = 'Bağlandı';

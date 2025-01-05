@@ -12,6 +12,8 @@ import base58
 from nacl.signing import VerifyKey
 from solana.transaction import Transaction
 from solana.rpc.api import Client
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
 
 class PublicKey:
     def __init__(self, key):
@@ -262,8 +264,17 @@ async def get_index():
 async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
     # Cüzdan adresini doğrula
     try:
+        # Add more detailed logging
+        print(f"Attempting WebSocket connection with wallet address: {wallet_address}")
         wallet = PublicKey(wallet_address)
-    except ValueError:
+        if not wallet_address.startswith('0x') and len(wallet_address) >= 32:
+            print(f"Valid wallet address format: {wallet_address}")
+        else:
+            print(f"Invalid wallet address format: {wallet_address}")
+            await websocket.close(code=1008, reason="Geçersiz cüzdan adresi formatı")
+            return
+    except ValueError as e:
+        print(f"Invalid wallet address error: {str(e)}")
         await websocket.close(code=1008, reason="Geçersiz cüzdan adresi")
         return
         
