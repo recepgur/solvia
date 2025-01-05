@@ -266,16 +266,17 @@ async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
     try:
         # Add more detailed logging
         print(f"Attempting WebSocket connection with wallet address: {wallet_address}")
-        wallet = PublicKey(wallet_address)
-        if not wallet_address.startswith('0x') and len(wallet_address) >= 32:
-            print(f"Valid wallet address format: {wallet_address}")
-        else:
-            print(f"Invalid wallet address format: {wallet_address}")
-            await websocket.close(code=1008, reason="Geçersiz cüzdan adresi formatı")
+        try:
+            # Let PublicKey class handle the validation
+            wallet = PublicKey(wallet_address)
+            print(f"Valid Solana wallet address: {wallet_address}")
+        except Exception as e:
+            print(f"Invalid wallet address: {str(e)}")
+            await websocket.close(code=1008, reason="Geçersiz cüzdan adresi")
             return
-    except ValueError as e:
-        print(f"Invalid wallet address error: {str(e)}")
-        await websocket.close(code=1008, reason="Geçersiz cüzdan adresi")
+    except Exception as e:
+        print(f"Connection error: {str(e)}")
+        await websocket.close(code=1008, reason="Bağlantı hatası")
         return
         
     await manager.connect(str(wallet), websocket)
