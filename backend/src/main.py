@@ -267,9 +267,14 @@ async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
         # Add more detailed logging
         print(f"Attempting WebSocket connection with wallet address: {wallet_address}")
         try:
-            # Let PublicKey class handle the validation
-            wallet = PublicKey(wallet_address)
-            print(f"Valid Solana wallet address: {wallet_address}")
+            # Allow test client IDs in development
+            if wallet_address.startswith('client-'):
+                wallet = wallet_address
+                print(f"Valid test client ID: {wallet_address}")
+            else:
+                # Let PublicKey class handle the validation for real wallet addresses
+                wallet = PublicKey(wallet_address)
+                print(f"Valid Solana wallet address: {wallet_address}")
         except Exception as e:
             print(f"Invalid wallet address: {str(e)}")
             await websocket.close(code=1008, reason="Geçersiz cüzdan adresi")
@@ -279,9 +284,10 @@ async def websocket_endpoint(websocket: WebSocket, wallet_address: str):
         await websocket.close(code=1008, reason="Bağlantı hatası")
         return
         
-    await manager.connect(str(wallet), websocket)
+    # Use wallet_address directly for test clients, str(wallet) for real wallets
+    wallet_str = wallet_address if isinstance(wallet, str) else str(wallet)
+    await manager.connect(wallet_str, websocket)
     try:
-        wallet_str = str(wallet)
         while True:
             message = await websocket.receive_json()
             
