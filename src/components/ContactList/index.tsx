@@ -12,26 +12,22 @@ import {
 } from '@chakra-ui/react';
 import { useTranslations } from 'next-intl';
 
-interface Contact {
-  publicKey: string;
-  name?: string;
-  lastMessage?: string;
-  lastMessageTime?: number;
-  unreadCount?: number;
-  online?: boolean;
-}
+import { ContactInfo } from '@/services/contacts/ContactDiscoveryService';
+import { useContacts } from '@/hooks/useContacts';
+import { Input, InputGroup, InputLeftElement, Spinner } from '@chakra-ui/react';
+import { SearchIcon } from '@chakra-ui/icons';
 
 interface ContactListProps {
-  contacts: Contact[];
   selectedContact?: string;
   onSelectContact: (publicKey: string) => void;
 }
 
 export const ContactList: React.FC<ContactListProps> = ({
-  contacts,
   selectedContact,
   onSelectContact,
 }) => {
+  const { contacts, loading, searchContacts } = useContacts();
+  const [searchQuery, setSearchQuery] = React.useState('');
   const t = useTranslations();
   const bgColor = useColorModeValue('white', 'gray.800');
   const hoverBgColor = useColorModeValue('gray.50', 'gray.700');
@@ -60,7 +56,26 @@ export const ContactList: React.FC<ContactListProps> = ({
       bg={bgColor}
       overflowY="auto"
     >
-      {contacts.length === 0 ? (
+      <Box p={4}>
+        <InputGroup>
+          <InputLeftElement pointerEvents="none">
+            <SearchIcon color="gray.500" />
+          </InputLeftElement>
+          <Input
+            placeholder={t('common.search_contacts')}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              searchContacts(e.target.value);
+            }}
+          />
+        </InputGroup>
+      </Box>
+      {loading ? (
+        <Box p={4} textAlign="center">
+          <Spinner />
+        </Box>
+      ) : contacts.length === 0 ? (
         <Box p={4} textAlign="center">
           <Text color="gray.500">{t('common.no_contacts')}</Text>
         </Box>

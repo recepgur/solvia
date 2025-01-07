@@ -30,6 +30,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.34",
     "@solana/wallet-adapter-wallets": "^0.19.25",
     "@solana/web3.js": "^1.87.6",
+    "@solana/spl-name-service": "^0.1.4",
     "@types/negotiator": "0.6.3",
     "@types/simple-peer": "^9.11.8",
     "@web3modal/wagmi": "^5.1.11",

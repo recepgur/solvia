@@ -1,6 +1,7 @@
 {
   "common": {
     "app_name": "Solvio",
+    "search_contacts": "Search contacts...",
     "connect_wallet": "Connect Wallet",
     "disconnect": "Disconnect",
     "send": "Send",
