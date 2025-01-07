@@ -67,7 +67,7 @@ export class MessagingService {
             {
               memcmp: {
                 offset: 32, // Adjust based on account data layout
-                bytes: publicKey,
+                bytes: new PublicKey(publicKey).toBase58(),
               },
             },
           ],
@@ -76,19 +76,31 @@ export class MessagingService {
 
       // Decrypt and format messages
       const formattedMessages: Message[] = await Promise.all(
-        messages.map(async ({ account }) => {
-          const data = account.data;
+        messages.map(async (accountInfo) => {
+          const messageData = Buffer.from(accountInfo.account.data);
+          
+          // Get recipient's keypair for decryption
+          const authMessage = new TextEncoder().encode('auth');
+          const recipientKeyPair = await this.provider.wallet.adapter.signMessage(
+            authMessage
+          );
+          
+          // Convert the encrypted content to Uint8Array for decryption
+          const encryptedContent = new Uint8Array(
+            messageData.slice(97, messageData.length - 8)
+          );
+          
           const decryptedContent = await decryptMessage(
-            data.slice(97, data.length - 8).toString(), // Adjust slicing based on account data layout
-            publicKey
+            encryptedContent,
+            new Uint8Array(recipientKeyPair)
           );
 
           return {
-            sender: new PublicKey(data.slice(0, 32)).toString(),
-            recipient: new PublicKey(data.slice(32, 64)).toString(),
+            sender: new PublicKey(messageData.slice(0, 32)).toString(),
+            recipient: new PublicKey(messageData.slice(32, 64)).toString(),
             content: decryptedContent,
-            timestamp: new Date(data.readBigInt64LE(89)).getTime(),
-            signature: data.slice(65, 89).toString('base64'),
+            timestamp: Number(messageData.readBigInt64LE(89)),
+            signature: messageData.slice(65, 89).toString('base64'),
           };
         })
       );
@@ -107,21 +119,40 @@ export class MessagingService {
       // Subscribe to program account changes
       return this.connection.onProgramAccountChange(
         new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || ''),
-        (accountInfo) => {
-          const { account } = accountInfo;
-          const data = account.data;
+        async (accountInfo) => {
+          try {
+            const messageData = Buffer.from(accountInfo.accountInfo.data);
+            
+            // Get recipient's keypair for decryption
+            const authMessage = new TextEncoder().encode('auth');
+            const recipientKeyPair = await this.provider.wallet.adapter.signMessage(
+              authMessage
+            );
+            
+            // Convert the encrypted content to Uint8Array for decryption
+            const encryptedContent = new Uint8Array(
+              messageData.slice(97, messageData.length - 8)
+            );
+            
+            const decryptedContent = await decryptMessage(
+              encryptedContent,
+              new Uint8Array(recipientKeyPair)
+            );
 
-          // Process new message
-          const message: Message = {
-            sender: new PublicKey(data.slice(0, 32)).toString(),
-            recipient: new PublicKey(data.slice(32, 64)).toString(),
-            content: data.slice(97, data.length - 8).toString(),
-            timestamp: new Date(data.readBigInt64LE(89)).getTime(),
-            signature: data.slice(65, 89).toString('base64'),
-          };
+            // Process new message
+            const message: Message = {
+              sender: new PublicKey(messageData.slice(0, 32)).toString(),
+              recipient: new PublicKey(messageData.slice(32, 64)).toString(),
+              content: decryptedContent,
+              timestamp: Number(messageData.readBigInt64LE(89)),
+              signature: messageData.slice(65, 89).toString('base64'),
+            };
 
-          // Invoke callback with new message
-          callback(message);
+            // Invoke callback with new message
+            callback(message);
+          } catch (error) {
+            console.error('Error processing new message:', error);
+          }
         }
       );
     } catch (error) {
