@@ -1,6 +1,6 @@
-# Decentralized Blockchain Messenger
+# Solvio
 
-A fully decentralized communication platform built with blockchain technology, enabling secure messaging, voice calls, and video calls.
+A fully decentralized communication platform built on the Solana blockchain, enabling secure messaging, voice calls, and video calls with wallet-based authentication.
 
 ## Features
 
@@ -25,7 +25,7 @@ A fully decentralized communication platform built with blockchain technology, e
 ## Project Structure
 
 ```
-blockchain-messenger/
+solvio/
 ├── contracts/         # Smart contract source files
 ├── scripts/          # Deployment and test scripts
 ├── test/            # Smart contract test files

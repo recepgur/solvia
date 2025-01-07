@@ -1,8 +1,8 @@
-# Blockchain Messenger Architecture
+# Solvio Architecture
 
 ## System Overview
 
-The Blockchain Messenger is a decentralized communication platform that enables secure messaging and real-time communication through blockchain technology. The system is designed with the following core components:
+Solvio is a decentralized communication platform that enables secure messaging and real-time communication through Solana blockchain technology. The system is designed with the following core components:
 
 ### 1. Core Components
 
