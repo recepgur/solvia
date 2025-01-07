@@ -1,19 +1,20 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { MessengerContract } from "../typechain-types";
+import type { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { MessengerContract, MessengerContract__factory } from "../typechain-types";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("MessengerContract", function () {
   let messengerContract: MessengerContract;
-  let owner: HardhatEthersSigner;
-  let user1: HardhatEthersSigner;
-  let user2: HardhatEthersSigner;
+  let owner: SignerWithAddress;
+  let user1: SignerWithAddress;
+  let user2: SignerWithAddress;
 
   beforeEach(async function () {
     [owner, user1, user2] = await ethers.getSigners();
     
     const MessengerFactory = await ethers.getContractFactory("MessengerContract");
-    messengerContract = await MessengerFactory.deploy();
+    messengerContract = await MessengerFactory.deploy() as MessengerContract;
     await messengerContract.waitForDeployment();
   });
 
@@ -44,10 +45,13 @@ describe("MessengerContract", function () {
 
     it("Should allow registered users to send messages", async function () {
       const message = "encrypted-message";
-      await expect(
-        messengerContract.connect(user1).sendMessage(user2.address, message)
-      ).to.emit(messengerContract, "MessageSent")
-        .withArgs(user1.address, user2.address, await ethers.provider.getBlock("latest").then(b => b!.timestamp));
+      const tx = await messengerContract.connect(user1).sendMessage(user2.address, message);
+      await tx.wait();
+
+      const block = await ethers.provider.getBlock("latest");
+      expect(tx)
+        .to.emit(messengerContract, "MessageSent")
+        .withArgs(user1.address, user2.address, block?.timestamp);
     });
 
     it("Should not allow unregistered users to send messages", async function () {

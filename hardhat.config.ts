@@ -1,10 +1,11 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
 dotenv.config();
 
@@ -22,7 +23,10 @@ const config: HardhatUserConfig = {
     hardhat: {
       chainId: 1337,
     },
-    // Add other networks as needed
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 1337,
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -33,7 +37,11 @@ const config: HardhatUserConfig = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./src/artifacts"
-  }
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
+  },
 };
 
 export default config;
