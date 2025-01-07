@@ -4,14 +4,12 @@ declare global {
   interface Window {
     solana?: {
       isPhantom?: boolean;
-      isConnected: boolean;
       publicKey?: { toString(): string };
-      connect(): Promise<{ publicKey: { toString(): string } }>;
+      connect(): Promise<{ publicKey: string }>;
       disconnect(): Promise<void>;
       on(event: string, callback: () => void): void;
       off(event: string, callback: () => void): void;
-      request(params: { method: string; params?: any[] }): Promise<any>;
-    };
+    }
   }
 }
 

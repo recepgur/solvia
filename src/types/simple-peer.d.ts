@@ -1,41 +1,44 @@
 /// <reference lib="dom" />
 
 declare module 'simple-peer' {
-  interface PeerData {
-    type?: 'offer' | 'answer' | 'candidate';
-    sdp?: string;
-    candidate?: RTCIceCandidate;
+  namespace SimplePeer {
+    interface SignalData {
+      type: 'offer' | 'answer' | 'candidate';
+      sdp?: string;
+      candidate?: {
+        candidate: string;
+        sdpMLineIndex: number | null;
+        sdpMid: string | null;
+        usernameFragment: string | null;
+      };
+    }
+
+    interface Options {
+      initiator?: boolean;
+      trickle?: boolean;
+      config?: RTCConfiguration;
+      stream?: MediaStream;
+    }
+
+    interface Instance {
+      signal(data: SignalData): void;
+      on(event: 'signal', callback: (data: SignalData) => void): void;
+      on(event: 'connect', callback: () => void): void;
+      on(event: 'data', callback: (data: Uint8Array) => void): void;
+      on(event: 'stream', callback: (stream: MediaStream) => void): void;
+      on(event: 'close', callback: () => void): void;
+      on(event: 'error', callback: (err: Error) => void): void;
+      addStream(stream: MediaStream): void;
+      send(data: string | Uint8Array): void;
+      destroy(): void;
+    }
   }
 
-  interface PeerOptions {
-    initiator?: boolean;
-    trickle?: boolean;
-    config?: RTCConfiguration;
-    stream?: MediaStream;
+  interface SimplePeerConstructor {
+    (opts?: SimplePeer.Options): SimplePeer.Instance;
+    new (opts?: SimplePeer.Options): SimplePeer.Instance;
   }
 
-  interface PeerEvents {
-    signal: PeerData;
-    connect: void;
-    data: Uint8Array;
-    stream: MediaStream;
-    close: void;
-    error: Error;
-  }
-
-  interface PeerInstance {
-    signal(data: PeerData): void;
-    on<E extends keyof PeerEvents>(event: E, callback: (data: PeerEvents[E]) => void): void;
-    addStream(stream: MediaStream): void;
-    send(data: string): void;
-    destroy(): void;
-  }
-
-  type SimplePeer = {
-    (opts?: PeerOptions): PeerInstance;
-    prototype: PeerInstance;
-  }
-
-  const peer: SimplePeer;
-  export = peer;
+  const SimplePeer: SimplePeerConstructor;
+  export = SimplePeer;
 }
