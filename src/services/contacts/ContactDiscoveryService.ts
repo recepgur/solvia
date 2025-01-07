@@ -75,7 +75,7 @@ export class ContactDiscoveryService {
             domainName: domains[0],
             lastSeen: Date.now(),
           });
-        } catch (e) {
+        } catch {
           // Invalid public key format
         }
       }

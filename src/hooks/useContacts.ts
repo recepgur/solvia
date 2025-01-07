@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { ContactDiscoveryService, ContactInfo } from '@/services/contacts/ContactDiscoveryService';
 import { useToast } from '@chakra-ui/react';
@@ -10,7 +10,7 @@ export const useContacts = () => {
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
-  const contactService = new ContactDiscoveryService(connection);
+  const contactService = useMemo(() => new ContactDiscoveryService(connection), [connection]);
 
   const searchContacts = useCallback(async (query: string) => {
     try {

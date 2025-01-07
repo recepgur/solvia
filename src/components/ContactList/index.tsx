@@ -12,7 +12,6 @@ import {
 } from '@chakra-ui/react';
 import { useTranslations } from 'next-intl';
 
-import { ContactInfo } from '@/services/contacts/ContactDiscoveryService';
 import { useContacts } from '@/hooks/useContacts';
 import { Input, InputGroup, InputLeftElement, Spinner } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
