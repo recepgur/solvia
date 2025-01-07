@@ -24,7 +24,7 @@ async function main() {
       nftOrSft: nft,
       name: "Solvio",
       symbol: "SOLV",
-      uri: "https://raw.githubusercontent.com/recepgur/solvia/main/metadata.json",
+      uri: "https://raw.githubusercontent.com/recepgur/solvio/main/metadata.json",
       sellerFeeBasisPoints: nft.sellerFeeBasisPoints,
       tokenStandard: nft.tokenStandard,
       isMutable: true,
