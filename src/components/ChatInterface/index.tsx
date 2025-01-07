@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { Box, VStack, Input, Button, HStack, Text } from '@chakra-ui/react';
 import { useTranslations } from 'next-intl';
-import { useMessaging } from '@/hooks/useMessaging';
-import MessageList from '@/components/MessageList';
+import { useMessaging } from '../../hooks/useMessaging';
+import MessageList from '../MessageList';
 
 interface ChatInterfaceProps {
   onStartCall: () => void;

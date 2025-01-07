@@ -49,13 +49,9 @@ export class WebRTCService {
     if (typeof window !== 'undefined') {
       this.initializeWebRTC();
     }
-
-    if (typeof window !== 'undefined') {
-      this.initializeWebRTC();
-    }
   }
 
-  private initializeWebRTC() {
+  private initializeWebRTC(): void {
     if (!this.peer) {
       this.peer = SimplePeer({
         initiator: true,
@@ -65,46 +61,51 @@ export class WebRTCService {
         }
       });
 
-      if (this.peer) {
-        this.peer.on('signal', (data) => {
-        const signal: CallSignal = {
-          type: data.type as 'offer' | 'answer',
-          sdp: data.sdp,
-          candidate: data.candidate as globalThis.RTCIceCandidate
-        };
-
-        const message: P2PMessage = {
-          type: 'call-signal',
-          content: JSON.stringify(signal),
-          timestamp: Date.now(),
-          sender: 'local'
-        };
-
-        this.sendMessage(message);
-      });
-
-        this.peer.on('stream', (stream: globalThis.MediaStream) => {
-        if (this.onStreamCallback) {
-          this.onStreamCallback(stream);
-        }
-      });
-
-        this.peer.on('data', async (data) => {
-        try {
-          const decryptedData = await decryptMessage(data.toString());
-          const message: P2PMessage = JSON.parse(decryptedData);
-          
-          if (message.type === 'call-signal') {
-            const signal: CallSignal = JSON.parse(message.content);
-            this.handleCallSignal(signal);
-          } else if (this.onMessageCallback) {
-            this.onMessageCallback(message);
-          }
-        } catch (error) {
-          console.error('Error processing received data:', error);
-        }
-      });
+      this.setupPeerEventHandlers();
     }
+  }
+
+  private setupPeerEventHandlers(): void {
+    if (!this.peer) return;
+
+    this.peer.on('signal', (data: any) => {
+      const signal: CallSignal = {
+        type: data.type as 'offer' | 'answer',
+        sdp: data.sdp,
+        candidate: data.candidate
+      };
+
+      const message: P2PMessage = {
+        type: 'call-signal',
+        content: JSON.stringify(signal),
+        timestamp: Date.now(),
+        sender: 'local'
+      };
+
+      this.sendMessage(message).catch(console.error);
+    });
+
+    this.peer.on('stream', (stream: MediaStream) => {
+      if (this.onStreamCallback) {
+        this.onStreamCallback(stream);
+      }
+    });
+
+    this.peer.on('data', async (data: Uint8Array) => {
+      try {
+        const decryptedData = await decryptMessage(data.toString());
+        const message: P2PMessage = JSON.parse(decryptedData);
+        
+        if (message.type === 'call-signal') {
+          const signal: CallSignal = JSON.parse(message.content);
+          this.handleCallSignal(signal);
+        } else if (this.onMessageCallback) {
+          this.onMessageCallback(message);
+        }
+      } catch (error) {
+        console.error('Error processing received data:', error);
+      }
+    });
   }
 
   private handleCallSignal(signal: CallSignal): void {

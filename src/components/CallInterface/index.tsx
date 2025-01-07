@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Button, HStack } from '@chakra-ui/react';
 import { useTranslations } from 'next-intl';
-import { useWebRTC } from '@/hooks/useWebRTC';
+import { useWebRTC } from '../../hooks/useWebRTC';
 
 interface CallInterfaceProps {
   isActive: boolean;

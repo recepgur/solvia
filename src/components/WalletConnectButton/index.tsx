@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Text } from '@chakra-ui/react';
-import { useWallet } from '@/contexts/WalletContext';
+import { useWallet } from '../../contexts/WalletContext';
 import { useTranslations } from 'next-intl';
 
 const WalletConnectButton: React.FC = () => {

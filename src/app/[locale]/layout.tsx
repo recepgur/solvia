@@ -2,6 +2,13 @@ import React from 'react';
 import { Providers } from '@/app/[locale]/providers';
 import { Box } from '@chakra-ui/react';
 
+export async function generateStaticParams() {
+  return [
+    { locale: 'en' },
+    { locale: 'tr' }
+  ];
+}
+
 export default function RootLayout({
   children,
 }: {
