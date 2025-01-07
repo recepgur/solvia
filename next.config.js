@@ -1,14 +1,12 @@
 /** @type {import('next').NextConfig} */
 const createNextIntlPlugin = require('next-intl/plugin');
 
-const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const withNextIntl = createNextIntlPlugin();
 
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
-  distDir: 'dist',
   images: {
-    unoptimized: true,
+    domains: ['localhost'],
   },
   webpack: (config) => {
     config.resolve.fallback = {
@@ -18,13 +16,6 @@ const nextConfig = {
       tls: false,
     };
     return config;
-  },
-  experimental: {
-    appDir: true
-  },
-  env: {
-    NEXT_PUBLIC_DEFAULT_LOCALE: 'en',
-    _next_intl_trailing_slash: 'true'
   }
 }
 
