@@ -1,22 +1,23 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
 import { Suspense } from 'react';
-import { locales } from '@/config/i18n';
+import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
-// Import HomeContent component
-import HomeContent from '@/components/HomeContent';
+const HomeContent = dynamic(() => import('@/components/HomeContent'), {
+  ssr: false,
+  loading: () => <div>Loading...</div>
+});
 
 type Props = {
   params: { locale: string };
 };
 
-export default async function Home({ params: { locale } }: Props) {
-  const t = await getTranslations('common');
+export default function Home({ params: { locale } }: Props) {
+  const t = useTranslations('common');
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t('loading')}</div>}>
       <HomeContent />
     </Suspense>
   );

@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "Yükleniyor...",
     "connect_wallet": "Cüzdan Bağla",
     "messages": "Mesajlar",
     "start_call": "Arama Başlat",

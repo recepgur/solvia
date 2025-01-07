@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "Loading...",
     "connect_wallet": "Connect Wallet",
     "messages": "Messages",
     "start_call": "Start Call",
