@@ -1,12 +1,13 @@
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import dynamic from 'next/dynamic';
+import { locales } from '@/config/i18n';
 
 type Props = {
   params: { locale: string };
 };
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'tr' }];
+  return locales.map((locale) => ({ locale }));
 }
 
 const HomeContent = dynamic(() => import('@/components/HomeContent'), {
@@ -15,7 +16,6 @@ const HomeContent = dynamic(() => import('@/components/HomeContent'), {
 });
 
 export default async function Home({ params: { locale } }: Props) {
-  unstable_setRequestLocale(locale);
   const t = await getTranslations('common');
 
   return <HomeContent />;

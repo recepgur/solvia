@@ -19,8 +19,12 @@ const nextConfig = {
     };
     return config;
   },
+  experimental: {
+    appDir: true
+  },
   env: {
-    _next_intl_trailing_slash: '1'
+    NEXT_PUBLIC_DEFAULT_LOCALE: 'en',
+    _next_intl_trailing_slash: 'true'
   }
 }
 
