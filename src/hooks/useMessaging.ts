@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { MessagingService, Message } from '@/services/messaging/MessagingService';
 import { useToast } from '@chakra-ui/react';
@@ -10,10 +10,33 @@ export const useMessaging = () => {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  const messagingService = new MessagingService(
+  const messagingService = useMemo(() => new MessagingService(
     connection,
-    { publicKey, signTransaction } as any
-  );
+    { publicKey, signTransaction }
+  ), [connection, publicKey, signTransaction]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!publicKey) return;
+
+    try {
+      setLoading(true);
+      const fetchedMessages = await messagingService.getMessages(
+        publicKey.toString()
+      );
+      setMessages(fetchedMessages);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch messages';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [publicKey, messagingService, toast]);
 
   const sendMessage = useCallback(
     async (recipientPublicKey: string, content: string) => {
@@ -45,10 +68,11 @@ export const useMessaging = () => {
 
         // Refresh messages
         fetchMessages();
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
         toast({
           title: 'Error',
-          description: error.message || 'Failed to send message',
+          description: errorMessage,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -57,30 +81,9 @@ export const useMessaging = () => {
         setLoading(false);
       }
     },
-    [publicKey, messagingService, toast]
+    [publicKey, messagingService, toast, fetchMessages]
   );
-
-  const fetchMessages = useCallback(async () => {
-    if (!publicKey) return;
-
-    try {
-      setLoading(true);
-      const fetchedMessages = await messagingService.getMessages(
-        publicKey.toString()
-      );
-      setMessages(fetchedMessages);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to fetch messages',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [publicKey, messagingService, toast]);
+;
 
   useEffect(() => {
     if (publicKey) {
@@ -98,7 +101,7 @@ export const useMessaging = () => {
         }
       };
     }
-  }, [publicKey, messagingService, connection]);
+  }, [publicKey, messagingService, connection, fetchMessages]);
 
   return {
     messages,

@@ -11,6 +11,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { useTranslations } from 'next-intl';
 
 interface CallInterfaceProps {
   recipientPublicKey: string;
@@ -60,6 +61,8 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
     endCall();
     onEndCall();
   };
+
+  const t = useTranslations();
 
   return (
     <Box
@@ -122,7 +125,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
           <VStack spacing={4}>
             <Flex gap={4}>
               <IconButton
-                aria-label="Toggle Video"
+                aria-label={t('common.toggle_video')}
                 onClick={toggleVideo}
                 icon={<span>📹</span>}
                 size="lg"
@@ -130,7 +133,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
                 variant="outline"
               />
               <IconButton
-                aria-label="Toggle Audio"
+                aria-label={t('common.toggle_audio')}
                 onClick={toggleAudio}
                 icon={<span>🎤</span>}
                 size="lg"
@@ -138,7 +141,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
                 variant="outline"
               />
               <IconButton
-                aria-label="End Call"
+                aria-label={t('common.end_call')}
                 onClick={handleEndCall}
                 icon={<span>📞</span>}
                 size="lg"
@@ -152,7 +155,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
                 onClick={handleStartCall}
                 leftIcon={<span>📞</span>}
               >
-                Start Call
+                {t('common.start_call')}
               </Button>
             )}
           </VStack>
@@ -161,7 +164,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
         {/* Connection Status */}
         <Box p={2} bg={callState.isInCall ? 'green.500' : 'gray.500'}>
           <Text color="white" textAlign="center">
-            {callState.isInCall ? 'Connected' : 'Not Connected'}
+            {callState.isInCall ? t('common.connected') : t('common.not_connected')}
           </Text>
         </Box>
       </Flex>

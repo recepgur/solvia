@@ -10,6 +10,7 @@ import {
   useColorModeValue,
   Badge,
 } from '@chakra-ui/react';
+import { useTranslations } from 'next-intl';
 
 interface Contact {
   publicKey: string;
@@ -31,6 +32,7 @@ export const ContactList: React.FC<ContactListProps> = ({
   selectedContact,
   onSelectContact,
 }) => {
+  const t = useTranslations();
   const bgColor = useColorModeValue('white', 'gray.800');
   const hoverBgColor = useColorModeValue('gray.50', 'gray.700');
   const selectedBgColor = useColorModeValue('gray.100', 'gray.600');
@@ -58,7 +60,11 @@ export const ContactList: React.FC<ContactListProps> = ({
       bg={bgColor}
       overflowY="auto"
     >
-      {contacts.map((contact) => (
+      {contacts.length === 0 ? (
+        <Box p={4} textAlign="center">
+          <Text color="gray.500">{t('common.no_contacts')}</Text>
+        </Box>
+      ) : contacts.map((contact) => (
         <Box
           key={contact.publicKey}
           p={4}

@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Message } from '@/services/messaging/MessagingService';
+import { useTranslations } from 'next-intl';
 
 interface MessageListProps {
   messages: Message[];
@@ -18,6 +19,7 @@ interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const { publicKey } = useWallet();
+  const t = useTranslations();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
@@ -40,7 +42,11 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       borderWidth="1px"
       borderColor={borderColor}
     >
-      {messages.map((message, index) => {
+      {messages.length === 0 ? (
+        <Text textAlign="center" color="gray.500">
+          {t('common.no_messages')}
+        </Text>
+      ) : messages.map((message, index) => {
         const isCurrentUser = message.sender === publicKey?.toString();
 
         return (
@@ -61,7 +67,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               />
               <Box>
                 <Box
-                  bg={isCurrentUser ? 'blue.500' : useColorModeValue('gray.100', 'gray.700')}
+                  bg={isCurrentUser ? 'blue.500' : 'gray.100'}
                   color={isCurrentUser ? 'white' : undefined}
                   px={4}
                   py={2}

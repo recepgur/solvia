@@ -1,5 +1,5 @@
-import { Connection, PublicKey, Keypair, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Program, AnchorProvider, web3 } from '@project-serum/anchor';
+import { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { AnchorProvider, web3 } from '@project-serum/anchor';
 import { encryptMessage, decryptMessage } from '@/utils/encryption';
 
 export interface Message {
@@ -22,7 +22,7 @@ export class MessagingService {
   async sendMessage(recipientPublicKey: string, content: string): Promise<string> {
     try {
       // Encrypt message content
-      const encryptedContent = await encryptMessage(content, recipientPublicKey);
+      await encryptMessage(content, recipientPublicKey);
 
       // Create PDA for message storage
       const [messagePDA] = await PublicKey.findProgramAddress(

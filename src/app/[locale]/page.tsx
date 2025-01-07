@@ -4,9 +4,11 @@ import { Box, Container, Heading, Text, VStack, useColorModeValue } from '@chakr
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletButton } from '@/components/WalletButton';
 import { ChatInterface } from '@/components/ChatInterface';
+import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const { connected, publicKey } = useWallet();
+  const t = useTranslations();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
@@ -38,10 +40,10 @@ export default function Home() {
           >
             <VStack spacing={6}>
               <Text fontSize="lg">
-                Connect your Solana wallet to start messaging
+                {t('common.connect_wallet')}
               </Text>
               <Text fontSize="sm" color="gray.500">
-                Secure, decentralized communication awaits
+                {t('common.loading')}
               </Text>
               <Box mt={4}>
                 <WalletButton />

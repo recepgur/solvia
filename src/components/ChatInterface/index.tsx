@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Input,
-  VStack,
   HStack,
   Text,
   useColorModeValue,
@@ -18,7 +17,6 @@ import { useMessaging } from '@/hooks/useMessaging';
 import { CallInterface } from '@/components/CallInterface';
 import { MessageList } from '@/components/MessageList';
 import { ContactList } from '@/components/ContactList';
-import { useWallet } from '@solana/wallet-adapter-react';
 
 interface Contact {
   publicKey: string;
@@ -30,12 +28,10 @@ interface Contact {
 }
 
 export const ChatInterface: React.FC = () => {
-  const { publicKey } = useWallet();
   const { messages, sendMessage, loading, error } = useMessaging();
   const [newMessage, setNewMessage] = useState('');
   const [showCall, setShowCall] = useState(false);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -71,10 +67,11 @@ export const ChatInterface: React.FC = () => {
     try {
       await sendMessage(selectedContact, newMessage);
       setNewMessage('');
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       toast({
         title: 'Failed to send message',
-        description: err.message,
+        description: errorMessage,
         status: 'error',
         duration: 5000,
         isClosable: true,

@@ -1,0 +1,31 @@
+{
+  "common": {
+    "connect_wallet": "Cüzdan Bağla",
+    "disconnect": "Bağlantıyı Kes",
+    "send": "Gönder",
+    "type_message": "Bir mesaj yazın...",
+    "select_contact": "Bir kişi seçin",
+    "voice_call": "Sesli Arama",
+    "video_call": "Görüntülü Arama",
+    "end_call": "Aramayı Sonlandır",
+    "loading": "Yükleniyor...",
+    "no_messages": "Henüz mesaj yok",
+    "no_contacts": "Kişi bulunamadı",
+    "start_call": "Aramayı Başlat",
+    "connected": "Bağlandı",
+    "not_connected": "Bağlı Değil",
+    "toggle_video": "Videoyu Aç/Kapat",
+    "toggle_audio": "Sesi Aç/Kapat"
+  },
+  "errors": {
+    "send_failed": "Mesaj gönderilemedi",
+    "connection_error": "Bağlantı hatası",
+    "wallet_error": "Cüzdan bağlantı hatası"
+  },
+  "notifications": {
+    "message_sent": "Mesaj gönderildi",
+    "call_started": "Arama başladı",
+    "call_ended": "Arama sonlandı",
+    "new_message": "Yeni mesaj alındı"
+  }
+}

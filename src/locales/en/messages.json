@@ -1,0 +1,31 @@
+{
+  "common": {
+    "connect_wallet": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "send": "Send",
+    "type_message": "Type a message...",
+    "select_contact": "Select a contact",
+    "voice_call": "Voice Call",
+    "video_call": "Video Call",
+    "end_call": "End Call",
+    "loading": "Loading...",
+    "no_messages": "No messages yet",
+    "no_contacts": "No contacts found",
+    "start_call": "Start Call",
+    "connected": "Connected",
+    "not_connected": "Not Connected",
+    "toggle_video": "Toggle Video",
+    "toggle_audio": "Toggle Audio"
+  },
+  "errors": {
+    "send_failed": "Failed to send message",
+    "connection_error": "Connection error",
+    "wallet_error": "Wallet connection error"
+  },
+  "notifications": {
+    "message_sent": "Message sent",
+    "call_started": "Call started",
+    "call_ended": "Call ended",
+    "new_message": "New message received"
+  }
+}

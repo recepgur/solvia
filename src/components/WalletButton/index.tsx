@@ -6,7 +6,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Box, useToast, Spinner } from '@chakra-ui/react';
 
 export const WalletButton: FC = () => {
-  const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
+  const { connected, connecting, disconnecting, publicKey } = useWallet();
   const toast = useToast();
 
   const handleConnectionChange = useCallback(() => {
@@ -20,16 +20,6 @@ export const WalletButton: FC = () => {
       });
     }
   }, [connected, publicKey, toast]);
-
-  const handleError = useCallback((error: Error) => {
-    toast({
-      title: 'Connection Error',
-      description: error.message,
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  }, [toast]);
 
   useEffect(() => {
     handleConnectionChange();

@@ -55,11 +55,11 @@ export const useWebRTC = () => {
         });
       });
 
-      service.on('peer:stream', ({ stream, publicKey }) => {
+      service.on('peer:stream', ({ stream }) => {
         setCallState(prev => ({ ...prev, remoteStream: stream }));
       });
 
-      service.on('peer:error', ({ error, publicKey }) => {
+      service.on('peer:error', ({ error }) => {
         toast({
           title: 'Call Error',
           description: error.message,
@@ -90,14 +90,16 @@ export const useWebRTC = () => {
 
       const offerSignal = await webRTCService.initiatePeerConnection(recipientPublicKey);
       return offerSignal;
-    } catch (error: any) {
-      toast({
-        title: 'Failed to Start Call',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          title: 'Failed to Start Call',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
       return null;
     }
   }, [webRTCService, toast]);
@@ -114,14 +116,16 @@ export const useWebRTC = () => {
 
       const answerSignal = await webRTCService.acceptPeerConnection(signalData, callerPublicKey);
       return answerSignal;
-    } catch (error: any) {
-      toast({
-        title: 'Failed to Accept Call',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          title: 'Failed to Accept Call',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
       return null;
     }
   }, [webRTCService, toast]);
