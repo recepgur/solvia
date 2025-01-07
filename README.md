@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Decentralized Blockchain Messenger
 
-## Getting Started
+A fully decentralized communication platform built with blockchain technology, enabling secure messaging, voice calls, and video calls.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Decentralized communication network
+- Wallet-based authentication
+- End-to-end encrypted messaging
+- Voice and video calls
+- WhatsApp-like user interface
+- Blockchain-based message storage
+- Peer-to-peer communication
+
+## Technology Stack
+
+- Frontend: Next.js + React
+- Styling: Tailwind CSS + Chakra UI
+- Blockchain Integration: ethers.js + Web3Modal
+- P2P Communication: Simple-peer
+- Real-time Updates: Socket.io
+- Authentication: Wallet Connect
+- Smart Contracts: Solidity + Hardhat
+
+## Project Structure
+
+```
+blockchain-messenger/
+├── contracts/         # Smart contract source files
+├── scripts/          # Deployment and test scripts
+├── test/            # Smart contract test files
+├── src/
+│   ├── app/         # Next.js app directory
+│   ├── components/  # React components
+│   ├── services/    # Backend services
+│   ├── utils/       # Utility functions
+│   └── artifacts/   # Compiled contract artifacts
+└── public/          # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
+```bash
+pnpm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+3. Configure environment variables in `.env.local`:
+- Set `NEXT_PUBLIC_WEB3MODAL_PROJECT_ID` for wallet integration
+- Configure `NEXT_PUBLIC_RPC_URL` for blockchain network
+- Add other required environment variables
 
-To learn more about Next.js, take a look at the following resources:
+4. Compile smart contracts:
+```bash
+pnpm hardhat compile
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Run local blockchain network:
+```bash
+pnpm hardhat node
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. Deploy contracts (in a new terminal):
+```bash
+pnpm hardhat run scripts/deploy.ts --network localhost
+```
 
-## Deploy on Vercel
+7. Run the development server:
+```bash
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Smart Contracts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project uses smart contracts for:
+- User authentication and profiles
+- Encrypted message storage
+- Call signaling
+- User data management
+
+### Contract Testing
+```bash
+pnpm hardhat test
+```
+
+### Contract Deployment
+```bash
+pnpm hardhat run scripts/deploy.ts --network <network-name>
+```
+
+## Security Features
+
+- End-to-end encryption for messages
+- Decentralized storage using IPFS
+- Wallet-based authentication
+- P2P communication for calls
+- Smart contract security measures:
+  - ReentrancyGuard
+  - Access control
+  - Input validation
