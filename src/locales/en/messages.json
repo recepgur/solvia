@@ -1,0 +1,13 @@
+{
+  "common": {
+    "connect_wallet": "Connect Wallet",
+    "messages": "Messages",
+    "start_call": "Start Call",
+    "end_call": "End Call",
+    "type_message": "Type a message...",
+    "send": "Send",
+    "language": "Language",
+    "english": "English",
+    "turkish": "Turkish"
+  }
+}

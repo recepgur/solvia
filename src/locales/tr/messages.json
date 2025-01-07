@@ -1,0 +1,13 @@
+{
+  "common": {
+    "connect_wallet": "Cüzdan Bağla",
+    "messages": "Mesajlar",
+    "start_call": "Arama Başlat",
+    "end_call": "Aramayı Sonlandır",
+    "type_message": "Mesaj yaz...",
+    "send": "Gönder",
+    "language": "Dil",
+    "english": "İngilizce",
+    "turkish": "Türkçe"
+  }
+}
