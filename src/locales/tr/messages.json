@@ -1,5 +1,6 @@
 {
   "common": {
+    "app_name": "Solvio",
     "connect_wallet": "Cüzdan Bağla",
     "disconnect": "Bağlantıyı Kes",
     "send": "Gönder",

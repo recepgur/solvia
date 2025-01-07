@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Box, Container, Flex, useColorModeValue } from '@chakra-ui/react';
+import { Box, Container, Flex, useColorModeValue, Text } from '@chakra-ui/react';
 import { WalletButton } from '../WalletButton';
 import { LanguageSwitcher } from '../LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const t = useTranslations('common');
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const headerBgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -22,7 +24,10 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       >
         <Container maxW="7xl">
           <Flex justify="space-between" align="center">
-            <LanguageSwitcher />
+            <Flex align="center" gap={4}>
+              <Text fontSize="2xl" fontWeight="bold">{t('app_name')}</Text>
+              <LanguageSwitcher />
+            </Flex>
             <WalletButton />
           </Flex>
         </Container>
