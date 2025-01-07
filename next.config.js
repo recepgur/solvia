@@ -11,6 +11,7 @@ const nextConfig = {
   env: {
     _next_intl_trailing_slash: '1'
   },
+  distDir: 'dist',
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
