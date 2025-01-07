@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const createNextIntlPlugin = require('next-intl/plugin');
 
-const withNextIntl = createNextIntlPlugin();
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: ['localhost'],
+  },
+  env: {
+    _next_intl_trailing_slash: '1'
   },
   webpack: (config) => {
     config.resolve.fallback = {
