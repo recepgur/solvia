@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useWebRTC } from '../services/WebRTCService';
-import { Call } from '../../../shared/src/types';
+import { Call } from '@solvia/messenger-shared';
+import { CallControls } from './CallControls';
 
 interface Props {
   call: Call;
@@ -72,39 +73,14 @@ export const CallInterface: React.FC<Props> = ({ call, onEndCall }) => {
           </div>
         )}
         
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4">
-          <button
-            onClick={handleToggleAudio}
-            className={`p-4 rounded-full ${
-              isMuted ? 'bg-red-500' : 'bg-gray-600'
-            } hover:bg-opacity-80 transition-colors`}
-          >
-            <span className="sr-only">{isMuted ? 'Unmute' : 'Mute'}</span>
-            {/* Add microphone icon */}
-          </button>
-          
-          {call.type === 'video' && (
-            <button
-              onClick={handleToggleVideo}
-              className={`p-4 rounded-full ${
-                !isVideoEnabled ? 'bg-red-500' : 'bg-gray-600'
-              } hover:bg-opacity-80 transition-colors`}
-            >
-              <span className="sr-only">
-                {isVideoEnabled ? 'Disable Video' : 'Enable Video'}
-              </span>
-              {/* Add video icon */}
-            </button>
-          )}
-          
-          <button
-            onClick={handleEndCall}
-            className="p-4 rounded-full bg-red-500 hover:bg-red-600 transition-colors"
-          >
-            <span className="sr-only">End Call</span>
-            {/* Add end call icon */}
-          </button>
-        </div>
+        <CallControls
+          call={call}
+          isMuted={isMuted}
+          isVideoEnabled={isVideoEnabled}
+          onToggleAudio={handleToggleAudio}
+          onToggleVideo={handleToggleVideo}
+          onEndCall={handleEndCall}
+        />
       </div>
     </div>
   );
