@@ -1,0 +1,4 @@
+packages:
+  - 'apps/messenger/web'
+  - 'apps/messenger/backend'
+  - 'apps/messenger/shared'
