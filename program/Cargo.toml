@@ -1,0 +1,20 @@
+[package]
+name = "solvio-program"
+version = "0.1.0"
+edition = "2021"
+description = "Solana program for Solvio decentralized communication platform"
+authors = ["Solvio Team"]
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+solana-program = "1.17.0"
+thiserror = "1.0.49"
+borsh = "0.10.3"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
