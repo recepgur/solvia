@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #4F46E5;
+  --secondary-color: #6B7280;
+}
+
+body {
+  @apply bg-gray-50;
+}
+
+.wallet-adapter-button {
+  @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all;
+}
