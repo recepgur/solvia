@@ -1,17 +1,38 @@
 import { useEffect, useRef } from 'react';
 import SimplePeer from 'simple-peer';
+import type { Instance as SimplePeerInstance } from 'simple-peer';
 import { io, Socket } from 'socket.io-client';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Call, WebRTCSignal } from '@solvia/messenger-shared';
 
 export class WebRTCService {
   private socket: Socket;
-  private peer: SimplePeer.Instance | null = null;
+  private peer: SimplePeerInstance | null = null;
   private stream: MediaStream | null = null;
 
-  constructor() {
-    this.socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000');
+  private wallet: ReturnType<typeof useWallet>;
+
+  constructor(wallet: ReturnType<typeof useWallet>) {
+    this.wallet = wallet;
+    this.socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000', {
+      auth: {
+        publicKey: this.wallet.publicKey?.toBase58()
+      }
+    });
     this.setupSocketListeners();
+  }
+
+  private async signMessage(message: string): Promise<string | undefined> {
+    if (!this.wallet.signMessage) return undefined;
+    
+    try {
+      const encodedMessage = new TextEncoder().encode(message);
+      const signedMessage = await this.wallet.signMessage(encodedMessage);
+      return Buffer.from(signedMessage).toString('base64');
+    } catch (error) {
+      console.error('Error signing message:', error);
+      return undefined;
+    }
   }
 
   private setupSocketListeners() {
@@ -20,9 +41,16 @@ export class WebRTCService {
       const stream = await this.getMediaStream(data.type);
       this.stream = stream;
       
-      this.peer = new SimplePeer({
+      this.peer = SimplePeer({
+        initiator: false,
         stream,
         trickle: false,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
       });
 
       this.setupPeerListeners();
@@ -73,18 +101,40 @@ export class WebRTCService {
 
   public async startCall(recipient: string, type: 'voice' | 'video'): Promise<void> {
     try {
+      if (!this.wallet.publicKey) throw new Error('Wallet not connected');
+
       const stream = await this.getMediaStream(type);
       this.stream = stream;
 
-      this.peer = new SimplePeer({
+      // Sign call request for authentication
+      const callRequest = JSON.stringify({
+        recipient,
+        type,
+        timestamp: Date.now()
+      });
+      const signature = await this.signMessage(callRequest);
+      if (!signature) throw new Error('Failed to sign call request');
+
+      this.peer = SimplePeer({
         initiator: true,
         stream,
         trickle: false,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
       });
 
       this.setupPeerListeners();
 
-      this.socket.emit('call:start', { recipient, type });
+      this.socket.emit('call:start', {
+        recipient,
+        type,
+        signature,
+        caller: this.wallet.publicKey.toBase58()
+      });
     } catch (error) {
       console.error('Error starting call:', error);
       throw error;
@@ -124,13 +174,13 @@ export class WebRTCService {
 
 export const useWebRTC = () => {
   const webRTCRef = useRef<WebRTCService>();
-  const { publicKey } = useWallet();
+  const wallet = useWallet();
 
   useEffect(() => {
-    if (!webRTCRef.current && publicKey) {
-      webRTCRef.current = new WebRTCService();
+    if (!webRTCRef.current && wallet.publicKey) {
+      webRTCRef.current = new WebRTCService(wallet);
     }
-  }, [publicKey]);
+  }, [wallet.publicKey, wallet]);
 
   return webRTCRef.current;
 };
