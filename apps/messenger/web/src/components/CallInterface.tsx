@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useWebRTC } from '../services/WebRTCService';
 import { Call } from '@solvia/messenger-shared';
 import { CallControls } from './CallControls';
@@ -16,40 +16,68 @@ export const CallInterface: React.FC<Props> = ({ call, onEndCall }) => {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (localVideoRef.current && call.type === 'video') {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
-        })
-        .catch((error) => console.error('Error accessing media devices:', error));
-    }
-  }, [call.type]);
+    if (!webRTC) return;
 
-  const handleToggleAudio = () => {
+    const handleLocalStream = (stream: MediaStream) => {
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+    };
+
+    const handleRemoteStream = (stream: MediaStream) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = stream;
+      }
+    };
+
+    const handleAudioEnabled = (enabled: boolean) => {
+      setIsMuted(!enabled);
+    };
+
+    const handleVideoEnabled = (enabled: boolean) => {
+      setIsVideoEnabled(enabled);
+    };
+
+    const handleCallStatus = ({ status }: { status: string }) => {
+      if (status === 'ended') {
+        onEndCall();
+      }
+    };
+
+    webRTC.on('localStream', handleLocalStream);
+    webRTC.on('remoteStream', handleRemoteStream);
+    webRTC.on('audioEnabled', handleAudioEnabled);
+    webRTC.on('videoEnabled', handleVideoEnabled);
+    webRTC.on('callStatus', handleCallStatus);
+
+    return () => {
+      webRTC.removeListener('localStream', handleLocalStream);
+      webRTC.removeListener('remoteStream', handleRemoteStream);
+      webRTC.removeListener('audioEnabled', handleAudioEnabled);
+      webRTC.removeListener('videoEnabled', handleVideoEnabled);
+      webRTC.removeListener('callStatus', handleCallStatus);
+    };
+  }, [webRTC, onEndCall]);
+
+  const handleToggleAudio = useCallback(() => {
     if (webRTC) {
       const newMutedState = !isMuted;
       webRTC.toggleAudio(!newMutedState);
-      setIsMuted(newMutedState);
     }
-  };
+  }, [webRTC, isMuted]);
 
-  const handleToggleVideo = () => {
+  const handleToggleVideo = useCallback(() => {
     if (webRTC) {
       const newVideoState = !isVideoEnabled;
       webRTC.toggleVideo(newVideoState);
-      setIsVideoEnabled(newVideoState);
     }
-  };
+  }, [webRTC, isVideoEnabled]);
 
-  const handleEndCall = () => {
+  const handleEndCall = useCallback(() => {
     if (webRTC) {
       webRTC.endCall();
-      onEndCall();
     }
-  };
+  }, [webRTC]);
 
   return (
     <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
