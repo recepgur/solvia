@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "A specialized blockchain network optimized for decentralized communication"
 authors = ["Solvio Team"]
 readme = "README.md"
+packages = [
+    { include = "solvio" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"

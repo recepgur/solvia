@@ -98,9 +98,15 @@ class Block:
     validator_signatures: List[bytes]
 
     def hash(self) -> bytes:
-        """Calculate the hash of the block."""
-        hasher = nacl.hash.sha256
-        return hasher(self.to_bytes())
+        """Calculate the hash of the block using BLAKE2b.
+        
+        BLAKE2b is chosen over SHA256 for its:
+        - Better performance
+        - Higher security margin
+        - Native support in PyNaCl
+        - Resistance to length extension attacks
+        """
+        return nacl.hash.blake2b(self.to_bytes())
     
     def to_bytes(self) -> bytes:
         """Convert block to bytes for hashing."""

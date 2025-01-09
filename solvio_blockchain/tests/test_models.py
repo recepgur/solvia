@@ -75,4 +75,4 @@ def test_block_creation():
     # Verify block hash
     block_hash = block.hash()
     assert isinstance(block_hash, bytes)
-    assert len(block_hash) == 32  # SHA256 hash size
+    assert len(block_hash) == 64  # BLAKE2b hash size (512 bits)
