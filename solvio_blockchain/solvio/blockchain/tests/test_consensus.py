@@ -2,6 +2,7 @@
 import pytest
 import nacl.signing
 import time
+import asyncio
 from solvio.blockchain.consensus import ConsensusManager, ValidatorInfo
 from solvio.blockchain.nodes import ValidatorNode
 from solvio.blockchain.models import MessageTransaction, MessageType, MessageMetadata
@@ -98,23 +99,27 @@ async def test_validator_slashing():
     validator_info = consensus.validators[node_id]
     initial_stake = validator_info.stake
     assert node_id in consensus.active_set
+    assert not validator_info.is_slashed
     
-    # Simulate consecutive misses
-    validator_info.consecutive_misses = 10
-    validator_info.is_slashed = False  # Ensure not already slashed
-    
-    # Trigger slash check
-    await consensus._manage_validator_set()
+    # Simulate consecutive misses over multiple management cycles
+    for _ in range(3):  # Multiple cycles to ensure slashing triggers
+        validator_info.consecutive_misses = 10
+        await consensus._manage_validator_set()
+        await asyncio.sleep(0.1)  # Allow for async operations
     
     # Verify validator was slashed
-    assert validator_info.is_slashed
-    assert validator_info.stake == 0  # Stake should be zeroed
-    assert validator_info.consecutive_misses == 0  # Should reset after slashing
-    assert node_id not in consensus.active_set  # Should be removed from active set
+    assert validator_info.is_slashed, "Validator should be slashed"
+    assert validator_info.stake == 0, "Slashed validator stake should be zero"
+    assert validator_info.consecutive_misses == 0, "Misses should reset after slashing"
+    assert node_id not in consensus.active_set, "Slashed validator should be removed from active set"
     
-    # Verify validator cannot be re-registered with same stake
-    success = await consensus.register_validator(node, initial_stake)
-    assert not success  # Should not allow slashed validator to re-register
+    # Verify validator cannot be re-registered
+    new_success = await consensus.register_validator(node, initial_stake)
+    assert not new_success, "Slashed validator should not be able to re-register"
+    
+    # Double-check validator remains slashed
+    assert validator_info.is_slashed, "Validator should remain slashed after re-registration attempt"
+    assert validator_info.stake == 0, "Validator stake should remain zero after re-registration attempt"
     
 @pytest.mark.asyncio
 async def test_validator_rotation():

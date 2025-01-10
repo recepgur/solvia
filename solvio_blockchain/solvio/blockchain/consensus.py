@@ -191,8 +191,11 @@ class ConsensusManager:
         total_size = 0
         max_block_size = 1_000_000  # 1MB limit
         
-        while self.pending_transactions and total_size < max_block_size:
-            _, tx = heapq.heappop(self.pending_transactions)
+        # Create a copy of pending transactions to preserve original queue
+        pending_copy = self.pending_transactions.copy()
+        
+        while pending_copy and total_size < max_block_size:
+            priority, tx = heapq.heappop(pending_copy)
             if total_size + tx.metadata.size <= max_block_size:
                 transactions.append(tx)
                 total_size += tx.metadata.size
