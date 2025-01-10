@@ -113,12 +113,14 @@ class ConsensusManager:
         """Slash a validator for misbehavior."""
         if validator_id in self.validators:
             validator_info = self.validators[validator_id]
-            validator_info.is_slashed = True
-            validator_info.stake = 0
-            validator_info.consecutive_misses = 0  # Reset after slashing
-            if validator_id in self.active_set:
-                self.active_set.remove(validator_id)
-                await self._update_active_set()
+            if not validator_info.is_slashed:  # Only slash once
+                validator_info.is_slashed = True
+                validator_info.stake = 0
+                validator_info.consecutive_misses = 0  # Reset after slashing
+                validator_info.node.is_leader = False  # Remove leadership
+                if validator_id in self.active_set:
+                    self.active_set.remove(validator_id)
+                    await self._update_active_set()
                 
     async def _coordinate_block_production(self):
         """Coordinate block production among validators."""
@@ -165,11 +167,11 @@ class ConsensusManager:
         """Compute priority score for a transaction."""
         # Base priority by message type (higher priority for real-time communication)
         type_priority = {
-            MessageType.VOICE: 1.0,
-            MessageType.VIDEO: 0.9,
-            MessageType.TEXT: 0.7,
-            MessageType.FILE: 0.5
-        }.get(tx.metadata.message_type, 0.3)
+            MessageType.VOICE: 10.0,  # Increased priority for real-time voice
+            MessageType.VIDEO: 9.0,   # Increased priority for real-time video
+            MessageType.TEXT: 5.0,    # Medium priority for text
+            MessageType.FILE: 3.0     # Lower priority for files
+        }.get(tx.metadata.message_type, 1.0)
         
         # Adjust by sender stake if sender is validator
         sender_info = next(
@@ -180,10 +182,11 @@ class ConsensusManager:
         stake_multiplier = 1.0 + (sender_info.stake / 10000.0 if sender_info else 0)
         
         # Factor in message size and TTL (normalized)
-        size_factor = max(0.1, 1.0 - (tx.metadata.size / 1_000_000))  # Favor smaller messages
+        size_factor = max(0.1, min(1.0, 1.0 - (tx.metadata.size / 1_000_000)))  # Favor smaller messages
         ttl_factor = max(0.1, min(1.0, tx.metadata.ttl / 3600))  # Normalize TTL impact
         
-        return type_priority * stake_multiplier * size_factor * ttl_factor
+        # Combine factors with higher weight on type_priority
+        return (type_priority * 2.0 + stake_multiplier + size_factor + ttl_factor) / 5.0
         
     def _get_prioritized_transactions(self) -> List[MessageTransaction]:
         """Get prioritized list of transactions for next block."""
