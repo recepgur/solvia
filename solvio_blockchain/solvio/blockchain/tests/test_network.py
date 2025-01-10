@@ -2,6 +2,7 @@
 import pytest
 import asyncio
 import tempfile
+import time
 from pathlib import Path
 import nacl.signing
 from solvio.blockchain.nodes import MessageRoutingNode, StorageNode, ValidatorNode
@@ -37,13 +38,14 @@ async def test_network_message_flow():
         await consensus.register_validator(validator, stake)
     
     try:
-        # Start all nodes
-        await mrn1.start()
-        await mrn2.start()
-        await sn.start()
-        for validator in validators:
-            await validator.start()
-        await consensus.start()
+        # Start all nodes with timeout
+        async with asyncio.timeout(5.0):  # 5 second timeout for startup
+            await mrn1.start()
+            await mrn2.start()
+            await sn.start()
+            for validator in validators:
+                await validator.start()
+            await consensus.start()
         
         # Set up peer connections
         await mrn1.add_peer(mrn2.node_id, mrn2)
@@ -62,24 +64,27 @@ async def test_network_message_flow():
             ttl=3600
         )
         
-        # Submit message to consensus
-        await consensus.submit_transaction(message_tx)
-        
-        # Update routing tables
-        await mrn1.update_routing(message_tx.sender, mrn1.node_id)
-        await mrn2.update_routing(message_tx.recipient, mrn2.node_id)
-        
-        # Wait for message propagation
-        await asyncio.sleep(2.0)  # Allow for multiple block cycles
-        
-        # Verify message reached recipient's routing node
-        assert message_tx.message_hash in mrn2.message_cache
-        
-        # Verify message was stored
-        stored_message = await sn.get_message(message_tx.message_hash)
-        assert stored_message is not None
-        assert stored_message.sender == message_tx.sender
-        assert stored_message.recipient == message_tx.recipient
+        # Submit message and wait for propagation with timeout
+        async with asyncio.timeout(3.0):  # 3 second timeout for message propagation
+            await consensus.submit_transaction(message_tx)
+            await mrn1.update_routing(message_tx.sender, mrn1.node_id)
+            await mrn2.update_routing(message_tx.recipient, mrn2.node_id)
+            
+            # Wait for message propagation (with progress checks)
+            start_time = time.time()
+            while time.time() - start_time < 2.0:
+                if message_tx.message_hash in mrn2.message_cache:
+                    break
+                await asyncio.sleep(0.1)
+            
+            # Verify message reached recipient's routing node
+            assert message_tx.message_hash in mrn2.message_cache
+            
+            # Verify message was stored
+            stored_message = await sn.get_message(message_tx.message_hash)
+            assert stored_message is not None
+            assert stored_message.sender == message_tx.sender
+            assert stored_message.recipient == message_tx.recipient
         
     finally:
         # Cleanup

@@ -88,7 +88,6 @@ class ConsensusManager:
             if not info.is_slashed:  # Only check non-slashed validators
                 if info.consecutive_misses >= 10:  # Threshold for slashing
                     slashed_validators.append(validator_id)
-                    info.consecutive_misses = 0  # Reset misses immediately
                 
         # Slash validators after iteration to avoid dict modification during iteration
         for validator_id in slashed_validators:
@@ -123,6 +122,10 @@ class ConsensusManager:
                 if validator_id in self.active_set:
                     self.active_set.remove(validator_id)
                     await self._update_active_set()
+                    
+                # Ensure validator state is consistent
+                validator_info.last_block_time = 0.0
+                validator_info.node.pending_transactions = []
                 
     async def _coordinate_block_production(self):
         """Coordinate block production among validators."""
