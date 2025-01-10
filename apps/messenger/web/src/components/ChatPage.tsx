@@ -45,6 +45,11 @@ const ChatPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { publicKey } = useWallet();
 
+  // Handle SSR case where wallet is not available
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   const handleSendMessage = (content: string) => {
     console.log('Sending message:', content);
     // TODO: Implement message sending

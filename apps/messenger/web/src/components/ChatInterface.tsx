@@ -24,6 +24,11 @@ const ChatInterface: React.FC<Props> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { publicKey } = useWallet();
 
+  // Handle SSR case where wallet is not available
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
