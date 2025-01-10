@@ -24,6 +24,11 @@ class Node(ABC):
         """Initialize a node with its unique identifier."""
         self.node_id = node_id
         self.peers: Dict[bytes, 'Node'] = {}
+        self._test_mode = False  # Flag for test mode to prevent infinite loops
+        
+    def enable_test_mode(self):
+        """Enable test mode to prevent infinite loops during testing."""
+        self._test_mode = True
         
     @abstractmethod
     async def start(self):
@@ -57,13 +62,13 @@ class MessageRoutingNode(Node):
         self.routing_table: Dict[bytes, bytes] = {}  # user_pubkey -> node_id
         self.message_cache: Dict[bytes, MessageTransaction] = {}
         self.running = False
+        self._test_mode = False  # Initialize test mode flag
         
     async def start(self):
         """Start the message routing service."""
         self.running = True
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        # Initialize without entering infinite loop for testing
-        if hasattr(self, '_test_mode') and self._test_mode:
+        if self._test_mode:  # Use base class test mode flag
             return
         while self.running:
             # Process message queue and update routing table
@@ -108,6 +113,7 @@ class StorageNode(Node):
         self.shard_count = 16  # Number of database shards
         self.shards: Dict[int, sqlite3.Connection] = {}
         self.running = False
+        self._test_mode = False  # Initialize test mode flag
         
     def _init_shard(self, shard_id: int) -> sqlite3.Connection:
         """Initialize a database shard."""
@@ -145,6 +151,10 @@ class StorageNode(Node):
         # Initialize all shards
         for shard_id in range(self.shard_count):
             self.shards[shard_id] = self._init_shard(shard_id)
+            
+        # Skip maintenance loop in test mode
+        if hasattr(self, '_test_mode') and self._test_mode:
+            return
             
         while self.running:
             # Periodic maintenance (cleanup expired messages, etc.)
@@ -247,10 +257,15 @@ class ValidatorNode(Node):
         self.running = False
         self.is_leader = False
         self.last_block_time = 0.0
+        self._test_mode = False  # Initialize test mode flag
         
     async def start(self):
         """Start the validator service."""
         self.running = True
+        # Skip processing loop in test mode
+        if hasattr(self, '_test_mode') and self._test_mode:
+            return
+            
         while self.running:
             if self.is_leader:
                 await self._produce_block()

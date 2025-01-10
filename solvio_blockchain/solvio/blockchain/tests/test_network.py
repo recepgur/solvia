@@ -108,6 +108,7 @@ async def test_validator_consensus():
         node_id = f"validator_{i}".encode()
         stake = 1000 * (i + 1)
         validator = ValidatorNode(node_id, stake)
+        validator._test_mode = True
         validators.append(validator)
         await consensus.register_validator(validator, stake)
     
@@ -164,6 +165,7 @@ async def test_network_identity_management():
     # Set up storage node
     storage_dir = Path(tempfile.mkdtemp())
     sn = StorageNode(b"storage_1", storage_dir)
+    sn._test_mode = True
     await sn.start()
     
     try:
