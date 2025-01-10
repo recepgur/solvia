@@ -6,10 +6,10 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter @solvia/messenger dev",
-    "build": "pnpm --filter @solvia/messenger build",
-    "lint": "pnpm --filter @solvia/messenger lint",
-    "clean": "pnpm --filter @solvia/messenger clean"
+    "dev": "pnpm --filter \"@solvia/messenger-*\" dev",
+    "build": "pnpm --filter \"@solvia/messenger-*\" build",
+    "lint": "pnpm --filter \"@solvia/messenger-*\" lint",
+    "clean": "pnpm --filter \"@solvia/messenger-*\" clean"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
