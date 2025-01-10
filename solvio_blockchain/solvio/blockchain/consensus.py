@@ -5,7 +5,14 @@ import asyncio
 import time
 import heapq
 import nacl.signing
-from .models import Block, BlockHeader, BlockType, MessageTransaction
+from .models import (
+    Block,
+    BlockHeader,
+    BlockType,
+    MessageTransaction,
+    MessageType,
+    MessageMetadata
+)
 from .nodes import ValidatorNode
 
 @dataclass
@@ -76,9 +83,14 @@ class ConsensusManager:
             self.last_rotation_time = current_time
             
         # Check for validator misbehavior
+        slashed_validators = []
         for validator_id, info in self.validators.items():
-            if info.consecutive_misses >= 10:  # Threshold for slashing
-                await self._slash_validator(validator_id)
+            if info.consecutive_misses >= 10 and not info.is_slashed:  # Threshold for slashing
+                slashed_validators.append(validator_id)
+                
+        # Slash validators after iteration to avoid dict modification during iteration
+        for validator_id in slashed_validators:
+            await self._slash_validator(validator_id)
                 
     async def _rotate_validator_set(self):
         """Rotate the active validator set."""
@@ -100,8 +112,10 @@ class ConsensusManager:
     async def _slash_validator(self, validator_id: bytes):
         """Slash a validator for misbehavior."""
         if validator_id in self.validators:
-            self.validators[validator_id].is_slashed = True
-            self.validators[validator_id].stake = 0
+            validator_info = self.validators[validator_id]
+            validator_info.is_slashed = True
+            validator_info.stake = 0
+            validator_info.consecutive_misses = 0  # Reset after slashing
             if validator_id in self.active_set:
                 self.active_set.remove(validator_id)
                 await self._update_active_set()
@@ -149,13 +163,13 @@ class ConsensusManager:
         
     def _compute_transaction_priority(self, tx: MessageTransaction) -> float:
         """Compute priority score for a transaction."""
-        # Base priority by message type
+        # Base priority by message type (higher priority for real-time communication)
         type_priority = {
-            'voice': 1.0,
-            'video': 0.9,
-            'text': 0.7,
-            'file': 0.5
-        }.get(tx.metadata.message_type.value, 0.3)
+            MessageType.VOICE: 1.0,
+            MessageType.VIDEO: 0.9,
+            MessageType.TEXT: 0.7,
+            MessageType.FILE: 0.5
+        }.get(tx.metadata.message_type, 0.3)
         
         # Adjust by sender stake if sender is validator
         sender_info = next(
@@ -165,9 +179,9 @@ class ConsensusManager:
         )
         stake_multiplier = 1.0 + (sender_info.stake / 10000.0 if sender_info else 0)
         
-        # Factor in message size and TTL
-        size_factor = 1.0 - (tx.metadata.size / 1_000_000)  # Favor smaller messages
-        ttl_factor = tx.metadata.ttl / 3600  # Favor shorter TTL
+        # Factor in message size and TTL (normalized)
+        size_factor = max(0.1, 1.0 - (tx.metadata.size / 1_000_000))  # Favor smaller messages
+        ttl_factor = max(0.1, min(1.0, tx.metadata.ttl / 3600))  # Normalize TTL impact
         
         return type_priority * stake_multiplier * size_factor * ttl_factor
         

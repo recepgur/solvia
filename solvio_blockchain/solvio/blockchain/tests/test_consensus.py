@@ -62,6 +62,10 @@ async def test_transaction_prioritization():
         ttl=3600
     )
     
+    # Create validator node for sender (to test stake impact)
+    validator_node = ValidatorNode(bytes(sender_key.verify_key), 5000)
+    await consensus.register_validator(validator_node, 5000)
+    
     # Submit transactions
     await consensus.submit_transaction(text_tx)
     await consensus.submit_transaction(voice_tx)
@@ -72,6 +76,12 @@ async def test_transaction_prioritization():
     # Verify voice call has higher priority
     assert len(transactions) == 2
     assert transactions[0].metadata.message_type == MessageType.VOICE
+    assert transactions[1].metadata.message_type == MessageType.TEXT
+    
+    # Verify size and TTL normalization
+    voice_priority = consensus._compute_transaction_priority(voice_tx)
+    text_priority = consensus._compute_transaction_priority(text_tx)
+    assert voice_priority > text_priority
     
 @pytest.mark.asyncio
 async def test_validator_slashing():
@@ -84,17 +94,27 @@ async def test_validator_slashing():
     node = ValidatorNode(node_id, stake)
     await consensus.register_validator(node, stake)
     
-    # Simulate consecutive misses
+    # Get validator info and verify initial state
     validator_info = consensus.validators[node_id]
+    initial_stake = validator_info.stake
+    assert node_id in consensus.active_set
+    
+    # Simulate consecutive misses
     validator_info.consecutive_misses = 10
+    validator_info.is_slashed = False  # Ensure not already slashed
     
     # Trigger slash check
     await consensus._manage_validator_set()
     
     # Verify validator was slashed
     assert validator_info.is_slashed
-    assert validator_info.stake == 0
-    assert node_id not in consensus.active_set
+    assert validator_info.stake == 0  # Stake should be zeroed
+    assert validator_info.consecutive_misses == 0  # Should reset after slashing
+    assert node_id not in consensus.active_set  # Should be removed from active set
+    
+    # Verify validator cannot be re-registered with same stake
+    success = await consensus.register_validator(node, initial_stake)
+    assert not success  # Should not allow slashed validator to re-register
     
 @pytest.mark.asyncio
 async def test_validator_rotation():
