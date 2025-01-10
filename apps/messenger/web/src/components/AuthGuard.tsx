@@ -1,12 +1,13 @@
 import React, { FC, ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import dynamic from 'next/dynamic';
 
 interface Props {
   children: ReactNode;
 }
 
-export const AuthGuard: FC<Props> = ({ children }) => {
+const AuthGuardComponent: FC<Props> = ({ children }) => {
   const { connected } = useWallet();
 
   if (!connected) {
@@ -31,3 +32,10 @@ export const AuthGuard: FC<Props> = ({ children }) => {
 
   return <>{children}</>;
 };
+
+export const AuthGuard = dynamic(
+  () => Promise.resolve(AuthGuardComponent),
+  {
+    ssr: false
+  }
+);
