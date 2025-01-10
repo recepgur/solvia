@@ -20,6 +20,7 @@ async def test_message_routing_node():
     # Create node
     node_id = b'test_node_1'
     mrn = MessageRoutingNode(node_id)
+    mrn._test_mode = True
     
     # Create a test message transaction
     sender_key = nacl.signing.SigningKey.generate()
@@ -56,6 +57,7 @@ async def test_message_routing_node():
     # Test routing functionality
     peer_node_id = b'test_node_2'
     peer_node = MessageRoutingNode(peer_node_id)
+    peer_node._test_mode = True  # Enable test mode for peer node
     await mrn.add_peer(peer_node_id, peer_node)
     
     # Update routing for recipient
@@ -66,10 +68,112 @@ async def test_message_routing_node():
     success = await mrn.route_message(message_tx)
     assert success
     assert message_tx.message_hash in mrn.message_cache
+    
+    # Test message integrity
+    stored_msg = mrn.message_cache[message_tx.message_hash]
+    assert stored_msg.sender == message_tx.sender
+    assert stored_msg.recipient == message_tx.recipient
+    assert stored_msg.message_hash == message_tx.message_hash
+    
+    # Verify signature
+    verify_key = nacl.signing.VerifyKey(message_tx.sender)
+    verify_key.verify(message_tx.to_bytes(), message_tx.signature)
+    
+    # Test message caching limits
+    for i in range(100):
+        new_tx = MessageTransaction.create(
+            sender_key=sender_key,
+            recipient_pubkey=bytes(recipient_key.verify_key),
+            message_hash=f"test_message_{i}".encode(),
+            message_type=MessageType.TEXT,
+            size=100,
+            ttl=3600
+        )
+        await mrn.route_message(new_tx)
+    
+    # Verify cache size management
+    assert len(mrn.message_cache) <= 1000  # Default cache size limit
 
 @pytest.mark.asyncio
 async def test_storage_node():
     """Test StorageNode functionality."""
+    # Create temporary directory for test data
+    test_dir = Path(tempfile.mkdtemp())
+    try:
+        # Create node
+        node_id = b'test_storage_node'
+        sn = StorageNode(node_id, test_dir)
+        sn._test_mode = True
+        await sn.start()
+        
+        # Create test message transaction
+        sender_key = nacl.signing.SigningKey.generate()
+        recipient_key = nacl.signing.SigningKey.generate()
+        message_tx = MessageTransaction.create(
+            sender_key=sender_key,
+            recipient_pubkey=bytes(recipient_key.verify_key),
+            message_hash=b'test_storage_message',
+            message_type=MessageType.TEXT,
+            size=100,
+            ttl=3600
+        )
+        
+        # Create and process block
+        header = BlockHeader(
+            previous_hash=b'prev_hash',
+            timestamp=1234567890.0,
+            merkle_root=b'merkle_root',
+            difficulty=1,
+            nonce=0,
+            block_type=BlockType.MESSAGE
+        )
+        block = Block(
+            header=header,
+            transactions=[message_tx],
+            validator_signatures=[b'validator_sig']
+        )
+        
+        await sn.process_block(block)
+        
+        # Test message retrieval
+        stored_message = await sn.get_message(message_tx.message_hash)
+        assert stored_message is not None
+        assert stored_message.sender == message_tx.sender
+        assert stored_message.recipient == message_tx.recipient
+        assert stored_message.message_hash == message_tx.message_hash
+        
+        # Test user identity management
+        test_pubkey = bytes(sender_key.verify_key)
+        await sn.update_user_identity(
+            test_pubkey,
+            "test_user",
+            ["messaging", "voice"]
+        )
+        
+        identity = await sn.get_user_identity(test_pubkey)
+        assert identity is not None
+        username, last_seen, capabilities = identity
+        assert username == "test_user"
+        assert "messaging" in capabilities
+        assert "voice" in capabilities
+        
+        # Test shard distribution
+        shard_id = sn._get_shard_id(message_tx.message_hash)
+        assert 0 <= shard_id < sn.shard_count
+        
+        # Verify message is in correct shard
+        conn = sn.shards[shard_id]
+        cursor = conn.execute(
+            "SELECT * FROM messages WHERE message_hash = ?",
+            (message_tx.message_hash,)
+        )
+        row = cursor.fetchone()
+        assert row is not None
+        
+        await sn.stop()
+    finally:
+        # Cleanup
+        shutil.rmtree(test_dir)
 
 @pytest.mark.asyncio
 async def test_validator_node():
@@ -78,6 +182,7 @@ async def test_validator_node():
     node_id = b'test_validator'
     stake_amount = 1000
     vn = ValidatorNode(node_id, stake_amount)
+    vn._test_mode = True
     await vn.start()
     
     try:
@@ -145,69 +250,8 @@ async def test_validator_node():
         )
         assert not await vn._validate_transaction(invalid_tx)
         
-        await vn.stop()
     finally:
+        # Cleanup validator resources
         await vn.stop()
-    # Create temporary directory for test data
-    test_dir = Path(tempfile.mkdtemp())
-    try:
-        # Create node
-        node_id = b'test_storage_node'
-        sn = StorageNode(node_id, test_dir)
-        await sn.start()
-        
-        # Create test message transaction
-        sender_key = nacl.signing.SigningKey.generate()
-        recipient_key = nacl.signing.SigningKey.generate()
-        message_tx = MessageTransaction.create(
-            sender_key=sender_key,
-            recipient_pubkey=bytes(recipient_key.verify_key),
-            message_hash=b'test_storage_message',
-            message_type=MessageType.TEXT,
-            size=100,
-            ttl=3600
-        )
-        
-        # Create and process block
-        header = BlockHeader(
-            previous_hash=b'prev_hash',
-            timestamp=1234567890.0,
-            merkle_root=b'merkle_root',
-            difficulty=1,
-            nonce=0,
-            block_type=BlockType.MESSAGE
-        )
-        block = Block(
-            header=header,
-            transactions=[message_tx],
-            validator_signatures=[b'validator_sig']
-        )
-        
-        await sn.process_block(block)
-        
-        # Test message retrieval
-        stored_message = await sn.get_message(message_tx.message_hash)
-        assert stored_message is not None
-        assert stored_message.sender == message_tx.sender
-        assert stored_message.recipient == message_tx.recipient
-        assert stored_message.message_hash == message_tx.message_hash
-        
-        # Test user identity management
-        test_pubkey = bytes(sender_key.verify_key)
-        await sn.update_user_identity(
-            test_pubkey,
-            "test_user",
-            ["messaging", "voice"]
-        )
-        
-        identity = await sn.get_user_identity(test_pubkey)
-        assert identity is not None
-        username, last_seen, capabilities = identity
-        assert username == "test_user"
-        assert "messaging" in capabilities
-        assert "voice" in capabilities
-        
-        await sn.stop()
-    finally:
-        # Cleanup
-        shutil.rmtree(test_dir)
+        vn.blockchain_state.clear()
+        vn.pending_transactions.clear()
