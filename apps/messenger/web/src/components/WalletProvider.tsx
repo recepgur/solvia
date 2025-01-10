@@ -5,7 +5,7 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import { clusterApiUrl } from '@solana/web3.js';
 import dynamic from 'next/dynamic';
 
-require('@solana/wallet-adapter-react-ui/styles.css');
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface Props {
   children: ReactNode;

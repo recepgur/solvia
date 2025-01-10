@@ -51,7 +51,8 @@ const ChatPage: React.FC = () => {
   }
 
   const handleSendMessage = (content: string) => {
-    console.log('Sending message:', content);
+    if (!publicKey) return;
+    console.log('Sending message:', content, 'from:', publicKey.toString());
     // TODO: Implement message sending
   };
 

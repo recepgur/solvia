@@ -2,7 +2,7 @@ declare module 'simple-peer' {
   import { EventEmitter } from 'events';
 
   export interface Instance extends EventEmitter {
-    signal(data: any): void;
+    signal(data: SignalData): void;
     destroy(): void;
     on(event: 'signal', cb: (data: SignalData) => void): this;
     on(event: 'connect', cb: () => void): this;
