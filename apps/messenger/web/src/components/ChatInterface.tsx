@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Message } from '@solvia/messenger-shared';
-import { MessageBubble } from './MessageBubble';
+import dynamic from 'next/dynamic';
+
+const MessageBubble = dynamic(() => import('./MessageBubble'), { ssr: false });
 import { useWallet } from '@solana/wallet-adapter-react';
 
 interface Props {
@@ -11,7 +13,7 @@ interface Props {
   onBack: () => void;
 }
 
-export const ChatInterface: React.FC<Props> = ({
+const ChatInterface: React.FC<Props> = ({
   user,
   messages,
   onSendMessage,
@@ -160,3 +162,5 @@ export const ChatInterface: React.FC<Props> = ({
     </div>
   );
 };
+
+export default ChatInterface;

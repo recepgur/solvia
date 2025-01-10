@@ -61,7 +61,7 @@ interface ChatListProps {
   onSelectUser: (user: User) => void;
 }
 
-export const ChatList: React.FC<ChatListProps> = ({ users, onSelectUser }) => {
+const ChatList: React.FC<ChatListProps> = ({ users, onSelectUser }) => {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
@@ -79,3 +79,5 @@ export const ChatList: React.FC<ChatListProps> = ({ users, onSelectUser }) => {
     </div>
   );
 };
+
+export default ChatList;

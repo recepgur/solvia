@@ -7,7 +7,7 @@ interface Props {
   isOwn: boolean;
 }
 
-export const MessageBubble: React.FC<Props> = ({ message, isOwn }) => {
+const MessageBubble: React.FC<Props> = ({ message, isOwn }) => {
   return (
     <div
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}
@@ -45,3 +45,5 @@ export const MessageBubble: React.FC<Props> = ({ message, isOwn }) => {
     </div>
   );
 };
+
+export default MessageBubble;
