@@ -1,18 +1,19 @@
 {
-  "name": "solvia-metadata-update",
+  "name": "solvia",
   "version": "1.0.0",
-  "description": "Update Solvia token metadata",
-  "main": "update_metadata.js",
-  "type": "module",
-  "dependencies": {
-    "@metaplex-foundation/js": "^0.19.4",
-    "@solana/web3.js": "^1.87.6",
-    "bs58": "^5.0.0"
-  },
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "pnpm --filter @solvia/messenger dev",
+    "build": "pnpm --filter @solvia/messenger build",
+    "lint": "pnpm --filter @solvia/messenger lint",
+    "clean": "pnpm --filter @solvia/messenger clean"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "prettier": "^3.2.4",
+    "eslint": "^8.56.0"
+  }
 }
