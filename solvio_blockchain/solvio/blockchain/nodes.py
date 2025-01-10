@@ -62,6 +62,9 @@ class MessageRoutingNode(Node):
         """Start the message routing service."""
         self.running = True
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        # Initialize without entering infinite loop for testing
+        if hasattr(self, '_test_mode') and self._test_mode:
+            return
         while self.running:
             # Process message queue and update routing table
             await asyncio.sleep(0.1)  # Prevent busy loop

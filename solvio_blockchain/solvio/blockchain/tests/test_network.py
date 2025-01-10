@@ -22,9 +22,11 @@ async def test_network_message_flow():
     # Set up network components
     consensus = ConsensusManager(target_block_time=0.5)
     
-    # Create nodes
+    # Create nodes in test mode
     mrn1 = MessageRoutingNode(b"mrn_1")
     mrn2 = MessageRoutingNode(b"mrn_2")
+    mrn1._test_mode = True
+    mrn2._test_mode = True
     
     storage_dir = Path(tempfile.mkdtemp())
     sn = StorageNode(b"storage_1", storage_dir)

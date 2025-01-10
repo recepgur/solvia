@@ -88,6 +88,8 @@ class ConsensusManager:
             if not info.is_slashed:  # Only check non-slashed validators
                 if info.consecutive_misses >= 10:  # Threshold for slashing
                     slashed_validators.append(validator_id)
+                    # Reset misses immediately when marking for slashing
+                    info.consecutive_misses = 0
                 
         # Slash validators after iteration to avoid dict modification during iteration
         for validator_id in slashed_validators:
