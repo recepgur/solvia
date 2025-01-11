@@ -15,6 +15,7 @@
   "env": {
     "NODE_ENV": "production",
     "PORT": "4000",
-    "SOLANA_RPC_URL": "https://api.devnet.solana.com"
+    "SOLANA_RPC_URL": "https://api.devnet.solana.com",
+    "HOST": "91.151.88.205"
   }
 }

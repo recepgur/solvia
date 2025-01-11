@@ -6,16 +6,35 @@ import winston from 'winston';
 
 // Configure Winston logger
 const logger = winston.createLogger({
-  level: 'info',
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
+    new winston.transports.File({ 
+      filename: '/var/log/solvia/error.log',
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5
+    }),
+    new winston.transports.File({ 
+      filename: '/var/log/solvia/combined.log',
+      maxsize: 5242880,
+      maxFiles: 5
+    })
   ]
 });
+
+// Add console transport for development
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
+  }));
+}
 
 const collectDefaultMetrics = prometheus.collectDefaultMetrics;
 const Registry = prometheus.Registry;
@@ -50,9 +69,21 @@ export async function setupMonitoring(app: Express) {
     }
   });
 
+  interface HealthStatus {
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    timestamp: string;
+    services: {
+      redis: 'healthy' | 'unhealthy' | 'unknown';
+      mongodb: 'healthy' | 'disconnected' | 'unhealthy' | 'unknown';
+      websocket: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+    };
+    version: string;
+    uptime: number;
+  }
+
   // Health check endpoint with detailed status
   app.get('/health', async (req, res) => {
-    const status = {
+    const status: HealthStatus = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       services: {
@@ -69,16 +100,35 @@ export async function setupMonitoring(app: Express) {
       const redis = getRedisClient();
       await redis.ping();
       status.services.redis = 'healthy';
+      logger.debug('Redis health check passed');
     } catch (error) {
+      logger.error('Redis health check failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       status.services.redis = 'unhealthy';
       status.status = 'degraded';
     }
 
     // Check MongoDB
     try {
-      await mongoose.connection.db.admin().ping();
-      status.services.mongodb = 'healthy';
+      if (!mongoose.connection || mongoose.connection.readyState !== 1) {
+        logger.warn('MongoDB not connected');
+        status.services.mongodb = 'disconnected';
+        status.status = 'degraded';
+      } else if (mongoose.connection.db) {
+        await mongoose.connection.db.admin().ping();
+        status.services.mongodb = 'healthy';
+        logger.debug('MongoDB health check passed');
+      } else {
+        logger.warn('MongoDB connection exists but no database selected');
+        status.services.mongodb = 'disconnected';
+        status.status = 'degraded';
+      }
     } catch (error) {
+      logger.error('MongoDB health check failed:', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        connectionState: mongoose.connection?.readyState
+      });
       status.services.mongodb = 'unhealthy';
       status.status = 'degraded';
     }
@@ -86,8 +136,19 @@ export async function setupMonitoring(app: Express) {
     // Check WebSocket connections
     try {
       const activeConnections = await wsConnectionsGauge.get();
-      status.services.websocket = activeConnections.values.length > 0 ? 'healthy' : 'degraded';
+      const connectionCount = activeConnections.values.length;
+      status.services.websocket = connectionCount > 0 ? 'healthy' : 'degraded';
+      
+      if (status.services.websocket === 'degraded') {
+        logger.warn('No active WebSocket connections');
+        status.status = 'degraded';
+      } else {
+        logger.debug('WebSocket health check passed', { activeConnections: connectionCount });
+      }
     } catch (error) {
+      logger.error('WebSocket health check failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       status.services.websocket = 'unhealthy';
       status.status = 'degraded';
     }

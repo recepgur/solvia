@@ -7,6 +7,7 @@
     }
   ],
   "env": {
-    "NEXT_PUBLIC_BACKEND_URL": "https://api.solvia.app"
+    "NEXT_PUBLIC_BACKEND_URL": "http://5.133.102.39:4000",
+    "NEXT_PUBLIC_WEBSOCKET_URL": "ws://5.133.102.39:4000"
   }
 }
