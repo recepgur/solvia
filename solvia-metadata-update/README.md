@@ -11,7 +11,23 @@ A tool for updating Solana token metadata.
 ## Prerequisites
 - Node.js
 - Solana CLI tools
-- Configured Solana wallet
+- Configured Solana wallet (keypair at `~/.config/solana/id.json`)
+
+## Environment Variables
+Copy `.env.example` to `.env` and configure:
+```bash
+# Required
+TOKEN_MINT_ADDRESS=your_token_mint_address_here
+METADATA_URI=your_metadata_uri_here
+
+# Optional (defaults to mainnet-beta)
+SOLANA_NETWORK=mainnet-beta
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+```
+
+## Keypair Configuration
+The tool expects your Solana keypair at: `/home/ubuntu/.config/solana/id.json`
+To use a different location, modify the path in `update_token.js`.
 
 ## Installation
 ```bash

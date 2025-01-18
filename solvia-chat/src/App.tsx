@@ -75,7 +75,7 @@ function App() {
   const createPeerConnection = async (targetPublicKey: string) => {
     // TODO: Implement proper WebRTC signaling server
     console.warn('In production, implement proper WebRTC signaling')
-    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    const configuration = { iceServers: [{ urls: import.meta.env.VITE_STUN_SERVER || 'stun:stun.l.google.com:19302' }] }
     const peerConnection = new RTCPeerConnection(configuration)
     
     // Set up data channel
