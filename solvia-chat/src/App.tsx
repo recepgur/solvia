@@ -55,9 +55,25 @@ function App() {
     window.open('https://phantom.app/', '_blank')
   }
 
+  /**
+   * Creates a WebRTC peer connection for real-time communication
+   * @param targetPublicKey - The public key of the peer to connect with
+   * @returns Promise<PeerConnection> - The established connection and data channel
+   * 
+   * Connection Flow:
+   * 1. Creates RTCPeerConnection with STUN server configuration
+   * 2. Sets up data channel for messaging
+   * 3. Handles ICE candidate discovery
+   * 4. Manages remote media stream
+   * 
+   * Note: Current implementation is for demo purposes.
+   * Production version needs:
+   * - Signaling server for ICE candidate exchange
+   * - NAT traversal configuration
+   * - Connection state management
+   */
   const createPeerConnection = async (targetPublicKey: string) => {
-    // In a real app, we would need a signaling server to exchange ICE candidates
-    // For demo purposes, we're just creating a local connection
+    // TODO: Implement proper WebRTC signaling server
     console.warn('In production, implement proper WebRTC signaling')
     const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     const peerConnection = new RTCPeerConnection(configuration)
@@ -109,6 +125,21 @@ function App() {
     return { connection: peerConnection, dataChannel }
   }
 
+  /**
+   * Sends a message to the current chat recipient
+   * 
+   * Message Flow:
+   * 1. Creates message object with sender, content, and timestamp
+   * 2. Establishes peer connection if not exists
+   * 3. Sends message through WebRTC data channel
+   * 4. Updates local message state with sent status
+   * 5. Simulates delivery confirmation after delay
+   * 
+   * Message States:
+   * - sent: Initial state when message is sent
+   * - delivered: Confirmed received by peer
+   * - read: Peer has viewed the message
+   */
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !recipientKey) return
 
@@ -144,8 +175,19 @@ function App() {
     }
   }
 
+  /**
+   * Initiates a video/audio call with the current chat recipient
+   * 1. Requests access to user's camera and microphone
+   * 2. Sets up local video preview
+   * 3. Adds media tracks to peer connection for streaming
+   * 
+   * Requires:
+   * - recipientKey to be set
+   * - Browser permission for media devices
+   */
   const startCall = async () => {
     try {
+      // Request camera and microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
@@ -169,8 +211,15 @@ function App() {
     }
   }
 
+  /**
+   * Toggles the microphone mute state during an active call
+   * - Affects only audio tracks
+   * - Maintains video state
+   * - Updates UI to reflect current mute status
+   */
   const toggleMute = () => {
     if (localStreamRef.current) {
+      // Toggle enabled state for all audio tracks
       localStreamRef.current.getAudioTracks().forEach(track => {
         track.enabled = !track.enabled
       })
@@ -203,8 +252,18 @@ function App() {
     }
   }, [messages, recipientKey, publicKey, peerConnections])
 
+  /**
+   * Ends the current video/audio call and cleans up resources
+   * 1. Stops all media tracks (camera/microphone)
+   * 2. Clears video elements
+   * 3. Resets call state
+   * 
+   * Note: This should be called before starting a new call
+   * or when leaving the chat
+   */
   const endCall = () => {
     if (localStreamRef.current) {
+      // Stop all tracks to release camera/microphone
       localStreamRef.current.getTracks().forEach(track => track.stop())
       localStreamRef.current = null
     }

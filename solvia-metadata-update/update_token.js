@@ -2,9 +2,24 @@ import { Metaplex, keypairIdentity } from "@metaplex-foundation/js";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import fs from 'fs';
 
+/**
+ * Updates Solana token metadata using the Metaplex protocol
+ * 
+ * Environment Variables Required:
+ * - TOKEN_MINT_ADDRESS: The mint address of the token to update
+ * - SOLANA_RPC_URL: RPC endpoint for Solana network (defaults to mainnet-beta)
+ * - METADATA_URI: URI for the token's metadata JSON
+ * 
+ * The metadata update includes:
+ * - Token name (Solvio)
+ * - Symbol (SOLV)
+ * - URI pointing to metadata JSON
+ * - Other NFT attributes (creators, collection, etc.)
+ */
 async function main() {
   try {
     console.log("Loading keypair...");
+    // Load Solana wallet keypair from the default location
     const keypairData = JSON.parse(fs.readFileSync("/home/ubuntu/.config/solana/id.json", "utf8"));
     const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
