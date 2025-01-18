@@ -9,9 +9,13 @@ async function main() {
     const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
     console.log("Connecting to Solana...");
-    const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+    const connection = new Connection(process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com", "confirmed");
     const metaplex = new Metaplex(connection);
     metaplex.use(keypairIdentity(keypair));
+
+    if (!process.env.TOKEN_MINT_ADDRESS) {
+      throw new Error("TOKEN_MINT_ADDRESS environment variable is required");
+    }
 
     console.log("Finding token...");
     const mint = new PublicKey(process.env.TOKEN_MINT_ADDRESS);
@@ -24,7 +28,7 @@ async function main() {
       nftOrSft: nft,
       name: "Solvio",
       symbol: "SOLV",
-      uri: "https://raw.githubusercontent.com/recepgur/solvia/main/metadata.json",
+      uri: process.env.METADATA_URI || "https://raw.githubusercontent.com/recepgur/solvia/main/metadata.json",
       sellerFeeBasisPoints: nft.sellerFeeBasisPoints,
       tokenStandard: nft.tokenStandard,
       isMutable: true,
