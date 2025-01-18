@@ -1,42 +1,14 @@
 import React from 'react';
 import { User } from 'lucide-react';
+import { ChatPreview, MOCK_CHATS } from '@/lib/constants';
 
 interface ChatListProps {
   onSelectChat: (publicKey: string) => void;
   searchQuery?: string;
 }
 
-interface ChatPreview {
-  publicKey: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-}
-
-// Temporary mock data
-const mockChats: ChatPreview[] = [
-  {
-    publicKey: '8xyt...9j2k',
-    lastMessage: 'Hey, how are you?',
-    timestamp: '10:30 AM',
-    unread: 2,
-  },
-  {
-    publicKey: '3mnb...7h4d',
-    lastMessage: 'Did you receive the files?',
-    timestamp: '9:45 AM',
-    unread: 0,
-  },
-  {
-    publicKey: '5qrs...2w8p',
-    lastMessage: 'Meeting at 3 PM',
-    timestamp: 'Yesterday',
-    unread: 1,
-  },
-];
-
 export const ChatList: React.FC<ChatListProps> = ({ onSelectChat, searchQuery = '' }) => {
-  const filteredChats = mockChats.filter(chat => 
+  const filteredChats = MOCK_CHATS.filter(chat => 
     chat.publicKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );

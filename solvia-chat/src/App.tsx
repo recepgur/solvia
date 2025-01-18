@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { ChatList } from './components/ChatList'
+import React, { useState, useRef, useEffect } from 'react'
+import { ChatList } from '@/components/ChatList'
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -7,6 +7,7 @@ import { Wallet, Video, Mic, MicOff, PhoneOff, Send, User } from "lucide-react"
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import '@solana/wallet-adapter-react-ui/styles.css'
+import { MOCK_PUBLIC_KEY } from '@/lib/constants'
 
 interface Message {
   sender: string
@@ -21,11 +22,10 @@ interface PeerConnection {
 }
 
 function App() {
-  // Simulate connected wallet for testing
-  const mockPublicKey = "11111111111111111111111111111111";
+  // TODO: Remove mock wallet data when ready for production
   const { publicKey: _publicKey, connected: _connected } = useWallet();
   const connected = true;
-  const publicKey = { toString: () => mockPublicKey };
+  const publicKey = { toString: () => MOCK_PUBLIC_KEY };
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [peerConnections, setPeerConnections] = useState<Record<string, PeerConnection>>({})
