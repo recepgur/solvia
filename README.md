@@ -1,25 +1,48 @@
 # Solvia Project
 
-This repository contains two main components:
+A comprehensive Solana blockchain toolkit that includes a decentralized communication platform and token metadata management tools.
 
-## [Solvia Chat](./solvia-chat)
-A decentralized messaging and video calling platform built on the Solana blockchain.
-- Secure peer-to-peer messaging
-- Video/audio calling capabilities
-- Solana wallet integration
-- Modern React/TypeScript implementation
+## Components
 
-## [Solvia Metadata Update](./solvia-metadata-update)
-A tool for updating Solana token metadata.
-- Token metadata management
-- Solana blockchain integration
-- NFT updates
+### [Solvia Chat](./solvia-chat)
+A secure, decentralized messaging and video calling platform.
+- End-to-end encrypted peer-to-peer messaging
+- WebRTC-based video/audio calling
+- Solana wallet authentication
+- Built with React, TypeScript, and modern web technologies
+- [View deployment guide](./solvia-chat/DEPLOYMENT.md)
 
-## Getting Started
-Each component has its own setup instructions in their respective directories.
+### [Solvia Metadata Update](./solvia-metadata-update)
+A utility for managing Solana token metadata.
+- Update token names, symbols, and URIs
+- Metaplex protocol integration
+- NFT collection management
+- Environment-based configuration
+
+## Quick Start
+
+### Chat Application
+```bash
+cd solvia-chat
+npm install
+npm run dev
+```
+
+### Metadata Tool
+```bash
+cd solvia-metadata-update
+npm install
+# Configure .env file
+node update_token.js
+```
+
+## Documentation
+- [Chat Application README](./solvia-chat/README.md)
+- [Metadata Tool README](./solvia-metadata-update/README.md)
+- [Deployment Guide](./solvia-chat/DEPLOYMENT.md)
 
 ## License
-See individual component directories for licensing information.
+This project is licensed under the MIT License - see individual component directories for details.
 
 ## Rust Programs
 - **The Metaplex Program Library** - [GitHub](https://github.com/metaplex-foundation/metaplex-program-library)
@@ -113,4 +136,4 @@ The following repositories are no longer maintained by the Metaplex Foundation.
   
 - **The Program Graveyard** - [GitHub](https://github.com/metaplex-foundation/the-graveyard)
   
-  The Rust programs that are we no longer maintain.   
+  The Rust programs that are we no longer maintain.      
