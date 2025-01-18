@@ -14,7 +14,7 @@ async function main() {
     metaplex.use(keypairIdentity(keypair));
 
     console.log("Finding token...");
-    const mint = new PublicKey("7bsVvXbR3524sgms6zjCF2BN3vHxuLePfb5CrqrPt4MQ");
+    const mint = new PublicKey(process.env.TOKEN_MINT_ADDRESS);
     const nft = await metaplex.nfts().findByMint({ mintAddress: mint });
 
     console.log("Current metadata:", nft);

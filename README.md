@@ -1,7 +1,25 @@
-# Metaplex Foundation Project Directory
-This repository is a directory of the projects that the Metaplex Foundation works on. 
+# Solvia Project
 
-To learn more, visit our documentation at https://docs.metaplex.com.
+This repository contains two main components:
+
+## [Solvia Chat](./solvia-chat)
+A decentralized messaging and video calling platform built on the Solana blockchain.
+- Secure peer-to-peer messaging
+- Video/audio calling capabilities
+- Solana wallet integration
+- Modern React/TypeScript implementation
+
+## [Solvia Metadata Update](./solvia-metadata-update)
+A tool for updating Solana token metadata.
+- Token metadata management
+- Solana blockchain integration
+- NFT updates
+
+## Getting Started
+Each component has its own setup instructions in their respective directories.
+
+## License
+See individual component directories for licensing information.
 
 ## Rust Programs
 - **The Metaplex Program Library** - [GitHub](https://github.com/metaplex-foundation/metaplex-program-library)
@@ -95,4 +113,4 @@ The following repositories are no longer maintained by the Metaplex Foundation.
   
 - **The Program Graveyard** - [GitHub](https://github.com/metaplex-foundation/the-graveyard)
   
-  The Rust programs that are we no longer maintain. 
+  The Rust programs that are we no longer maintain.   
