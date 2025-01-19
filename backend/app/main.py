@@ -24,15 +24,15 @@ from app.auth import (
     get_user_by_email, users
 )
 
-# Create API router first
+# Create main app
+app = FastAPI()
+
+# Create API router
 api_router = FastAPI(title="Solvia API")
 
 # In-memory storage
 listings: List[Listing] = []
 user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
-
-# Create main app
-app = FastAPI()
 
 # Enable CORS
 app.add_middleware(
@@ -43,13 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create API router
-api_router = FastAPI(title="Solvia API")
+# Health check endpoint
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
 
-# Add healthz endpoint to main app
-# Health check endpoint is now defined above
-
-# Mount API under /api prefix after all routes are registered
+# Mount API under /api prefix
 app.mount("/api", api_router)
 
 # Mount static files if they exist
