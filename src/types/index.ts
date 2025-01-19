@@ -3,14 +3,30 @@ export interface Location {
   longitude: number;
 }
 
-export interface CarListing {
+export enum Category {
+  REAL_ESTATE = "real_estate",
+  VEHICLE = "vehicle",
+  ELECTRONICS = "electronics",
+  OTHER = "other"
+}
+
+export enum ItemCondition {
+  NEW = "new",
+  USED = "used"
+}
+
+export interface Listing {
   id?: string;
   title: string;
   price: number;
   description: string;
   location: Location;
-  image_url: string;
+  image_urls: string[];
+  category: Category;
+  condition: ItemCondition;
+  category_specific: Record<string, any>;
   created_at?: string;
+  seller_id?: string;
 }
 
 export type SwipeAction = 'like' | 'dislike';

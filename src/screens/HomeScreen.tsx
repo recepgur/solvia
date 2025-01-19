@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import { CarCard } from '../components/CarCard';
+import { CategoryFilter } from '../components/CategoryFilter';
 import { api } from '../services/api';
-import { CarListing, Location } from '../types';
+import { Category, Listing, Location } from '../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const HomeScreen: React.FC = () => {
-  const [listings, setListings] = useState<CarListing[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,8 @@ export const HomeScreen: React.FC = () => {
 
   const fetchListings = async (location: Location) => {
     try {
-      const response = await api.getNearbyListings(location);
+      const filters = selectedCategory !== 'all' ? { category: selectedCategory } : undefined;
+      const response = await api.getNearbyListings(location, filters);
       if (response.data) {
         setListings(response.data);
         setError(null);
@@ -113,6 +116,10 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <CategoryFilter
+        selectedCategory={selectedCategory}
+        onSelect={setSelectedCategory}
+      />
       <View style={styles.cardContainer}>
         <CarCard
           listing={listings[currentIndex]}

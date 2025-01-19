@@ -9,13 +9,13 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import { CarListing } from '../types';
+import { Listing, ItemCondition } from '../types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
 interface CarCardProps {
-  listing: CarListing;
+  listing: Listing;
   onSwipe: (direction: 'left' | 'right') => void;
 }
 
@@ -57,7 +57,22 @@ export const CarCard: React.FC<CarCardProps> = ({ listing, onSwipe }) => {
   return (
     <PanGestureHandler onGestureEvent={panGesture}>
       <Animated.View style={[styles.card, cardStyle]}>
-        <Image source={{ uri: listing.image_url }} style={styles.image} />
+        <Image source={{ uri: listing.image_urls[0] }} style={styles.image} />
+        <View style={styles.badges}>
+          <View style={[
+            styles.badge,
+            { backgroundColor: listing.condition === ItemCondition.NEW ? '#22c55e' : '#eab308' }
+          ]}>
+            <Text style={styles.badgeText}>
+              {listing.condition === ItemCondition.NEW ? 'NEW' : 'USED'}
+            </Text>
+          </View>
+          <View style={[styles.badge, { backgroundColor: '#64748b' }]}>
+            <Text style={styles.badgeText}>
+              {listing.category.replace('_', ' ').toUpperCase()}
+            </Text>
+          </View>
+        </View>
         <View style={styles.content}>
           <Text style={styles.title}>{listing.title}</Text>
           <Text style={styles.price}>${listing.price.toLocaleString()}</Text>
@@ -72,6 +87,26 @@ export const CarCard: React.FC<CarCardProps> = ({ listing, onSwipe }) => {
 };
 
 const styles = StyleSheet.create({
+  badges: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    flexDirection: 'column',
+    gap: 8,
+    zIndex: 1,
+  },
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   card: {
     width: SCREEN_WIDTH * 0.9,
     backgroundColor: 'white',
