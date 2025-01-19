@@ -12,6 +12,7 @@ from .deps import (
     users,
     oauth2_scheme
 )
+from ..models.user import User, UserCreate, UserLogin
 
 __all__ = [
     'verify_password',
@@ -23,5 +24,8 @@ __all__ = [
     'create_new_user',
     'get_user_by_email',
     'users',
-    'oauth2_scheme'
+    'oauth2_scheme',
+    'User',
+    'UserCreate',
+    'UserLogin'
 ]

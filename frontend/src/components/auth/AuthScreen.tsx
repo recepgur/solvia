@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
-  const { login, register, error } = useAuth();
+  const { login, register } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
     try {

@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
@@ -14,14 +16,15 @@ class SwipeAction(str, Enum):
 from app.models import (
     Listing, Category, ItemCondition, Location
 )
+from app.models.user import User, UserCreate, UserLogin
 from app.auth import (
     verify_password, get_password_hash,
     create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user, create_new_user,
-    get_user_by_email, users,
-    User, UserCreate, UserLogin
+    get_user_by_email, users
 )
 
+# Create main app
 app = FastAPI()
 
 # In-memory storage
@@ -37,8 +40,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create API router
+api_router = FastAPI(title="Solvia API")
+
+# Mount API under /api prefix
+app.mount("/api", api_router)
+
+# Mount static files if they exist
+frontend_path = os.getenv("FRONTEND_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+if not os.path.exists(frontend_path):
+    print(f"Warning: Frontend path {frontend_path} does not exist. Static files will not be served.")
+else:
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
 # Auth endpoints
-@app.post("/api/auth/register", response_model=User)
+@api_router.post("/auth/register", response_model=User)
 async def register(user_data: UserCreate):
     if get_user_by_email(user_data.email):
         raise HTTPException(
@@ -51,7 +67,7 @@ async def register(user_data: UserCreate):
     user_dict["password_hash"] = get_password_hash(user_dict.pop("password"))
     return create_new_user(user_dict)
 
-@app.post("/api/auth/login")
+@api_router.post("/auth/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = get_user_by_email(form_data.username)  # username is email in this case
     if not user or not verify_password(form_data.password, user.password_hash):
@@ -68,11 +84,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/api/auth/me", response_model=User)
+@api_router.get("/auth/me", response_model=User)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
-@app.get("/healthz")
+@api_router.get("/healthz")
 async def healthz():
     return {"status": "ok"}
 
@@ -98,14 +114,14 @@ class CategoryFieldsResponse(BaseModel):
     required: List[str]
     optional: List[str]
 
-@app.get("/api/categories/{category}/fields", response_model=CategoryFieldsResponse)
+@api_router.get("/categories/{category}/fields", response_model=CategoryFieldsResponse)
 async def get_category_fields(category: Category):
     fields = getattr(CategoryFields(), category.value, None)
     if not fields:
         raise HTTPException(status_code=404, detail="Category not found")
     return fields
 
-@app.post("/api/listings", response_model=Listing)
+@api_router.post("/listings", response_model=Listing)
 async def create_listing(
     listing: Listing,
     current_user: User = Depends(get_current_user)
@@ -159,7 +175,7 @@ class ListingFilter(BaseModel):
 class ListingFeedResponse(BaseModel):
     listings: List[Listing]
 
-@app.get("/api/listings/feed", response_model=ListingFeedResponse)
+@api_router.get("/listings/feed", response_model=ListingFeedResponse)
 async def get_listing_feed(
     latitude: float,
     longitude: float,
@@ -199,11 +215,11 @@ async def get_listing_feed(
     
     return {"listings": filtered_listings}
 
-@app.get("/api/listings/my", response_model=List[Listing])
+@api_router.get("/listings/my", response_model=List[Listing])
 async def get_my_listings(current_user: User = Depends(get_current_user)):
     return [listing for listing in listings if listing.seller_id == current_user.id]
 
-@app.get("/api/listings/liked", response_model=List[Listing])
+@api_router.get("/listings/liked", response_model=List[Listing])
 async def get_liked_listings(current_user: User = Depends(get_current_user)):
     liked_ids = [
         listing_id
@@ -212,7 +228,7 @@ async def get_liked_listings(current_user: User = Depends(get_current_user)):
     ]
     return [listing for listing in listings if listing.id in liked_ids]
 
-@app.get("/api/listings/seller/{seller_id}", response_model=List[Listing])
+@api_router.get("/listings/seller/{seller_id}", response_model=List[Listing])
 async def get_seller_listings(
     seller_id: str,
     current_user: User = Depends(get_current_user)
@@ -222,7 +238,7 @@ async def get_seller_listings(
 class CategoriesResponse(BaseModel):
     categories: List[str]
 
-@app.get("/api/categories", response_model=CategoriesResponse)
+@api_router.get("/categories", response_model=CategoriesResponse)
 async def get_categories():
     return {"categories": [category.value for category in Category]}
 
@@ -233,7 +249,7 @@ class SwipeResponse(BaseModel):
     status: str
     message: str
 
-@app.post("/api/listings/{listing_id}/swipe", response_model=SwipeResponse)
+@api_router.post("/listings/{listing_id}/swipe", response_model=SwipeResponse)
 async def swipe_listing(
     listing_id: str,
     swipe: SwipeRequest,
