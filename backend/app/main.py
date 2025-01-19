@@ -43,14 +43,14 @@ app.add_middleware(
 # Create API router
 api_router = FastAPI(title="Solvia API")
 
-# Mount API under /api prefix
-app.mount("/api", api_router)
-
 # Mount static files if they exist
 frontend_path = os.getenv("FRONTEND_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 if not os.path.exists(frontend_path):
     print(f"Warning: Frontend path {frontend_path} does not exist. Static files will not be served.")
 else:
+    # First mount API under /api prefix
+    app.mount("/api", api_router)
+    # Then mount static files at root, with fallback to index.html for client-side routing
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 # Auth endpoints
@@ -88,7 +88,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
-@api_router.get("/healthz")
+@app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
 
