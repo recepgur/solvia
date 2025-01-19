@@ -24,12 +24,15 @@ from app.auth import (
     get_user_by_email, users
 )
 
-# Create main app
-app = FastAPI()
+# Create API router first
+api_router = FastAPI(title="Solvia API")
 
 # In-memory storage
 listings: List[Listing] = []
 user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
+
+# Create main app
+app = FastAPI()
 
 # Enable CORS
 app.add_middleware(
@@ -43,10 +46,10 @@ app.add_middleware(
 # Create API router
 api_router = FastAPI(title="Solvia API")
 
-# Create API router
-api_router = FastAPI(title="Solvia API")
+# Add healthz endpoint to main app
+# Health check endpoint is now defined above
 
-# Mount API under /api prefix
+# Mount API under /api prefix after all routes are registered
 app.mount("/api", api_router)
 
 # Mount static files if they exist
@@ -91,9 +94,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
-@app.get("/healthz")
-async def healthz():
-    return {"status": "ok"}
+# Health check endpoint is now defined above
 
 class CategoryFields(BaseModel):
     real_estate: Dict[str, List[str]] = {
