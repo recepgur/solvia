@@ -1,22 +1,32 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from typing import List, Optional
+from typing import List, Optional, Dict
+from pydantic import BaseModel, Field
 import uuid
 from datetime import datetime, timedelta
+from enum import Enum
+
+class SwipeAction(str, Enum):
+    LIKE = "like"
+    DISLIKE = "dislike"
 
 from app.models import (
-    Listing, Category, ItemCondition, Location,
-    User, UserCreate, UserLogin
+    Listing, Category, ItemCondition, Location
 )
 from app.auth import (
     verify_password, get_password_hash,
     create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user, create_new_user,
-    get_user_by_email, users
+    get_user_by_email, users,
+    User, UserCreate, UserLogin
 )
 
 app = FastAPI()
+
+# In-memory storage
+listings: List[Listing] = []
+user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
 
 # Enable CORS
 app.add_middleware(
@@ -26,10 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# In-memory storage
-listings: List[Listing] = []
-user_preferences = {}
 
 # Auth endpoints
 @app.post("/api/auth/register", response_model=User)
@@ -70,25 +76,94 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 async def healthz():
     return {"status": "ok"}
 
+class CategoryFields(BaseModel):
+    real_estate: Dict[str, List[str]] = {
+        "required": ["square_meters", "rooms", "floor"],
+        "optional": ["heating_type", "building_age"]
+    }
+    vehicle: Dict[str, List[str]] = {
+        "required": ["make", "model", "year", "mileage"],
+        "optional": ["fuel_type", "transmission"]
+    }
+    electronics: Dict[str, List[str]] = {
+        "required": ["brand", "model"],
+        "optional": ["warranty_months", "specifications"]
+    }
+    other: Dict[str, List[str]] = {
+        "required": [],
+        "optional": ["brand", "model", "specifications"]
+    }
+
+class CategoryFieldsResponse(BaseModel):
+    required: List[str]
+    optional: List[str]
+
+@app.get("/api/categories/{category}/fields", response_model=CategoryFieldsResponse)
+async def get_category_fields(category: Category):
+    fields = getattr(CategoryFields(), category.value, None)
+    if not fields:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return fields
+
 @app.post("/api/listings", response_model=Listing)
 async def create_listing(
     listing: Listing,
     current_user: User = Depends(get_current_user)
 ):
+    # Validate category-specific fields
+    required_fields = getattr(CategoryFields(), listing.category.value)["required"]
+    optional_fields = getattr(CategoryFields(), listing.category.value)["optional"]
+    
+    # Check required fields
+    for field in required_fields:
+        if field not in listing.category_specific:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing required field for {listing.category}: {field}"
+            )
+    
+    # Remove any fields that aren't in required or optional
+    allowed_fields = set(required_fields + optional_fields)
+    listing.category_specific = {
+        k: v for k, v in listing.category_specific.items()
+        if k in allowed_fields
+    }
+    
+    # Validate image URLs
+    if not listing.image_urls:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one image URL is required"
+        )
+    
+    # Set listing metadata
+    listing.id = str(uuid.uuid4())
+    listing.created_at = datetime.now()
+    listing.seller_id = current_user.id
+    
+    # Add to listings database
+    listings.append(listing)
+    return listing
     listing.id = str(uuid.uuid4())
     listing.created_at = datetime.now()
     listings.append(listing)
     return listing
 
-@app.get("/api/listings/feed")
+class ListingFilter(BaseModel):
+    category: Optional[Category] = None
+    condition: Optional[ItemCondition] = None
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    radius: float = Field(default=10.0, gt=0)
+
+class ListingFeedResponse(BaseModel):
+    listings: List[Listing]
+
+@app.get("/api/listings/feed", response_model=ListingFeedResponse)
 async def get_listing_feed(
     latitude: float,
     longitude: float,
-    category: Optional[Category] = None,
-    condition: Optional[ItemCondition] = None,
-    radius: float = Query(default=10.0, gt=0),
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
+    filters: ListingFilter = Depends(),
     current_user: User = Depends(get_current_user)
 ):
     user_location = Location(latitude=latitude, longitude=longitude)
@@ -101,17 +176,17 @@ async def get_listing_feed(
             continue
             
         # Apply category filter
-        if category and listing.category != category:
+        if filters.category and listing.category != filters.category:
             continue
             
         # Apply condition filter
-        if condition and listing.condition != condition:
+        if filters.condition and listing.condition != filters.condition:
             continue
             
         # Apply price range filter
-        if min_price is not None and listing.price < min_price:
+        if filters.min_price is not None and listing.price < filters.min_price:
             continue
-        if max_price is not None and listing.price > max_price:
+        if filters.max_price is not None and listing.price > filters.max_price:
             continue
             
         # Calculate distance (simplified)
@@ -119,28 +194,69 @@ async def get_listing_feed(
         dy = listing.location.longitude - user_location.longitude
         distance = (dx * dx + dy * dy) ** 0.5
         
-        if distance <= radius:
+        if distance <= filters.radius:
             filtered_listings.append(listing)
     
     return {"listings": filtered_listings}
 
-@app.get("/api/categories")
+@app.get("/api/listings/my", response_model=List[Listing])
+async def get_my_listings(current_user: User = Depends(get_current_user)):
+    return [listing for listing in listings if listing.seller_id == current_user.id]
+
+@app.get("/api/listings/liked", response_model=List[Listing])
+async def get_liked_listings(current_user: User = Depends(get_current_user)):
+    liked_ids = [
+        listing_id
+        for listing_id, action in user_preferences.get(current_user.id, {}).items()
+        if action == SwipeAction.LIKE
+    ]
+    return [listing for listing in listings if listing.id in liked_ids]
+
+@app.get("/api/listings/seller/{seller_id}", response_model=List[Listing])
+async def get_seller_listings(
+    seller_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    return [listing for listing in listings if listing.seller_id == seller_id]
+
+class CategoriesResponse(BaseModel):
+    categories: List[str]
+
+@app.get("/api/categories", response_model=CategoriesResponse)
 async def get_categories():
     return {"categories": [category.value for category in Category]}
 
-@app.post("/api/listings/{listing_id}/swipe")
+class SwipeRequest(BaseModel):
+    action: SwipeAction
+
+class SwipeResponse(BaseModel):
+    status: str
+    message: str
+
+@app.post("/api/listings/{listing_id}/swipe", response_model=SwipeResponse)
 async def swipe_listing(
     listing_id: str,
-    action: str,
+    swipe: SwipeRequest,
     current_user: User = Depends(get_current_user)
 ):
-    if action not in ["like", "dislike"]:
-        raise HTTPException(status_code=400, detail="Invalid action")
-        
+    # Validate listing exists
+    listing = None
+    for l in listings:
+        if l.id == listing_id:
+            listing = l
+            break
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
     # Initialize user preferences if not exists
     if current_user.id not in user_preferences:
         user_preferences[current_user.id] = {}
-        
-    # Record the swipe action
-    user_preferences[current_user.id][listing_id] = action
-    return {"status": "success"}
+    
+    # Store the swipe action
+    user_preferences[current_user.id][listing_id] = swipe.action
+    
+    return SwipeResponse(
+        status="success",
+        message=f"Successfully recorded {swipe.action} for listing {listing_id}"
+    )
