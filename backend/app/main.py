@@ -160,10 +160,6 @@ async def create_listing(
     # Add to listings database
     listings.append(listing)
     return listing
-    listing.id = str(uuid.uuid4())
-    listing.created_at = datetime.now()
-    listings.append(listing)
-    return listing
 
 class ListingFilter(BaseModel):
     category: Optional[Category] = None

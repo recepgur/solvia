@@ -1,41 +1,37 @@
-FROM python:3.12-slim as builder
-
-# Install node and build tools
-RUN apt-get update && \
-    apt-get install -y nodejs npm curl git && \
-    npm install -g pnpm && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set up backend
-WORKDIR /app
-COPY backend/ ./backend/
-WORKDIR /app/backend
-COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+FROM node:18-slim AS frontend-builder
 
 # Set up frontend
 WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy frontend source and build
 COPY frontend/ ./
-RUN pnpm install
-RUN pnpm build
+RUN npm run build
+
+# Backend builder stage
+FROM python:3.12-slim AS backend-builder
+WORKDIR /app/backend
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/ ./
 
 # Final stage
 FROM python:3.12-slim
 WORKDIR /app
 
-# Copy backend and frontend build
-COPY --from=builder /app/backend /app/backend
-COPY --from=builder /app/frontend/dist /app/dist
+# Copy frontend build and backend
+COPY --from=frontend-builder /app/frontend/dist /app/dist
+COPY --from=backend-builder /app/backend /app/backend
+COPY backend/requirements.txt ./
 
 # Install production dependencies
-COPY --from=builder /app/backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Set environment variables
-ENV FRONTEND_PATH=/app/dist
-ENV PORT=8080
-ENV PYTHONPATH=/app
+# Environment configuration
+ENV PYTHONPATH=/app \
+    FRONTEND_PATH=/app/dist \
+    PORT=8080
 
 # Expose port
 EXPOSE 8080
