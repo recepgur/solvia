@@ -105,6 +105,9 @@ async def general_exception_handler(request, exc):
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
+# Register API routes first
+app.include_router(api_router, prefix="/api")
+
 # Configure static files if frontend path exists
 if not frontend_path:
     print("Warning: FRONTEND_PATH environment variable is not set")
@@ -112,56 +115,11 @@ else:
     print(f"\nDEBUG: Frontend path configuration:")
     print(f"FRONTEND_PATH={frontend_path}")
     print(f"Path exists: {os.path.exists(frontend_path)}")
-    print(f"Directory contents:")
+    
     try:
-        # List directory contents for debugging
-        for root, dirs, files in os.walk(frontend_path):
-            level = root.replace(frontend_path, '').count(os.sep)
-            indent = ' ' * 4 * level
-            print(f"{indent}{os.path.basename(root)}/")
-            subindent = ' ' * 4 * (level + 1)
-            for f in files:
-                print(f"{subindent}{f}")
-        
-        # Mount assets directory for static files
-        assets_path = os.path.join(frontend_path, "assets")
-        if os.path.exists(assets_path):
-            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-            print("Successfully mounted assets directory")
-        
-        # Serve favicon.ico directly
-        @app.get("/favicon.ico")
-        async def favicon():
-            favicon_path = os.path.join(frontend_path, "favicon.ico")
-            if os.path.exists(favicon_path):
-                return FileResponse(favicon_path)
-            raise HTTPException(status_code=404, detail="Favicon not found")
-        
-        # Serve static files directly
-        @app.get("/{path:path}")
-        async def serve_static(path: str):
-            # Don't handle API routes
-            if path.startswith("api/"):
-                raise HTTPException(status_code=404, detail="Not Found")
-            
-            # Try to serve static files first
-            static_path = os.path.join(frontend_path, path)
-            if os.path.exists(static_path) and os.path.isfile(static_path):
-                return FileResponse(static_path)
-            
-            # Fall back to index.html for client-side routing
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                return FileResponse(index_path)
-            raise HTTPException(status_code=404, detail="Frontend not found")
-        
-        # Serve index.html for root
-        @app.get("/")
-        async def serve_root():
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                return FileResponse(index_path)
-            raise HTTPException(status_code=404, detail="Frontend not found")
+        # Mount static files directory
+        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+        print("Successfully mounted static files directory")
         
         print("\nDEBUG: Route configuration:")
         for route in app.routes:
@@ -175,8 +133,7 @@ else:
         print(f"Traceback: {traceback.format_exc()}")
         raise
 
-# Register API routes after static file configuration
-app.include_router(api_router, prefix="/api")
+# Print final route configuration
 print("\nDEBUG: Final route configuration:")
 for route in app.routes:
     if isinstance(route, APIRoute):
