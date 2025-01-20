@@ -123,23 +123,22 @@ else:
     else:
         print(f"Contents of {frontend_path}:")
         try:
-            for item in os.listdir(frontend_path):
-                full_path = os.path.join(frontend_path, item)
-                print(f"  - {item} ({'directory' if os.path.isdir(full_path) else 'file'})")
-                if os.path.isdir(full_path):
-                    print(f"    Contents of {item}/:")
-                    for subitem in os.listdir(full_path):
-                        print(f"    - {subitem}")
-                if item == 'index.html':
-                    print("\nindex.html contents:")
-                    with open(os.path.join(frontend_path, item)) as f:
-                        print(f.read())
+            # List directory contents for debugging
+            for root, dirs, files in os.walk(frontend_path):
+                level = root.replace(frontend_path, '').count(os.sep)
+                indent = ' ' * 4 * level
+                print(f"{indent}{os.path.basename(root)}/")
+                subindent = ' ' * 4 * (level + 1)
+                for f in files:
+                    print(f"{subindent}{f}")
             
-            # Mount static files with explicit paths
-            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
-            print("Successfully mounted assets directory")
+            # First mount the assets directory
+            assets_path = os.path.join(frontend_path, "assets")
+            if os.path.exists(assets_path):
+                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+                print("Successfully mounted assets directory")
             
-            # Mount root directory for all other files (index.html, favicon.ico, etc.)
+            # Then mount the root directory for all other files
             app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
             print("Successfully mounted frontend directory")
             
