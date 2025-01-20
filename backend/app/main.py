@@ -104,43 +104,52 @@ async def general_exception_handler(request, exc):
         content={"detail": "Internal server error"}
     )
 
-# Configure static files and SPA
+# Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
+
+# Configure static files if frontend path exists
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # First mount assets directory
+        # Mount assets directory if it exists
         assets_path = os.path.join(frontend_path, "assets")
         if os.path.exists(assets_path):
             app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
             print("Successfully mounted assets directory")
-        
-        # Add catch-all route for SPA
-        @app.get("/{full_path:path}")
-        async def serve_spa(full_path: str):
-            if full_path == "healthz" or full_path.startswith("api/"):
-                raise HTTPException(status_code=404, detail="Not found")
-            
-            try:
-                # Try to serve static file first
-                static_file = os.path.join(frontend_path, full_path)
-                if os.path.exists(static_file) and os.path.isfile(static_file):
-                    return FileResponse(static_file)
-                
-                # Fall back to index.html for client-side routing
-                return FileResponse(
-                    os.path.join(frontend_path, "index.html"),
-                    media_type="text/html"
-                )
-            except Exception as e:
-                print(f"Error serving file: {str(e)}")
-                raise HTTPException(status_code=404, detail="Not found")
-                
-        print("Successfully configured SPA routing")
     except Exception as e:
-        print(f"Error configuring frontend: {str(e)}")
+        print(f"Error mounting assets: {str(e)}")
 else:
-    print(f"Warning: Frontend path {frontend_path} does not exist or is not set. Static files will not be served.")
+    print(f"Warning: Frontend path {frontend_path} does not exist or is not set")
+
+# Add catch-all route for SPA routing (after API routes)
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Don't handle API routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Don't handle health check
+    if full_path == "healthz":
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    if not frontend_path or not os.path.exists(frontend_path):
+        raise HTTPException(status_code=404, detail="Frontend not configured")
+        
+    try:
+        # Try to serve static file first
+        static_file = os.path.join(frontend_path, full_path)
+        if os.path.exists(static_file) and os.path.isfile(static_file):
+            return FileResponse(static_file)
+        
+        # Fall back to index.html for client-side routing
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path, media_type="text/html")
+        else:
+            raise HTTPException(status_code=404, detail="Frontend index not found")
+    except Exception as e:
+        print(f"Error serving file: {str(e)}")
+        raise HTTPException(status_code=404, detail="Not found")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
