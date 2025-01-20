@@ -154,11 +154,44 @@ else:
             with open(index_path, 'r') as f:
                 print(f"  First 100 chars: {f.read(100)}")
 
-        # Mount static files if frontend path exists
-        if os.path.exists(frontend_path):
+        # Mount assets directory
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
             print("\nDEBUG: Mounting static files")
-            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
             print("Successfully mounted static files")
+
+        # Root path handler
+        @app.get("/")
+        async def serve_root():
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print("DEBUG: Serving index.html for root path")
+                return FileResponse(index_path)
+            raise HTTPException(status_code=404, detail="Frontend not found")
+
+        # Mount API routes first (before any catch-all routes)
+        app.include_router(api_router, prefix="/api")
+        print("\nDEBUG: API routes mounted")
+
+        # Catch-all route for SPA (must be last)
+        @app.get("/{path:path}")
+        async def serve_spa(path: str):
+            print(f"DEBUG: Handling path: {path}")
+            
+            # Try to serve static file first
+            static_path = os.path.join(frontend_path, path)
+            if os.path.exists(static_path) and os.path.isfile(static_path):
+                print(f"DEBUG: Serving static file: {static_path}")
+                return FileResponse(static_path)
+            
+            # Fall back to index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print(f"DEBUG: Serving index.html for path: {path}")
+                return FileResponse(index_path)
+            
+            raise HTTPException(status_code=404, detail="Frontend not found")
 
         print("\nDEBUG: Route configuration:")
         for route in app.routes:
