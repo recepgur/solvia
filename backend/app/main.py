@@ -115,9 +115,27 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Serve static files from root
-        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-        print(f"Successfully mounted frontend directory at root")
+        # First mount assets directory
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+            print("Successfully mounted assets directory")
+
+        # Then add catch-all route for SPA
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            # Don't handle API routes or health check
+            if full_path.startswith("api/") or full_path == "healthz":
+                raise HTTPException(status_code=404, detail="Not found")
+            
+            # Serve index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print(f"Serving {index_path} for path: {full_path}")
+                return FileResponse(index_path)
+            else:
+                print(f"Frontend not found at {index_path}")
+                raise HTTPException(status_code=404, detail="Frontend not found")
     except Exception as e:
         print(f"Error configuring frontend: {str(e)}")
         raise
