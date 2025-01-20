@@ -110,6 +110,9 @@ async def general_exception_handler(request, exc):
         content={"detail": "Internal server error"}
     )
 
+# Include API router first
+app.include_router(api_router)
+
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
@@ -117,29 +120,29 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Mount static files directory
-        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="static")
-        print("Successfully mounted static files")
-    except Exception as e:
-        print(f"Error mounting static files: {str(e)}")
-
-# Include API router before catch-all route
-app.include_router(api_router)
-
-# Serve index.html for client-side routing (after API routes)
-if frontend_path and os.path.exists(frontend_path):
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        # Don't handle API routes or health check
-        if full_path.startswith("api/") or full_path == "healthz":
-            raise HTTPException(status_code=404, detail="Not found")
+        # Mount static files directory for assets
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="static")
+            print(f"Successfully mounted static files from {assets_path}")
         
-        # Serve index.html for client-side routing
-        index_path = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        else:
-            raise HTTPException(status_code=404, detail="Frontend not found")
+        # Serve index.html for all non-API routes
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            # Don't handle API routes or health check
+            if full_path.startswith("api/") or full_path == "healthz":
+                raise HTTPException(status_code=404, detail="Not found")
+            
+            # Serve index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print(f"Serving {index_path} for path: {full_path}")
+                return FileResponse(index_path)
+            else:
+                print(f"Frontend not found at {index_path}")
+                raise HTTPException(status_code=404, detail="Frontend not found")
+    except Exception as e:
+        print(f"Error configuring frontend: {str(e)}")
 
 # Configure static files if frontend path exists
 if frontend_path and os.path.exists(frontend_path):

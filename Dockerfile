@@ -3,7 +3,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
-RUN npm run build
+RUN npm run build && ls -la dist/
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -16,9 +16,12 @@ WORKDIR /app
 COPY --from=frontend-builder /app/frontend/dist /app/dist
 COPY --from=backend-builder /app/backend /app/backend
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    ls -la /app/dist && \
+    echo "Frontend path contents:" && \
+    ls -la /app/dist/assets || echo "No assets directory found"
 ENV PYTHONPATH=/app/backend \
     FRONTEND_PATH=/app/dist \
     PORT=8080
 EXPOSE 8080
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
