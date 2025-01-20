@@ -105,22 +105,66 @@ async def general_exception_handler(request, exc):
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Register API routes first
-app.include_router(api_router, prefix="/api")
-
-# Configure static files if frontend path exists
+# Configure static files and routes
 if not frontend_path:
     print("Warning: FRONTEND_PATH environment variable is not set")
 else:
     print(f"\nDEBUG: Frontend path configuration:")
     print(f"FRONTEND_PATH={frontend_path}")
     print(f"Path exists: {os.path.exists(frontend_path)}")
-    
+    print(f"Directory contents:")
     try:
-        # Mount static files directory
-        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
-        print("Successfully mounted static files directory")
-        
+        # List directory contents for debugging
+        for root, dirs, files in os.walk(frontend_path):
+            level = root.replace(frontend_path, '').count(os.sep)
+            indent = ' ' * 4 * level
+            print(f"{indent}{os.path.basename(root)}/")
+            subindent = ' ' * 4 * (level + 1)
+            for f in files:
+                print(f"{subindent}{f}")
+
+        # Serve static files
+        if os.path.exists(os.path.join(frontend_path, "assets")):
+            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+            print("Successfully mounted assets directory")
+
+        # Root path handler (must be before catch-all)
+        @app.get("/")
+        async def serve_root():
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print("DEBUG: Serving index.html for root path")
+                return FileResponse(index_path)
+            raise HTTPException(status_code=404, detail="Frontend not found")
+
+        # Mount API routes
+        app.include_router(api_router, prefix="/api")
+        print("\nDEBUG: API routes mounted")
+
+        # Catch-all route for SPA (must be last)
+        @app.get("/{path:path}")
+        async def serve_spa(path: str):
+            print(f"DEBUG: Handling path: {path}")
+            
+            # Don't handle API routes
+            if path.startswith("api/"):
+                print(f"DEBUG: API path detected: {path}")
+                raise HTTPException(status_code=404, detail="Not Found")
+            
+            # Try to serve static file first
+            static_path = os.path.join(frontend_path, path)
+            if os.path.exists(static_path) and os.path.isfile(static_path):
+                print(f"DEBUG: Serving static file: {static_path}")
+                return FileResponse(static_path)
+            
+            # Fall back to index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                print(f"DEBUG: Serving index.html for path: {path}")
+                return FileResponse(index_path)
+            
+            raise HTTPException(status_code=404, detail="Frontend not found")
+
         print("\nDEBUG: Route configuration:")
         for route in app.routes:
             if isinstance(route, APIRoute):

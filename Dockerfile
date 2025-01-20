@@ -44,7 +44,10 @@ RUN echo "=== Verifying frontend files ===" && \
     echo "\nIndex.html contents:" && \
     cat /app/dist/index.html && \
     echo "\nVerifying assets:" && \
-    ls -la /app/dist/assets/
+    ls -la /app/dist/assets/ && \
+    echo "\nSetting correct permissions:" && \
+    chmod -R 755 /app/dist && \
+    chown -R root:root /app/dist
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
