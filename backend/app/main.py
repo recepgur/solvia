@@ -13,11 +13,11 @@ class SwipeAction(str, Enum):
     LIKE = "like"
     DISLIKE = "dislike"
 
-from app.models import (
+from .models import (
     Listing, Category, ItemCondition, Location
 )
-from app.models.user import User, UserCreate, UserLogin
-from app.auth import (
+from .models.user import User, UserCreate, UserLogin
+from .auth import (
     verify_password, get_password_hash,
     create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user, create_new_user,
