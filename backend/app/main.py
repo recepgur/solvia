@@ -104,7 +104,7 @@ async def general_exception_handler(request, exc):
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Add API routes (before static files)
+# Register API routes first (only once!)
 app.include_router(api_router, prefix="/api")
 print("Successfully added API routes with /api prefix")
 
@@ -115,27 +115,39 @@ else:
     print(f"\nDEBUG: Frontend path configuration:")
     print(f"FRONTEND_PATH={frontend_path}")
     print(f"Path exists: {os.path.exists(frontend_path)}")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Environment variables: {dict(os.environ)}")
     
     if not os.path.exists(frontend_path):
         print(f"Warning: Frontend path {frontend_path} does not exist")
     else:
         print(f"Contents of {frontend_path}:")
-        for item in os.listdir(frontend_path):
-            print(f"  - {item}")
-        
         try:
-            # Mount the entire frontend directory
+            for item in os.listdir(frontend_path):
+                full_path = os.path.join(frontend_path, item)
+                print(f"  - {item} ({'directory' if os.path.isdir(full_path) else 'file'})")
+                if os.path.isdir(full_path):
+                    print(f"    Contents of {item}/:")
+                    for subitem in os.listdir(full_path):
+                        print(f"    - {subitem}")
+                if item == 'index.html':
+                    print("\nindex.html contents:")
+                    with open(os.path.join(frontend_path, item)) as f:
+                        print(f.read())
+            
+            # Mount static files with explicit paths
+            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+            print("Successfully mounted assets directory")
+            
+            # Mount root directory for all other files (index.html, favicon.ico, etc.)
             app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
             print("Successfully mounted frontend directory")
-            
-            # Add catch-all route for API 404s
-            @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-            async def api_404_handler(path: str):
-                raise HTTPException(status_code=404, detail="API endpoint not found")
             
             print(f"Successfully configured frontend routing from {frontend_path}")
         except Exception as e:
             print(f"Error configuring frontend: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             raise
 
 # Auth endpoints
