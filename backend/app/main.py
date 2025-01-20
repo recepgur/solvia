@@ -37,11 +37,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Create API sub-application
-api_app = FastAPI()
-
-# Enable CORS for API
-api_app.add_middleware(
+# Enable CORS
+app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -49,22 +46,19 @@ api_app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add debug middleware to API
-@api_app.middleware("http")
-async def api_debug_middleware(request, call_next):
-    print(f"\nDEBUG: API request to {request.url.path}")
+# Add debug middleware
+@app.middleware("http")
+async def debug_middleware(request, call_next):
+    print(f"\nDEBUG: Request to {request.url.path}")
     print(f"DEBUG: Method: {request.method}")
     print(f"DEBUG: Headers: {request.headers}")
     response = await call_next(request)
-    print(f"DEBUG: API response status: {response.status_code}")
+    print(f"DEBUG: Response status: {response.status_code}")
     return response
 
-# Add API routes to sub-application
-api_app.include_router(api_router)
-
-# Mount API sub-application
-app.mount("/api", api_app)
-print("Successfully mounted API routes at /api")
+# Add API routes with prefix
+app.include_router(api_router, prefix="/api")
+print("Successfully added API routes with /api prefix")
 
 # Health check endpoint
 @app.get("/healthz")
