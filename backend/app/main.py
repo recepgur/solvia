@@ -51,32 +51,21 @@ app.add_middleware(
 async def healthz():
     return {"status": "ok"}
 
-# Mount static files if they exist
-frontend_path = os.getenv("FRONTEND_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
-if os.path.exists(frontend_path):
-    # Mount assets directory for static files
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="static")
-
-# Include API router
+# Include API router first
 app.include_router(api_router)
 
-# Serve SPA after API routes
-if os.path.exists(frontend_path):
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="API route not found")
-        # First check if the exact file exists
-        file_path = os.path.join(frontend_path, full_path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        # Otherwise serve index.html for client-side routing
-        index_path = os.path.join(frontend_path, "index.html")
-        if not os.path.exists(index_path):
-            raise HTTPException(status_code=404, detail="Frontend not built")
-        return FileResponse(index_path)
+# Mount static files if they exist
+frontend_path = os.getenv("FRONTEND_PATH")
+if frontend_path and os.path.exists(frontend_path):
+    print(f"Mounting frontend from: {frontend_path}")
+    try:
+        # Serve static files
+        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+        print("Successfully mounted frontend static files")
+    except Exception as e:
+        print(f"Error mounting frontend: {str(e)}")
 else:
-    print(f"Warning: Frontend path {frontend_path} does not exist. Static files will not be served.")
+    print(f"Warning: Frontend path {frontend_path} does not exist or is not set. Static files will not be served.")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
