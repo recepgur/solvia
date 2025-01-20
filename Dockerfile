@@ -8,7 +8,9 @@ RUN echo "Building frontend..." && \
     echo "Frontend build contents:" && \
     ls -la dist/ && \
     echo "Frontend assets:" && \
-    ls -la dist/assets/
+    ls -la dist/assets/ && \
+    echo "Verifying index.html:" && \
+    cat dist/index.html
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -19,15 +21,24 @@ COPY backend/ ./
 FROM python:3.12-slim
 WORKDIR /app
 
-# Create dist directory
-RUN mkdir -p /app/dist
+# Install curl for healthcheck
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create dist directory with correct permissions
+RUN mkdir -p /app/dist && \
+    chown -R nobody:nogroup /app/dist && \
+    chmod -R 755 /app/dist
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
 RUN echo "Verifying frontend files:" && \
     ls -la /app/dist/ && \
     echo "\nVerifying assets:" && \
-    ls -la /app/dist/assets/ || echo "No assets directory found"
+    ls -la /app/dist/assets/ && \
+    echo "\nVerifying index.html:" && \
+    cat /app/dist/index.html
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
@@ -43,12 +54,9 @@ ENV PYTHONPATH=/app/backend \
 RUN echo "Frontend path contents:" && \
     ls -la ${FRONTEND_PATH} && \
     echo "\nFrontend path exists:" && \
-    test -d ${FRONTEND_PATH} && echo "Yes" || echo "No"
-
-# Ensure correct permissions
-RUN mkdir -p /app/dist && \
-    chown -R nobody:nogroup /app/dist && \
-    chmod -R 755 /app/dist
+    test -d ${FRONTEND_PATH} && echo "Yes" || echo "No" && \
+    echo "\nFull contents of /app:" && \
+    find /app -type f
 
 # Switch to non-root user
 USER nobody

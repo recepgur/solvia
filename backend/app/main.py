@@ -111,36 +111,45 @@ app.include_router(api_router)
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Configure static files if frontend path exists
-if frontend_path and os.path.exists(frontend_path):
-    print(f"Mounting frontend from: {frontend_path}")
-    try:
-        # First mount assets directory
-        assets_path = os.path.join(frontend_path, "assets")
-        if os.path.exists(assets_path):
-            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-            print("Successfully mounted assets directory")
+# Include API router first
+app.include_router(api_router, prefix="/api")
 
-        # Then add catch-all route for SPA
-        @app.get("/{full_path:path}")
-        async def serve_spa(full_path: str):
-            # Don't handle API routes or health check
-            if full_path.startswith("api/") or full_path == "healthz":
-                raise HTTPException(status_code=404, detail="Not found")
-            
-            # Serve index.html for client-side routing
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                print(f"Serving {index_path} for path: {full_path}")
-                return FileResponse(index_path)
-            else:
-                print(f"Frontend not found at {index_path}")
-                raise HTTPException(status_code=404, detail="Frontend not found")
-    except Exception as e:
-        print(f"Error configuring frontend: {str(e)}")
-        raise
+# Configure static files if frontend path exists
+if not frontend_path:
+    print(f"Warning: Frontend path {frontend_path} is not set")
 else:
-    print(f"Warning: Frontend path {frontend_path} does not exist or is not set")
+    print(f"\nDEBUG: Frontend path configuration:")
+    print(f"FRONTEND_PATH={frontend_path}")
+    print(f"Path exists: {os.path.exists(frontend_path)}")
+    
+    if not os.path.exists(frontend_path):
+        print(f"Warning: Frontend path {frontend_path} does not exist")
+    else:
+        print(f"Contents of {frontend_path}:")
+        for item in os.listdir(frontend_path):
+            print(f"  - {item}")
+        
+        try:
+            # First mount assets directory
+            assets_path = os.path.join(frontend_path, "assets")
+            print(f"\nDEBUG: Assets path configuration:")
+            print(f"assets_path={assets_path}")
+            print(f"Path exists: {os.path.exists(assets_path)}")
+            
+            if os.path.exists(assets_path):
+                print(f"Contents of {assets_path}:")
+                for item in os.listdir(assets_path):
+                    print(f"  - {item}")
+                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+                print("Successfully mounted assets directory")
+
+            # Mount static files at root
+            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+            print(f"Successfully mounted frontend from {frontend_path}")
+            
+        except Exception as e:
+            print(f"Error configuring frontend: {str(e)}")
+            raise
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
