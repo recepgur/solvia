@@ -47,16 +47,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Set environment variables
 ENV PYTHONPATH=/app/backend \
-    FRONTEND_PATH=/app/dist \
-    PORT=8080
+    PORT=8080 \
+    FRONTEND_PATH=/app/dist
 
-# Debug frontend path
+# Debug frontend path and permissions
 RUN echo "Frontend path contents:" && \
     ls -la ${FRONTEND_PATH} && \
     echo "\nFrontend path exists:" && \
     test -d ${FRONTEND_PATH} && echo "Yes" || echo "No" && \
     echo "\nFull contents of /app:" && \
-    find /app -type f
+    find /app -type f && \
+    echo "\nVerifying permissions:" && \
+    chmod -R 755 ${FRONTEND_PATH} && \
+    chown -R nobody:nogroup ${FRONTEND_PATH}
 
 # Switch to non-root user
 USER nobody

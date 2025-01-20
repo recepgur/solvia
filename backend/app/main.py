@@ -56,10 +56,6 @@ async def debug_middleware(request, call_next):
     print(f"DEBUG: Response status: {response.status_code}")
     return response
 
-# Add API routes with prefix
-app.include_router(api_router, prefix="/api")
-print("Successfully added API routes with /api prefix")
-
 # Health check endpoint
 @app.get("/healthz")
 async def healthz():
@@ -105,23 +101,16 @@ async def general_exception_handler(request, exc):
         content={"detail": "Internal server error"}
     )
 
-# Include API router first (without prefix, it's already in the router)
-app.include_router(api_router)
-
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Configure API router first
-api_app = FastAPI(title="Solvia API")
-api_app.include_router(api_router)
-
-# Mount API under /api prefix
-app.mount("/api", api_app)
-print("Successfully mounted API router under /api prefix")
+# Add API routes (before static files)
+app.include_router(api_router, prefix="/api")
+print("Successfully added API routes with /api prefix")
 
 # Configure static files if frontend path exists
 if not frontend_path:
-    print(f"Warning: Frontend path {frontend_path} is not set")
+    print("Warning: FRONTEND_PATH environment variable is not set")
 else:
     print(f"\nDEBUG: Frontend path configuration:")
     print(f"FRONTEND_PATH={frontend_path}")
@@ -135,23 +124,48 @@ else:
             print(f"  - {item}")
         
         try:
-            # First mount assets directory
-            assets_path = os.path.join(frontend_path, "assets")
-            print(f"\nDEBUG: Assets path configuration:")
-            print(f"assets_path={assets_path}")
-            print(f"Path exists: {os.path.exists(assets_path)}")
+            # Mount static files
+            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+            print("Successfully mounted assets directory")
             
-            if os.path.exists(assets_path):
-                print(f"Contents of {assets_path}:")
-                for item in os.listdir(assets_path):
-                    print(f"  - {item}")
-                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-                print("Successfully mounted assets directory")
+            # Serve favicon.ico
+            @app.get("/favicon.ico")
+            async def favicon():
+                favicon_path = os.path.join(frontend_path, "favicon.ico")
+                if os.path.exists(favicon_path):
+                    return FileResponse(favicon_path)
+                raise HTTPException(status_code=404, detail="Favicon not found")
 
-            # Mount static files at root
-            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-            print(f"Successfully mounted frontend from {frontend_path}")
+            # Root route handler
+            @app.get("/")
+            async def serve_root():
+                print("DEBUG: Serving root index.html")
+                index_path = os.path.join(frontend_path, "index.html")
+                if os.path.exists(index_path):
+                    return FileResponse(index_path)
+                else:
+                    raise HTTPException(status_code=404, detail="Frontend not found")
+
+            # Add catch-all route for SPA (after API routes)
+            @app.get("/{full_path:path}")
+            async def serve_spa(full_path: str):
+                print(f"DEBUG: Handling path: {full_path}")
+                
+                # Don't handle API routes or health check
+                if full_path.startswith("api/") or full_path == "healthz":
+                    print(f"DEBUG: Skipping API/health path: {full_path}")
+                    raise HTTPException(status_code=404, detail="Not Found")
+                
+                # Serve index.html for client-side routing
+                index_path = os.path.join(frontend_path, "index.html")
+                if os.path.exists(index_path):
+                    print(f"DEBUG: Serving index.html for path: {full_path}")
+                    return FileResponse(index_path)
+                else:
+                    print(f"DEBUG: Frontend not found at {index_path}")
+                    raise HTTPException(status_code=404, detail="Frontend not found")
             
+            print(f"Successfully configured frontend routing from {frontend_path}")
         except Exception as e:
             print(f"Error configuring frontend: {str(e)}")
             raise
