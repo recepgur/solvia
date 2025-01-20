@@ -37,8 +37,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS
-app.add_middleware(
+# Create API sub-application
+api_app = FastAPI()
+
+# Enable CORS for API
+api_app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -46,15 +49,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add debug middleware
-@app.middleware("http")
-async def debug_middleware(request, call_next):
-    print(f"\nDEBUG: Incoming request to {request.url.path}")
+# Add debug middleware to API
+@api_app.middleware("http")
+async def api_debug_middleware(request, call_next):
+    print(f"\nDEBUG: API request to {request.url.path}")
     print(f"DEBUG: Method: {request.method}")
     print(f"DEBUG: Headers: {request.headers}")
     response = await call_next(request)
-    print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: API response status: {response.status_code}")
     return response
+
+# Add API routes to sub-application
+api_app.include_router(api_router)
+
+# Mount API sub-application
+app.mount("/api", api_app)
+print("Successfully mounted API routes at /api")
 
 # Health check endpoint
 @app.get("/healthz")
@@ -111,42 +121,9 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Mount assets directory first
-        assets_path = os.path.join(frontend_path, "assets")
-        if os.path.exists(assets_path):
-            app.mount("/assets", StaticFiles(directory=assets_path), name="static")
-            print(f"Successfully mounted static files from {assets_path}")
-
-        # Root route handler
-        @app.get("/")
-        async def serve_root():
-            print("DEBUG: Handling root path")
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                print(f"DEBUG: Serving root index.html")
-                return FileResponse(index_path)
-            else:
-                print("DEBUG: Root index.html not found")
-                raise HTTPException(status_code=404, detail="Frontend not found")
-
-        # Catch-all route for SPA (excluding /api and /healthz)
-        @app.get("/{full_path:path}", include_in_schema=False)
-        async def serve_spa(full_path: str):
-            print(f"DEBUG: Handling path: {full_path}")
-            
-            # Don't handle API routes or health check
-            if full_path.startswith("api/") or full_path == "healthz":
-                print(f"DEBUG: Skipping API/health path: {full_path}")
-                raise HTTPException(status_code=404, detail="Not found")
-            
-            # Serve index.html for client-side routing
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                print(f"DEBUG: Serving {index_path} for path: {full_path}")
-                return FileResponse(index_path)
-            else:
-                print(f"DEBUG: Frontend not found at {index_path}")
-                raise HTTPException(status_code=404, detail="Frontend not found")
+        # Serve static files from root
+        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+        print(f"Successfully mounted frontend directory at root")
     except Exception as e:
         print(f"Error configuring frontend: {str(e)}")
         raise
