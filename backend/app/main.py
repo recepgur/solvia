@@ -115,11 +115,7 @@ class SPAStaticFiles(StaticFiles):
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Register API routes first
-app.include_router(api_router, prefix="/api")
-print("\nDEBUG: API routes mounted")
-
-# Configure static files
+# Configure static files first
 if not frontend_path:
     print("Warning: FRONTEND_PATH environment variable is not set")
 else:
@@ -131,7 +127,17 @@ else:
         try:
             print("\nDEBUG: Mounting static files")
             
-            # Mount SPA static files at root
+            # Mount assets directory first
+            assets_path = os.path.join(frontend_path, "assets")
+            if os.path.exists(assets_path):
+                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+                print("Successfully mounted assets directory")
+
+            # Register API routes before catch-all
+            app.include_router(api_router, prefix="/api")
+            print("\nDEBUG: API routes mounted")
+            
+            # Mount SPA static files at root last (catch-all)
             app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
             print("Successfully mounted SPA static files with client-side routing support")
 
