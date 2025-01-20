@@ -82,5 +82,10 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 # Start application with debug output
 CMD echo "Starting server with FRONTEND_PATH=${FRONTEND_PATH}" && \
+    echo "Directory structure:" && \
+    tree /app && \
+    echo "\nFrontend directory contents:" && \
     ls -la ${FRONTEND_PATH} && \
+    echo "\nStarting server..." && \
+    cd /app/backend && \
     uvicorn app.main:app --host 0.0.0.0 --port 8080
