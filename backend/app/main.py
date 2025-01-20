@@ -124,46 +124,14 @@ else:
             print(f"  - {item}")
         
         try:
-            # Mount static files
-            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
-            print("Successfully mounted assets directory")
+            # Mount the entire frontend directory
+            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+            print("Successfully mounted frontend directory")
             
-            # Serve favicon.ico
-            @app.get("/favicon.ico")
-            async def favicon():
-                favicon_path = os.path.join(frontend_path, "favicon.ico")
-                if os.path.exists(favicon_path):
-                    return FileResponse(favicon_path)
-                raise HTTPException(status_code=404, detail="Favicon not found")
-
-            # Root route handler
-            @app.get("/")
-            async def serve_root():
-                print("DEBUG: Serving root index.html")
-                index_path = os.path.join(frontend_path, "index.html")
-                if os.path.exists(index_path):
-                    return FileResponse(index_path)
-                else:
-                    raise HTTPException(status_code=404, detail="Frontend not found")
-
-            # Add catch-all route for SPA (after API routes)
-            @app.get("/{full_path:path}")
-            async def serve_spa(full_path: str):
-                print(f"DEBUG: Handling path: {full_path}")
-                
-                # Don't handle API routes or health check
-                if full_path.startswith("api/") or full_path == "healthz":
-                    print(f"DEBUG: Skipping API/health path: {full_path}")
-                    raise HTTPException(status_code=404, detail="Not Found")
-                
-                # Serve index.html for client-side routing
-                index_path = os.path.join(frontend_path, "index.html")
-                if os.path.exists(index_path):
-                    print(f"DEBUG: Serving index.html for path: {full_path}")
-                    return FileResponse(index_path)
-                else:
-                    print(f"DEBUG: Frontend not found at {index_path}")
-                    raise HTTPException(status_code=404, detail="Frontend not found")
+            # Add catch-all route for API 404s
+            @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+            async def api_404_handler(path: str):
+                raise HTTPException(status_code=404, detail="API endpoint not found")
             
             print(f"Successfully configured frontend routing from {frontend_path}")
         except Exception as e:
