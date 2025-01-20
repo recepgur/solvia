@@ -111,8 +111,13 @@ app.include_router(api_router)
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Include API router first
-app.include_router(api_router, prefix="/api")
+# Configure API router first
+api_app = FastAPI(title="Solvia API")
+api_app.include_router(api_router)
+
+# Mount API under /api prefix
+app.mount("/api", api_app)
+print("Successfully mounted API router under /api prefix")
 
 # Configure static files if frontend path exists
 if not frontend_path:
