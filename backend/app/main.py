@@ -53,8 +53,8 @@ async def debug_middleware(request, call_next):
     print(f"DEBUG: Response status: {response.status_code}")
     return response
 
-# Create API router
-api_router = APIRouter()
+# Create API router with explicit prefix
+api_router = APIRouter(prefix="/api", tags=["api"])
 
 # In-memory storage
 listings: List[Listing] = []
@@ -84,8 +84,8 @@ listings.append(test_listing)
 async def healthz():
     return {"status": "ok"}
 
-# Include API router with prefix
-app.include_router(api_router, prefix="/api")
+# Include API router
+app.include_router(api_router)
 
 # Add error handlers
 @app.exception_handler(HTTPException)
@@ -104,7 +104,7 @@ async def general_exception_handler(request, exc):
         content={"detail": "Internal server error"}
     )
 
-# Configure static files and SPA after API routes
+# Configure static files and SPA
 frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
@@ -115,27 +115,28 @@ if frontend_path and os.path.exists(frontend_path):
             app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
             print("Successfully mounted assets directory")
         
-        # Then mount other static files
-        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-        print("Successfully mounted frontend files")
-        
         # Add catch-all route for SPA
-        @app.exception_handler(404)
-        async def custom_404_handler(request, exc):
-            if request.url.path.startswith("/api/"):
-                return JSONResponse(
-                    status_code=404,
-                    content={"detail": "API endpoint not found"}
-                )
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            if full_path == "healthz" or full_path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="Not found")
+            
             try:
+                # Try to serve static file first
+                static_file = os.path.join(frontend_path, full_path)
+                if os.path.exists(static_file) and os.path.isfile(static_file):
+                    return FileResponse(static_file)
+                
+                # Fall back to index.html for client-side routing
                 return FileResponse(
                     os.path.join(frontend_path, "index.html"),
                     media_type="text/html"
                 )
             except Exception as e:
-                print(f"Error serving index.html: {str(e)}")
-                return PlainTextResponse("Not Found", status_code=404)
+                print(f"Error serving file: {str(e)}")
+                raise HTTPException(status_code=404, detail="Not found")
                 
+        print("Successfully configured SPA routing")
     except Exception as e:
         print(f"Error configuring frontend: {str(e)}")
 else:
