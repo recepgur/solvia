@@ -27,12 +27,24 @@ from app.auth import (
 
 from fastapi import APIRouter
 
+# Create API router
+api_router = APIRouter(tags=["api"])
+
 # Create main app
 app = FastAPI(
     title="Solvia API",
     description="Multi-category marketplace API",
     version="1.0.0"
 )
+
+# Debug middleware to log all requests
+@app.middleware("http")
+async def debug_middleware(request, call_next):
+    print(f"\nDEBUG: Incoming request to {request.url.path}")
+    print(f"DEBUG: Method: {request.method}")
+    response = await call_next(request)
+    print(f"DEBUG: Response status: {response.status_code}")
+    return response
 
 # Enable CORS
 app.add_middleware(
@@ -43,6 +55,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health check endpoint
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
+
 # Add debug middleware
 @app.middleware("http")
 async def debug_middleware(request, call_next):
@@ -52,9 +69,6 @@ async def debug_middleware(request, call_next):
     response = await call_next(request)
     print(f"DEBUG: Response status: {response.status_code}")
     return response
-
-# Create API router with explicit prefix
-api_router = APIRouter(prefix="/api", tags=["api"])
 
 # In-memory storage
 listings: List[Listing] = []
@@ -78,14 +92,6 @@ test_listing = Listing(
     created_at=datetime.now()
 )
 listings.append(test_listing)
-
-# Health check endpoint
-@app.get("/healthz")
-async def healthz():
-    return {"status": "ok"}
-
-# Include API router
-app.include_router(api_router)
 
 # Add error handlers
 @app.exception_handler(HTTPException)
@@ -111,45 +117,57 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Mount assets directory if it exists
+        # Mount static files directory
+        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="static")
+        print("Successfully mounted static files")
+    except Exception as e:
+        print(f"Error mounting static files: {str(e)}")
+
+# Include API router before catch-all route
+app.include_router(api_router)
+
+# Serve index.html for client-side routing (after API routes)
+if frontend_path and os.path.exists(frontend_path):
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Don't handle API routes or health check
+        if full_path.startswith("api/") or full_path == "healthz":
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        # Serve index.html for client-side routing
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        else:
+            raise HTTPException(status_code=404, detail="Frontend not found")
+
+# Configure static files if frontend path exists
+if frontend_path and os.path.exists(frontend_path):
+    print(f"Mounting frontend from: {frontend_path}")
+    try:
+        # Mount assets directory first
         assets_path = os.path.join(frontend_path, "assets")
         if os.path.exists(assets_path):
             app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
             print("Successfully mounted assets directory")
+
+        # Add catch-all route for SPA routing (after API routes)
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def serve_spa(full_path: str):
+            # Don't handle API routes or health check
+            if full_path.startswith("api/") or full_path == "healthz":
+                raise HTTPException(status_code=404, detail="Not found")
+            
+            # Serve index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+            else:
+                raise HTTPException(status_code=404, detail="Frontend not found")
     except Exception as e:
-        print(f"Error mounting assets: {str(e)}")
+        print(f"Error configuring frontend: {str(e)}")
 else:
     print(f"Warning: Frontend path {frontend_path} does not exist or is not set")
-
-# Add catch-all route for SPA routing (after API routes)
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
-    # Don't handle API routes
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="API endpoint not found")
-    
-    # Don't handle health check
-    if full_path == "healthz":
-        raise HTTPException(status_code=404, detail="Not found")
-    
-    if not frontend_path or not os.path.exists(frontend_path):
-        raise HTTPException(status_code=404, detail="Frontend not configured")
-        
-    try:
-        # Try to serve static file first
-        static_file = os.path.join(frontend_path, full_path)
-        if os.path.exists(static_file) and os.path.isfile(static_file):
-            return FileResponse(static_file)
-        
-        # Fall back to index.html for client-side routing
-        index_path = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path, media_type="text/html")
-        else:
-            raise HTTPException(status_code=404, detail="Frontend index not found")
-    except Exception as e:
-        print(f"Error serving file: {str(e)}")
-        raise HTTPException(status_code=404, detail="Not found")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
