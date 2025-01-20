@@ -4,9 +4,17 @@ COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
 
-# Build frontend with verbose output
+# Build frontend with verbose output and error handling
 RUN echo "Building frontend..." && \
-    npm run build && \
+    echo "Node version: $(node -v)" && \
+    echo "NPM version: $(npm -v)" && \
+    echo "Installing dependencies..." && \
+    npm install && \
+    echo "Running TypeScript check..." && \
+    npx tsc --noEmit && \
+    echo "Building project..." && \
+    npm run build || (echo "Build failed. Error log:" && cat /root/.npm/_logs/*-debug.log && exit 1) && \
+    echo "Build successful!" && \
     echo "Frontend build contents:" && \
     ls -la dist/ && \
     echo "Frontend assets:" && \
