@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 import os
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import List, Optional, Dict
@@ -27,7 +27,33 @@ from app.auth import (
 
 from fastapi import APIRouter
 
-# Create API router first
+# Create main app
+app = FastAPI(
+    title="Solvia API",
+    description="Multi-category marketplace API",
+    version="1.0.0"
+)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Add debug middleware
+@app.middleware("http")
+async def debug_middleware(request, call_next):
+    print(f"\nDEBUG: Incoming request to {request.url.path}")
+    print(f"DEBUG: Method: {request.method}")
+    print(f"DEBUG: Headers: {request.headers}")
+    response = await call_next(request)
+    print(f"DEBUG: Response status: {response.status_code}")
+    return response
+
+# Create API router
 api_router = APIRouter()
 
 # In-memory storage
@@ -53,46 +79,67 @@ test_listing = Listing(
 )
 listings.append(test_listing)
 
-# Create main app
-app = FastAPI()
-
-# Enable CORS for main app
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Health check endpoint
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
 
-# Include API router first
+# Include API router with prefix
 app.include_router(api_router, prefix="/api")
 
-# Configure static files and SPA
+# Add error handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    print(f"DEBUG: HTTP Exception: {exc.detail} (status_code={exc.status_code})")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    print(f"DEBUG: Unhandled exception: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
+
+# Configure static files and SPA after API routes
 frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Mount the entire frontend directory
+        # First mount assets directory
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+            print("Successfully mounted assets directory")
+        
+        # Then mount other static files
         app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
         print("Successfully mounted frontend files")
+        
+        # Add catch-all route for SPA
+        @app.exception_handler(404)
+        async def custom_404_handler(request, exc):
+            if request.url.path.startswith("/api/"):
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": "API endpoint not found"}
+                )
+            try:
+                return FileResponse(
+                    os.path.join(frontend_path, "index.html"),
+                    media_type="text/html"
+                )
+            except Exception as e:
+                print(f"Error serving index.html: {str(e)}")
+                return PlainTextResponse("Not Found", status_code=404)
+                
     except Exception as e:
         print(f"Error configuring frontend: {str(e)}")
 else:
     print(f"Warning: Frontend path {frontend_path} does not exist or is not set. Static files will not be served.")
-
-# Add catch-all route for client-side routing after API routes
-@app.middleware("http")
-async def spa_middleware(request, call_next):
-    response = await call_next(request)
-    if response.status_code == 404 and not request.url.path.startswith("/api/"):
-        return FileResponse(os.path.join(frontend_path, "index.html"))
-    return response
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
