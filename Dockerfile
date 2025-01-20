@@ -3,6 +3,8 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
+
+# Build frontend with verbose output
 RUN echo "Building frontend..." && \
     npm run build && \
     echo "Frontend build contents:" && \
@@ -10,7 +12,9 @@ RUN echo "Building frontend..." && \
     echo "Frontend assets:" && \
     ls -la dist/assets/ && \
     echo "Verifying index.html:" && \
-    cat dist/index.html
+    cat dist/index.html && \
+    echo "Verifying file permissions:" && \
+    find dist/ -type f -exec ls -l {} \;
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -21,24 +25,26 @@ COPY backend/ ./
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install curl for healthcheck
+# Install debugging tools
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl tree && \
     rm -rf /var/lib/apt/lists/*
 
-# Create dist directory with correct permissions
+# Set up frontend directory
 RUN mkdir -p /app/dist && \
-    chown -R nobody:nogroup /app/dist && \
     chmod -R 755 /app/dist
 
-# Copy frontend build
+# Copy frontend build with verification
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
-RUN echo "Verifying frontend files:" && \
-    ls -la /app/dist/ && \
+RUN echo "=== Verifying frontend files ===" && \
+    echo "Directory structure:" && \
+    tree /app/dist && \
+    echo "\nFile permissions:" && \
+    find /app/dist -type f -exec ls -l {} \; && \
+    echo "\nIndex.html contents:" && \
+    cat /app/dist/index.html && \
     echo "\nVerifying assets:" && \
-    ls -la /app/dist/assets/ && \
-    echo "\nVerifying index.html:" && \
-    cat /app/dist/index.html
+    ls -la /app/dist/assets/
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
@@ -50,24 +56,28 @@ ENV PYTHONPATH=/app/backend \
     PORT=8080 \
     FRONTEND_PATH=/app/dist
 
-# Debug frontend path and permissions
-RUN echo "Frontend path contents:" && \
-    ls -la ${FRONTEND_PATH} && \
-    echo "\nFrontend path exists:" && \
-    test -d ${FRONTEND_PATH} && echo "Yes" || echo "No" && \
-    echo "\nFull contents of /app:" && \
-    find /app -type f && \
-    echo "\nVerifying permissions:" && \
-    chmod -R 755 ${FRONTEND_PATH} && \
-    chown -R nobody:nogroup ${FRONTEND_PATH}
+# Verify final setup
+RUN echo "=== Final Verification ===" && \
+    echo "Environment:" && \
+    env | grep -E "FRONTEND_PATH|PORT|PYTHONPATH" && \
+    echo "\nDirectory structure:" && \
+    tree /app && \
+    echo "\nFile permissions:" && \
+    find /app -type f -exec ls -l {} \; && \
+    echo "\nFrontend path test:" && \
+    test -d "${FRONTEND_PATH}" && \
+    test -f "${FRONTEND_PATH}/index.html" && \
+    test -d "${FRONTEND_PATH}/assets" && \
+    echo "All frontend path tests passed"
 
-# Switch to non-root user
-USER nobody
-
+# Expose port
 EXPOSE 8080
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:8080/healthz || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start application with debug output
+CMD echo "Starting server with FRONTEND_PATH=${FRONTEND_PATH}" && \
+    ls -la ${FRONTEND_PATH} && \
+    uvicorn app.main:app --host 0.0.0.0 --port 8080
