@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.routing import APIRoute
 import os
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import List, Optional, Dict
@@ -104,10 +105,6 @@ async def general_exception_handler(request, exc):
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
 
-# Register API routes first (only once!)
-app.include_router(api_router, prefix="/api")
-print("Successfully added API routes with /api prefix")
-
 # Configure static files if frontend path exists
 if not frontend_path:
     print("Warning: FRONTEND_PATH environment variable is not set")
@@ -115,39 +112,77 @@ else:
     print(f"\nDEBUG: Frontend path configuration:")
     print(f"FRONTEND_PATH={frontend_path}")
     print(f"Path exists: {os.path.exists(frontend_path)}")
-    print(f"Current directory: {os.getcwd()}")
-    print(f"Environment variables: {dict(os.environ)}")
-    
-    if not os.path.exists(frontend_path):
-        print(f"Warning: Frontend path {frontend_path} does not exist")
+    print(f"Directory contents:")
+    try:
+        # List directory contents for debugging
+        for root, dirs, files in os.walk(frontend_path):
+            level = root.replace(frontend_path, '').count(os.sep)
+            indent = ' ' * 4 * level
+            print(f"{indent}{os.path.basename(root)}/")
+            subindent = ' ' * 4 * (level + 1)
+            for f in files:
+                print(f"{subindent}{f}")
+        
+        # Mount assets directory for static files
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+            print("Successfully mounted assets directory")
+        
+        # Serve favicon.ico directly
+        @app.get("/favicon.ico")
+        async def favicon():
+            favicon_path = os.path.join(frontend_path, "favicon.ico")
+            if os.path.exists(favicon_path):
+                return FileResponse(favicon_path)
+            raise HTTPException(status_code=404, detail="Favicon not found")
+        
+        # Serve static files directly
+        @app.get("/{path:path}")
+        async def serve_static(path: str):
+            # Don't handle API routes
+            if path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="Not Found")
+            
+            # Try to serve static files first
+            static_path = os.path.join(frontend_path, path)
+            if os.path.exists(static_path) and os.path.isfile(static_path):
+                return FileResponse(static_path)
+            
+            # Fall back to index.html for client-side routing
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+            raise HTTPException(status_code=404, detail="Frontend not found")
+        
+        # Serve index.html for root
+        @app.get("/")
+        async def serve_root():
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+            raise HTTPException(status_code=404, detail="Frontend not found")
+        
+        print("\nDEBUG: Route configuration:")
+        for route in app.routes:
+            if isinstance(route, APIRoute):
+                print(f"  {route.path} [{','.join(route.methods)}]")
+            else:
+                print(f"  {str(route)} (mounted)")
+    except Exception as e:
+        print(f"Error configuring frontend: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise
+
+# Register API routes after static file configuration
+app.include_router(api_router, prefix="/api")
+print("\nDEBUG: Final route configuration:")
+for route in app.routes:
+    if isinstance(route, APIRoute):
+        print(f"  {route.path} [{','.join(route.methods)}]")
     else:
-        print(f"Contents of {frontend_path}:")
-        try:
-            # List directory contents for debugging
-            for root, dirs, files in os.walk(frontend_path):
-                level = root.replace(frontend_path, '').count(os.sep)
-                indent = ' ' * 4 * level
-                print(f"{indent}{os.path.basename(root)}/")
-                subindent = ' ' * 4 * (level + 1)
-                for f in files:
-                    print(f"{subindent}{f}")
-            
-            # First mount the assets directory
-            assets_path = os.path.join(frontend_path, "assets")
-            if os.path.exists(assets_path):
-                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-                print("Successfully mounted assets directory")
-            
-            # Then mount the root directory for all other files
-            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-            print("Successfully mounted frontend directory")
-            
-            print(f"Successfully configured frontend routing from {frontend_path}")
-        except Exception as e:
-            print(f"Error configuring frontend: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            raise
+        print(f"  {str(route)} (mounted)")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
