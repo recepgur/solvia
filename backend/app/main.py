@@ -73,32 +73,26 @@ async def healthz():
 # Include API router first
 app.include_router(api_router, prefix="/api")
 
-# Mount static files if they exist
+# Configure static files and SPA
 frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # First mount /assets for static files
-        assets_path = os.path.join(frontend_path, "assets")
-        if os.path.exists(assets_path):
-            app.mount("/assets", StaticFiles(directory=assets_path), name="static")
-            print("Successfully mounted static assets")
-        
-        # Then add a catch-all route for the SPA
-        @app.get("/{full_path:path}")
-        async def serve_spa(full_path: str):
-            if full_path.startswith("api/"):
-                raise HTTPException(status_code=404, detail="API route not found")
-            index_path = os.path.join(frontend_path, "index.html")
-            if not os.path.exists(index_path):
-                raise HTTPException(status_code=404, detail="Frontend not built")
-            return FileResponse(index_path)
-        
-        print("Successfully configured SPA routing")
+        # Mount the entire frontend directory
+        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+        print("Successfully mounted frontend files")
     except Exception as e:
         print(f"Error configuring frontend: {str(e)}")
 else:
     print(f"Warning: Frontend path {frontend_path} does not exist or is not set. Static files will not be served.")
+
+# Add catch-all route for client-side routing after API routes
+@app.middleware("http")
+async def spa_middleware(request, call_next):
+    response = await call_next(request)
+    if response.status_code == 404 and not request.url.path.startswith("/api/"):
+        return FileResponse(os.path.join(frontend_path, "index.html"))
+    return response
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
