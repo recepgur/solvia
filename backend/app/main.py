@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, Depends, status
+from fastapi import FastAPI, HTTPException, Query, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
@@ -170,14 +170,25 @@ else:
                 return FileResponse(index_path)
             raise HTTPException(status_code=404, detail="Frontend not found")
 
-        # Mount API routes first (before any catch-all routes)
+        # Mount API routes first
         app.include_router(api_router, prefix="/api")
         print("\nDEBUG: API routes mounted")
 
+        # Mount static files
+        if os.path.exists(frontend_path):
+            print("\nDEBUG: Mounting static files")
+            app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+            print("Successfully mounted static files")
+
         # Catch-all route for SPA (must be last)
         @app.get("/{path:path}")
-        async def serve_spa(path: str):
+        async def serve_spa(path: str, request: Request):
             print(f"DEBUG: Handling path: {path}")
+            
+            # Don't interfere with API routes
+            if path.startswith("api/"):
+                print(f"DEBUG: API path detected: {path}")
+                raise HTTPException(status_code=404, detail="API endpoint not found")
             
             # Try to serve static file first
             static_path = os.path.join(frontend_path, path)
