@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import List, Optional, Dict
@@ -54,7 +55,16 @@ app.mount("/api", api_router)
 # Mount static files if they exist
 frontend_path = os.getenv("FRONTEND_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="static")
+    
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # First check if the exact file exists
+        file_path = os.path.join(frontend_path, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # Otherwise serve index.html for client-side routing
+        return FileResponse(os.path.join(frontend_path, "index.html"))
 else:
     print(f"Warning: Frontend path {frontend_path} does not exist. Static files will not be served.")
 
