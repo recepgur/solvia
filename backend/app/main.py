@@ -25,17 +25,19 @@ from app.auth import (
     get_user_by_email, users
 )
 
-# Create main app
-app = FastAPI()
+from fastapi import APIRouter
 
-# Create API router
-api_router = FastAPI(title="Solvia API")
+# Create API router first
+api_router = APIRouter(prefix="/api")
 
 # In-memory storage
 listings: List[Listing] = []
 user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
 
-# Enable CORS
+# Create main app
+app = FastAPI()
+
+# Enable CORS for main app
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,12 +51,13 @@ app.add_middleware(
 async def healthz():
     return {"status": "ok"}
 
-# Mount API under /api prefix
-app.mount("/api", api_router)
+# Include API router
+app.include_router(api_router)
 
 # Mount static files if they exist
 frontend_path = os.getenv("FRONTEND_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 if os.path.exists(frontend_path):
+    # Mount assets directory for static files
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="static")
     
     @app.get("/{full_path:path}")
