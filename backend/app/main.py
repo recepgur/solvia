@@ -28,11 +28,30 @@ from app.auth import (
 from fastapi import APIRouter
 
 # Create API router first
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter()
 
 # In-memory storage
 listings: List[Listing] = []
 user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
+
+# Add some test data
+test_listing = Listing(
+    id="test-1",
+    title="Test Apartment",
+    price=250000.00,
+    description="Beautiful apartment for sale",
+    location=Location(latitude=41.0082, longitude=28.9784),
+    image_urls=["https://example.com/image1.jpg"],
+    category=Category.REAL_ESTATE,
+    condition=ItemCondition.NEW,
+    category_specific={
+        "square_meters": 120,
+        "rooms": 3,
+        "floor": 2
+    },
+    created_at=datetime.now()
+)
+listings.append(test_listing)
 
 # Create main app
 app = FastAPI()
@@ -52,34 +71,55 @@ async def healthz():
     return {"status": "ok"}
 
 # Include API router first
-app.include_router(api_router)
+app.include_router(api_router, prefix="/api")
 
 # Mount static files if they exist
-frontend_path = os.getenv("FRONTEND_PATH")
+frontend_path = os.getenv("FRONTEND_PATH", "")
 if frontend_path and os.path.exists(frontend_path):
     print(f"Mounting frontend from: {frontend_path}")
     try:
-        # Serve static files
-        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-        print("Successfully mounted frontend static files")
+        # First mount /assets for static files
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="static")
+            print("Successfully mounted static assets")
+        
+        # Then add a catch-all route for the SPA
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            if full_path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="API route not found")
+            index_path = os.path.join(frontend_path, "index.html")
+            if not os.path.exists(index_path):
+                raise HTTPException(status_code=404, detail="Frontend not built")
+            return FileResponse(index_path)
+        
+        print("Successfully configured SPA routing")
     except Exception as e:
-        print(f"Error mounting frontend: {str(e)}")
+        print(f"Error configuring frontend: {str(e)}")
 else:
     print(f"Warning: Frontend path {frontend_path} does not exist or is not set. Static files will not be served.")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
 async def register(user_data: UserCreate):
-    if get_user_by_email(user_data.email):
+    try:
+        if get_user_by_email(user_data.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        # Create user with hashed password
+        user_dict = user_data.model_dump()
+        user_dict["password_hash"] = get_password_hash(user_dict.pop("password"))
+        return create_new_user(user_dict)
+    except Exception as e:
+        print(f"Error in register endpoint: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration failed"
         )
-    
-    # Create user with hashed password
-    user_dict = user_data.model_dump()
-    user_dict["password_hash"] = get_password_hash(user_dict.pop("password"))
-    return create_new_user(user_dict)
 
 @api_router.post("/auth/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -185,8 +225,8 @@ class ListingFeedResponse(BaseModel):
 
 @api_router.get("/listings/feed", response_model=ListingFeedResponse)
 async def get_listing_feed(
-    latitude: float,
-    longitude: float,
+    latitude: float = Query(..., description="Latitude for location-based search"),
+    longitude: float = Query(..., description="Longitude for location-based search"),
     filters: ListingFilter = Depends(),
     current_user: User = Depends(get_current_user)
 ):
