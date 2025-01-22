@@ -1,7 +1,8 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TouchableOpacity, Text } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import ChatScreen from '../screens/ChatScreen';
 import CallScreen from '../screens/CallScreen';
@@ -17,13 +18,27 @@ export type RootStackParamList = {
   Group: undefined;
 };
 
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: theme.colors.primary,
+    background: theme.colors.background,
+    text: theme.colors.text,
+    card: theme.colors.background,
+    border: theme.colors.border,
+    notification: theme.colors.primary,
+  }
+};
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
   return (
-    <NavigationContainer>
-      <WalletProvider>
-        <Stack.Navigator
+    <SafeAreaProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <WalletProvider>
+          <Stack.Navigator
           screenOptions={{
             headerStyle: {
               backgroundColor: theme.colors.primary,
