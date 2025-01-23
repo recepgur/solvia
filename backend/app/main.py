@@ -105,21 +105,56 @@ async def general_exception_handler(request, exc):
 # Custom StaticFiles class that always returns index.html for 404s
 class SPAStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
+        print(f"\nDEBUG: SPAStaticFiles.get_response called")
+        print(f"DEBUG: Requested path: {path}")
+        print(f"DEBUG: Directory: {str(self.directory)}")
+        print(f"DEBUG: HTML mode: {self.html}")
+        
         try:
             # First try to serve the requested path
             try:
+                print(f"DEBUG: Attempting to serve path: {path}")
                 response = await super().get_response(path, scope)
+                print(f"DEBUG: Successfully served path: {path}")
                 return response
             except HTTPException as ex:
+                print(f"DEBUG: HTTPException caught: {ex.status_code} - {ex.detail}")
+                
                 # If path starts with /api/, let the API router handle it
                 if path.startswith('/api/'):
+                    print("DEBUG: API path detected, forwarding to API router")
                     raise ex
+                
                 # For all other 404s, serve index.html
                 if ex.status_code == 404:
-                    return await super().get_response('index.html', scope)
+                    print("DEBUG: 404 detected, attempting to serve index.html")
+                    try:
+                        # Convert PathLike object to string
+                        base_dir = str(self.directory) if self.directory else ""
+                        if not base_dir:
+                            print("DEBUG: No directory configured!")
+                            raise HTTPException(status_code=500, detail="Static files directory not configured")
+                            
+                        index_path = os.path.join(base_dir, 'index.html')
+                        print(f"DEBUG: Checking index.html at: {index_path}")
+                        
+                        if os.path.exists(index_path):
+                            print("DEBUG: index.html found, serving")
+                            return await super().get_response('index.html', scope)
+                        else:
+                            print("DEBUG: index.html not found!")
+                            print(f"DEBUG: Directory contents: {os.listdir(base_dir)}")
+                            raise HTTPException(status_code=404, detail="index.html not found")
+                    except Exception as e:
+                        print(f"DEBUG: Error serving index.html: {str(e)}")
+                        print(f"DEBUG: Error type: {type(e)}")
+                        raise
                 raise ex
         except Exception as e:
-            print(f"Error in SPAStaticFiles.get_response: {str(e)}")
+            print(f"DEBUG: Unhandled error in SPAStaticFiles.get_response: {str(e)}")
+            print(f"DEBUG: Error type: {type(e)}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             raise
 
 # Auth endpoints
