@@ -42,7 +42,9 @@ RUN echo "Building frontend..." && \
     echo "\nSetting correct permissions:" && \
     chmod -R 755 dist/ && \
     echo "\nCreating verification file:" && \
-    echo "Frontend build completed at $(date)" > dist/build-info.txt
+    echo "Frontend build completed at $(date)" > dist/build-info.txt && \
+    echo "\nFinal dist directory structure:" && \
+    tree dist/
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -93,7 +95,14 @@ RUN echo "=== Verifying frontend files ===" && \
     echo "\nVerifying static files access:" && \
     { test -f /app/dist/index.html && echo "index.html is accessible"; } && \
     { test -d /app/dist/assets && echo "assets directory is accessible"; } && \
-    { test -r /app/dist/index.html && echo "index.html is readable"; }
+    { test -r /app/dist/index.html && echo "index.html is readable"; } && \
+    echo "\nFinal verification of all paths:" && \
+    echo "FRONTEND_PATH contents:" && \
+    ls -la ${FRONTEND_PATH} && \
+    echo "\nPYTHONPATH contents:" && \
+    ls -la ${PYTHONPATH} && \
+    echo "\nFull directory tree:" && \
+    tree /app
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
