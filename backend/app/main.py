@@ -393,90 +393,45 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 print(f"\nDEBUG: Environment variables:")
 print(f"FRONTEND_PATH: {frontend_path}")
 print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
-print(f"NODE_ENV: {os.getenv('NODE_ENV')}")
-print(f"STATIC_FILES_DEBUG: {os.getenv('STATIC_FILES_DEBUG')}")
+
+# Include API router first
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
 
 if frontend_path and os.path.exists(frontend_path):
-    print(f"\nDEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
-    print("\nDEBUG: Frontend directory contents:")
-    for root, dirs, files in os.walk(frontend_path):
-        print(f"\nDirectory: {root}")
-        print("Files:", files)
-        print("Subdirectories:", dirs)
-    
     try:
         # Verify critical files
         index_path = os.path.join(frontend_path, "index.html")
         assets_path = os.path.join(frontend_path, "assets")
         
         if not os.path.exists(index_path):
-            print("\nWARNING: index.html not found!")
             raise RuntimeError("index.html not found in frontend path")
-        
-        print(f"\nDEBUG: index.html found at {index_path}")
-        with open(index_path, 'r') as f:
-            index_content = f.read()
-            print("DEBUG: index.html contents:", index_content)
             
         if os.path.exists(assets_path):
-            print("\nDEBUG: Assets directory found")
-            print("DEBUG: Assets contents:", os.listdir(assets_path))
-        else:
-            print("\nWARNING: Assets directory not found")
+            # Mount static assets directory
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
         
-        # Configure routes in the correct order
+        # Serve favicon.ico
+        @app.get("/favicon.ico")
+        async def favicon():
+            favicon_path = os.path.join(frontend_path, "favicon.ico")
+            if os.path.exists(favicon_path):
+                return FileResponse(favicon_path)
+            raise HTTPException(status_code=404)
         
-        # 1. Mount assets directory first
-        print("\nDEBUG: Mounting assets directory")
-        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
-        
-        # 2. Include API router
-        print("\nDEBUG: Including API router")
-        app.include_router(api_router)
-        
-        # 3. Root path handler
-        @app.get("/")
-        async def serve_root():
-            print("\nDEBUG: Serving root path")
-            return FileResponse(
-                index_path,
-                media_type="text/html",
-                headers={"Cache-Control": "no-cache"}
-            )
-        
-        # 4. Health check endpoint
-        @app.get("/healthz")
-        async def serve_health():
-            print("\nDEBUG: Serving health check")
-            return {"status": "ok"}
-        
-        # 5. Finally, catch-all route for SPA
-        @app.get("/{full_path:path}", include_in_schema=False)
-        async def serve_spa(full_path: str):
-            print(f"\nDEBUG: Serving SPA for path: {full_path}")
+        # Serve index.html for all non-API routes
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str = ""):
             if full_path.startswith("api/"):
                 raise HTTPException(status_code=404, detail="Not Found")
-            
-            # Serve index.html with text/html content type
             return FileResponse(
                 index_path,
-                media_type="text/html",
-                headers={"Cache-Control": "no-cache"}
+                media_type="text/html"
             )
-        
+            
         print("\nDEBUG: Successfully configured frontend serving")
-        
-        # Print final route configuration
-        print("\nDEBUG: Final route configuration:")
-        for route in app.routes:
-            if isinstance(route, APIRoute):
-                print(f"  {route.path} [{','.join(route.methods)}]")
-            else:
-                print(f"  {str(route)} (mounted)")
     except Exception as e:
         print(f"\nERROR: Failed to configure frontend: {str(e)}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
         raise
 else:
     print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
