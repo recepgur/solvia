@@ -372,20 +372,27 @@ if frontend_path and os.path.exists(frontend_path):
         print("Subdirectories:", dirs)
     
     try:
-        # Mount assets directory if it exists
-        assets_path = os.path.join(frontend_path, "assets")
-        if os.path.exists(assets_path):
-            print(f"\nDEBUG: Mounting assets from {assets_path}")
-            print("DEBUG: Assets directory contents:", os.listdir(assets_path))
-            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-            print("DEBUG: Successfully mounted assets directory")
-        else:
-            print("\nWARNING: Assets directory not found")
-        
-        # Mount SPA static files at root last (catch-all)
+        # Mount static files at root with SPA handling
         print(f"\nDEBUG: Mounting SPA static files from {frontend_path}")
         app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
         print("DEBUG: Successfully mounted SPA static files")
+        
+        # Verify critical files
+        index_path = os.path.join(frontend_path, "index.html")
+        assets_path = os.path.join(frontend_path, "assets")
+        
+        if os.path.exists(index_path):
+            print(f"\nDEBUG: index.html found at {index_path}")
+            with open(index_path, 'r') as f:
+                print("DEBUG: index.html contents:", f.read())
+        else:
+            print("\nWARNING: index.html not found!")
+            
+        if os.path.exists(assets_path):
+            print("\nDEBUG: Assets directory found")
+            print("DEBUG: Assets contents:", os.listdir(assets_path))
+        else:
+            print("\nWARNING: Assets directory not found")
         
         # Print final route configuration
         print("\nDEBUG: Final route configuration:")
