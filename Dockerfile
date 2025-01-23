@@ -95,5 +95,5 @@ CMD echo "Starting server with FRONTEND_PATH=${FRONTEND_PATH}" && \
     echo "\nFrontend directory contents:" && \
     ls -la ${FRONTEND_PATH} && \
     echo "\nStarting server..." && \
-    cd /app/backend && \
-    uvicorn app.main:app --host 0.0.0.0 --port 8080
+    cd /app && \
+    PYTHONPATH=/app/backend uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --log-level debug
