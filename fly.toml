@@ -8,6 +8,7 @@ primary_region = "sea"
   FRONTEND_PATH = "/app/dist"
   PORT = "8080"
   PYTHONPATH = "/app/backend"
+  NODE_ENV = "production"
 
 [http_service]
   internal_port = 8080
