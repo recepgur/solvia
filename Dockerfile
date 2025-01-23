@@ -62,8 +62,14 @@ RUN apt-get update && \
 RUN mkdir -p /app/dist && \
     chmod -R 755 /app/dist
 
+# Set environment variables
+ENV FRONTEND_PATH=/app/dist \
+    PYTHONPATH=/app/backend \
+    NODE_ENV=production
+
 # Copy frontend build with verification
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
+
 RUN echo "=== Verifying frontend files ===" && \
     echo "Directory structure:" && \
     tree /app/dist && \
