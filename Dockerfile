@@ -22,10 +22,12 @@ RUN echo "Building frontend..." && \
     cat vite.config.ts && \
     echo "\nChecking source files:" && \
     ls -R src/ && \
+    echo "\nInstalling TypeScript globally..." && \
+    npm install -g typescript && \
     echo "\nRunning TypeScript check..." && \
     npx tsc --noEmit && \
     echo "\nBuilding project..." && \
-    npm run build || (echo "Build failed. Error log:" && cat /root/.npm/_logs/*-debug.log && exit 1) && \
+    NODE_ENV=production npm run build || (echo "Build failed. Error log:" && cat /root/.npm/_logs/*-debug.log && exit 1) && \
     echo "\nBuild successful!" && \
     echo "\nVerifying build output:" && \
     ls -la dist/ && \
@@ -36,7 +38,9 @@ RUN echo "Building frontend..." && \
     echo "\nVerifying assets:" && \
     ls -la dist/assets/ && \
     echo "\nVerifying file permissions:" && \
-    find dist/ -type f -exec ls -l {} \;
+    find dist/ -type f -exec ls -l {} \; && \
+    echo "\nSetting correct permissions:" && \
+    chmod -R 755 dist/
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -69,7 +73,13 @@ RUN echo "=== Verifying frontend files ===" && \
     ls -la /app/dist/assets/ && \
     echo "\nSetting correct permissions:" && \
     chmod -R 755 /app/dist && \
-    chown -R root:root /app/dist
+    chown -R root:root /app/dist && \
+    echo "\nVerifying final structure:" && \
+    ls -la /app && \
+    echo "\nVerifying Python path:" && \
+    python3 -c "import sys; print('\n'.join(sys.path))" && \
+    echo "\nVerifying environment:" && \
+    env | grep -E "FRONTEND_PATH|PYTHONPATH|NODE_ENV"
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
@@ -79,7 +89,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Set environment variables
 ENV PYTHONPATH=/app/backend \
     PORT=8080 \
-    FRONTEND_PATH=/app/dist
+    FRONTEND_PATH=/app/dist \
+    NODE_ENV=production
 
 # Verify final setup
 RUN echo "=== Final Verification ===" && \
