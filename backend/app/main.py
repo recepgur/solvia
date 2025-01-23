@@ -396,10 +396,6 @@ print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
 print(f"NODE_ENV: {os.getenv('NODE_ENV')}")
 print(f"STATIC_FILES_DEBUG: {os.getenv('STATIC_FILES_DEBUG')}")
 
-# Always include API router first to ensure its routes take precedence
-print("\nDEBUG: Including API router")
-app.include_router(api_router)
-
 if frontend_path and os.path.exists(frontend_path):
     print(f"\nDEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
     print("\nDEBUG: Frontend directory contents:")
@@ -428,17 +424,45 @@ if frontend_path and os.path.exists(frontend_path):
         else:
             print("\nWARNING: Assets directory not found")
         
-        # Mount assets directory first
+        # Configure routes in the correct order
+        
+        # 1. Mount assets directory first
         print("\nDEBUG: Mounting assets directory")
         app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
         
-        # Then mount root path handler
-        @app.get("/{full_path:path}")
+        # 2. Include API router
+        print("\nDEBUG: Including API router")
+        app.include_router(api_router)
+        
+        # 3. Root path handler
+        @app.get("/")
+        async def serve_root():
+            print("\nDEBUG: Serving root path")
+            return FileResponse(
+                index_path,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache"}
+            )
+        
+        # 4. Health check endpoint
+        @app.get("/healthz")
+        async def serve_health():
+            print("\nDEBUG: Serving health check")
+            return {"status": "ok"}
+        
+        # 5. Finally, catch-all route for SPA
+        @app.get("/{full_path:path}", include_in_schema=False)
         async def serve_spa(full_path: str):
             print(f"\nDEBUG: Serving SPA for path: {full_path}")
             if full_path.startswith("api/"):
                 raise HTTPException(status_code=404, detail="Not Found")
-            return FileResponse(index_path)
+            
+            # Serve index.html with text/html content type
+            return FileResponse(
+                index_path,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache"}
+            )
         
         print("\nDEBUG: Successfully configured frontend serving")
         
