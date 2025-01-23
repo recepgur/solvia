@@ -395,15 +395,13 @@ print(f"FRONTEND_PATH: {frontend_path}")
 print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
 print(f"NODE_ENV: {os.getenv('NODE_ENV')}")
 print(f"STATIC_FILES_DEBUG: {os.getenv('STATIC_FILES_DEBUG')}")
-print(f"\nDEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
-if os.path.exists(frontend_path):
-    print("Frontend directory contents:")
-    for root, dirs, files in os.walk(frontend_path):
-        print(f"\nDirectory: {root}")
-        print("Files:", files)
-        print("Subdirectories:", dirs)
+
+# Always include API router first to ensure its routes take precedence
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
 
 if frontend_path and os.path.exists(frontend_path):
+    print(f"\nDEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
     print("\nDEBUG: Frontend directory contents:")
     for root, dirs, files in os.walk(frontend_path):
         print(f"\nDirectory: {root}")
@@ -411,32 +409,38 @@ if frontend_path and os.path.exists(frontend_path):
         print("Subdirectories:", dirs)
     
     try:
-        # Mount static files at root with SPA handling FIRST
-        print(f"\nDEBUG: Mounting SPA static files from {frontend_path}")
-        app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
-        print("DEBUG: Successfully mounted SPA static files")
-        
         # Verify critical files
         index_path = os.path.join(frontend_path, "index.html")
         assets_path = os.path.join(frontend_path, "assets")
         
-        if os.path.exists(index_path):
-            print(f"\nDEBUG: index.html found at {index_path}")
-            with open(index_path, 'r') as f:
-                print("DEBUG: index.html contents:", f.read())
-        else:
+        if not os.path.exists(index_path):
             print("\nWARNING: index.html not found!")
             raise RuntimeError("index.html not found in frontend path")
+        
+        print(f"\nDEBUG: index.html found at {index_path}")
+        with open(index_path, 'r') as f:
+            index_content = f.read()
+            print("DEBUG: index.html contents:", index_content)
             
         if os.path.exists(assets_path):
             print("\nDEBUG: Assets directory found")
             print("DEBUG: Assets contents:", os.listdir(assets_path))
         else:
             print("\nWARNING: Assets directory not found")
-            
-        # Include API router AFTER static files
-        print("\nDEBUG: Including API router")
-        app.include_router(api_router)
+        
+        # Mount assets directory first
+        print("\nDEBUG: Mounting assets directory")
+        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+        
+        # Then mount root path handler
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            print(f"\nDEBUG: Serving SPA for path: {full_path}")
+            if full_path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="Not Found")
+            return FileResponse(index_path)
+        
+        print("\nDEBUG: Successfully configured frontend serving")
         
         # Print final route configuration
         print("\nDEBUG: Final route configuration:")
@@ -452,6 +456,3 @@ if frontend_path and os.path.exists(frontend_path):
         raise
 else:
     print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
-    # Include API router if no frontend
-    print("\nDEBUG: Including API router (no frontend)")
-    app.include_router(api_router)
