@@ -1,27 +1,41 @@
-FROM node:18-slim AS frontend-builder
+FROM node:18 AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
 
-# Build frontend with verbose output and error handling
-RUN echo "Building frontend..." && \
+# Install dependencies with verbose logging
+RUN echo "Installing frontend dependencies..." && \
     echo "Node version: $(node -v)" && \
     echo "NPM version: $(npm -v)" && \
-    echo "Installing dependencies..." && \
-    npm install && \
-    echo "Running TypeScript check..." && \
+    npm install --verbose && \
+    npm install -g typescript
+
+# Copy frontend source
+COPY frontend/ ./
+
+# Build frontend with extensive verification
+RUN echo "Building frontend..." && \
+    echo "Verifying package.json:" && \
+    cat package.json && \
+    echo "\nVerifying tsconfig.json:" && \
+    cat tsconfig.json && \
+    echo "\nVerifying vite.config.ts:" && \
+    cat vite.config.ts && \
+    echo "\nChecking source files:" && \
+    ls -R src/ && \
+    echo "\nRunning TypeScript check..." && \
     npx tsc --noEmit && \
-    echo "Building project..." && \
+    echo "\nBuilding project..." && \
     npm run build || (echo "Build failed. Error log:" && cat /root/.npm/_logs/*-debug.log && exit 1) && \
-    echo "Build successful!" && \
-    echo "Frontend build contents:" && \
+    echo "\nBuild successful!" && \
+    echo "\nVerifying build output:" && \
     ls -la dist/ && \
-    echo "Frontend assets:" && \
-    ls -la dist/assets/ && \
-    echo "Verifying index.html:" && \
+    echo "\nVerifying index.html exists:" && \
+    test -f dist/index.html && \
+    echo "\nVerifying index.html contents:" && \
     cat dist/index.html && \
-    echo "Verifying file permissions:" && \
+    echo "\nVerifying assets:" && \
+    ls -la dist/assets/ && \
+    echo "\nVerifying file permissions:" && \
     find dist/ -type f -exec ls -l {} \;
 
 FROM python:3.12-slim AS backend-builder
