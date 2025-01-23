@@ -109,26 +109,31 @@ class SPAStaticFiles(StaticFiles):
         print(f"DEBUG: Requested path: {path}")
         print(f"DEBUG: Directory: {str(self.directory)}")
         print(f"DEBUG: HTML mode: {self.html}")
+        print(f"DEBUG: Scope base_url: {scope.get('root_path', '')}")
         
         try:
-            # If path starts with /api/, let the API router handle it
-            if path.startswith('/api/'):
+            # Strip leading slash for consistency
+            path = path.lstrip('/')
+            print(f"DEBUG: Normalized path: {path}")
+            
+            # Handle API routes
+            if path.startswith('api/'):
                 print("DEBUG: API path detected, forwarding to API router")
                 raise HTTPException(status_code=404, detail="Not Found")
             
-            # For static assets (in /assets, favicon.ico, etc.), try to serve directly
-            if path.startswith('/assets/') or path in ['favicon.ico', 'robots.txt']:
+            # For static assets, try to serve directly
+            if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
                 try:
                     print(f"DEBUG: Attempting to serve static file: {path}")
                     response = await super().get_response(path, scope)
                     print(f"DEBUG: Successfully served static file: {path}")
                     return response
-                except HTTPException:
+                except HTTPException as ex:
                     print(f"DEBUG: Static file not found: {path}")
                     raise
             
-            # For all other paths, serve index.html
-            print("DEBUG: Non-static path detected, serving index.html")
+            # For root path or any other path, serve index.html
+            print("DEBUG: Serving index.html for path: {path}")
             try:
                 base_dir = str(self.directory) if self.directory else ""
                 if not base_dir:
