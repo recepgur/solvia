@@ -29,7 +29,7 @@ from app.auth import (
 from fastapi import APIRouter
 
 # Create API router
-api_router = APIRouter(tags=["api"])
+api_router = APIRouter(prefix="/api", tags=["api"])
 
 # Create main app
 app = FastAPI(
@@ -106,60 +106,21 @@ async def general_exception_handler(request, exc):
 class SPAStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
         try:
-            return await super().get_response(path, scope)
-        except HTTPException as ex:
-            if ex.status_code == 404 and not path.startswith('/api/'):
-                return await super().get_response('index.html', scope)
-            raise ex
-
-# Get frontend path from environment
-frontend_path = os.getenv("FRONTEND_PATH", "")
-
-# Configure static files first
-if not frontend_path:
-    print("Warning: FRONTEND_PATH environment variable is not set")
-else:
-    print(f"\nDEBUG: Frontend path configuration:")
-    print(f"FRONTEND_PATH={frontend_path}")
-    print(f"Path exists: {os.path.exists(frontend_path)}")
-    
-    if os.path.exists(frontend_path):
-        try:
-            print("\nDEBUG: Mounting static files")
-            
-            # Mount assets directory first
-            assets_path = os.path.join(frontend_path, "assets")
-            if os.path.exists(assets_path):
-                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-                print("Successfully mounted assets directory")
-
-            # Register API routes before catch-all
-            app.include_router(api_router, prefix="/api")
-            print("\nDEBUG: API routes mounted")
-            
-            # Mount SPA static files at root last (catch-all)
-            app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
-            print("Successfully mounted SPA static files with client-side routing support")
-
-            print("\nDEBUG: Route configuration:")
-            for route in app.routes:
-                if isinstance(route, APIRoute):
-                    print(f"  {route.path} [{','.join(route.methods)}]")
-                else:
-                    print(f"  {str(route)} (mounted)")
+            # First try to serve the requested path
+            try:
+                response = await super().get_response(path, scope)
+                return response
+            except HTTPException as ex:
+                # If path starts with /api/, let the API router handle it
+                if path.startswith('/api/'):
+                    raise ex
+                # For all other 404s, serve index.html
+                if ex.status_code == 404:
+                    return await super().get_response('index.html', scope)
+                raise ex
         except Exception as e:
-            print(f"Error configuring frontend: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
+            print(f"Error in SPAStaticFiles.get_response: {str(e)}")
             raise
-
-# Print final route configuration
-print("\nDEBUG: Final route configuration:")
-for route in app.routes:
-    if isinstance(route, APIRoute):
-        print(f"  {route.path} [{','.join(route.methods)}]")
-    else:
-        print(f"  {str(route)} (mounted)")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
@@ -227,8 +188,9 @@ class CategoryFieldsResponse(BaseModel):
     required: List[str]
     optional: List[str]
 
-@api_router.get("/categories/{category}/fields", response_model=CategoryFieldsResponse)
+@api_router.get("/categories/{category}/fields", response_model=CategoryFieldsResponse, tags=["categories"])
 async def get_category_fields(category: Category):
+    """Get required and optional fields for a specific category"""
     fields = getattr(CategoryFields(), category.value, None)
     if not fields:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -347,8 +309,9 @@ async def get_seller_listings(
 class CategoriesResponse(BaseModel):
     categories: List[str]
 
-@api_router.get("/categories", response_model=CategoriesResponse)
+@api_router.get("/categories", response_model=CategoriesResponse, tags=["categories"])
 async def get_categories():
+    """Get all available categories"""
     return {"categories": [category.value for category in Category]}
 
 class SwipeRequest(BaseModel):
