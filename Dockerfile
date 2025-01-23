@@ -20,7 +20,17 @@ RUN echo "Verifying frontend source files:" && \
     echo "Source directory:" && \
     ls -la src/ && \
     echo "Package scripts:" && \
-    cat package.json | grep scripts
+    cat package.json | grep scripts && \
+    echo "Building frontend..." && \
+    NODE_ENV=production npm run build && \
+    echo "Build complete. Verifying dist directory:" && \
+    ls -la dist/ && \
+    echo "Verifying index.html:" && \
+    cat dist/index.html && \
+    echo "Verifying assets:" && \
+    ls -la dist/assets/ && \
+    echo "Setting correct permissions:" && \
+    chmod -R 755 dist/
 
 # Build frontend with extensive verification
 RUN echo "Building frontend..." && \
