@@ -385,8 +385,18 @@ async def swipe_listing(
 
 # Get frontend path from environment
 frontend_path = os.getenv("FRONTEND_PATH", "")
-print(f"\nDEBUG: Frontend path: {frontend_path}")
-print(f"DEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
+print(f"\nDEBUG: Environment variables:")
+print(f"FRONTEND_PATH: {frontend_path}")
+print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
+print(f"NODE_ENV: {os.getenv('NODE_ENV')}")
+print(f"STATIC_FILES_DEBUG: {os.getenv('STATIC_FILES_DEBUG')}")
+print(f"\nDEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
+if os.path.exists(frontend_path):
+    print("Frontend directory contents:")
+    for root, dirs, files in os.walk(frontend_path):
+        print(f"\nDirectory: {root}")
+        print("Files:", files)
+        print("Subdirectories:", dirs)
 
 if frontend_path and os.path.exists(frontend_path):
     print("\nDEBUG: Frontend directory contents:")

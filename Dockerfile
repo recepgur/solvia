@@ -7,10 +7,20 @@ RUN echo "Installing frontend dependencies..." && \
     echo "Node version: $(node -v)" && \
     echo "NPM version: $(npm -v)" && \
     npm install --verbose && \
-    npm install -g typescript
+    npm install -g typescript && \
+    npm install -g vite && \
+    echo "Installed global dependencies"
 
-# Copy frontend source
+# Copy frontend source with verification
 COPY frontend/ ./
+RUN echo "Verifying frontend source files:" && \
+    ls -la && \
+    echo "Node modules:" && \
+    ls -la node_modules && \
+    echo "Source directory:" && \
+    ls -la src/ && \
+    echo "Package scripts:" && \
+    cat package.json | grep scripts
 
 # Build frontend with extensive verification
 RUN echo "Building frontend..." && \

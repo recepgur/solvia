@@ -9,6 +9,7 @@ primary_region = "sea"
   PORT = "8080"
   PYTHONPATH = "/app/backend"
   NODE_ENV = "production"
+  STATIC_FILES_DEBUG = "true"
 
 [http_service]
   internal_port = 8080
