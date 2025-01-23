@@ -2,69 +2,14 @@ FROM node:18 AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
-# Install dependencies with verbose logging
-RUN echo "Installing frontend dependencies..." && \
-    echo "Node version: $(node -v)" && \
-    echo "NPM version: $(npm -v)" && \
-    npm install --verbose && \
-    npm install -g typescript && \
-    npm install -g vite && \
-    echo "Installed global dependencies"
+# Install dependencies and build frontend
+RUN npm install && \
+    npm install -g typescript vite
 
-# Copy frontend source with verification
+# Copy frontend source and build
 COPY frontend/ ./
-RUN echo "Verifying frontend source files:" && \
-    ls -la && \
-    echo "Node modules:" && \
-    ls -la node_modules && \
-    echo "Source directory:" && \
-    ls -la src/ && \
-    echo "Package scripts:" && \
-    cat package.json | grep scripts && \
-    echo "Building frontend..." && \
-    NODE_ENV=production npm run build && \
-    echo "Build complete. Verifying dist directory:" && \
-    ls -la dist/ && \
-    echo "Verifying index.html:" && \
-    cat dist/index.html && \
-    echo "Verifying assets:" && \
-    ls -la dist/assets/ && \
-    echo "Setting correct permissions:" && \
+RUN npm run build && \
     chmod -R 755 dist/
-
-# Build frontend with extensive verification
-RUN echo "Building frontend..." && \
-    echo "Verifying package.json:" && \
-    cat package.json && \
-    echo "\nVerifying tsconfig.json:" && \
-    cat tsconfig.json && \
-    echo "\nVerifying vite.config.ts:" && \
-    cat vite.config.ts && \
-    echo "\nChecking source files:" && \
-    ls -R src/ && \
-    echo "\nInstalling TypeScript globally..." && \
-    npm install -g typescript && \
-    echo "\nRunning TypeScript check..." && \
-    npx tsc --noEmit && \
-    echo "\nBuilding project..." && \
-    NODE_ENV=production npm run build || (echo "Build failed. Error log:" && cat /root/.npm/_logs/*-debug.log && exit 1) && \
-    echo "\nBuild successful!" && \
-    echo "\nVerifying build output:" && \
-    ls -la dist/ && \
-    echo "\nVerifying index.html exists:" && \
-    test -f dist/index.html && \
-    echo "\nVerifying index.html contents:" && \
-    cat dist/index.html && \
-    echo "\nVerifying assets:" && \
-    ls -la dist/assets/ && \
-    echo "\nVerifying file permissions:" && \
-    find dist/ -type f -exec ls -l {} \; && \
-    echo "\nSetting correct permissions:" && \
-    chmod -R 755 dist/ && \
-    echo "\nCreating verification file:" && \
-    echo "Frontend build completed at $(date)" > dist/build-info.txt && \
-    echo "\nFinal dist directory structure:" && \
-    tree dist/
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
