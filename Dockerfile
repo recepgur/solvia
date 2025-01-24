@@ -2,14 +2,12 @@ FROM node:18 AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
-# Install dependencies and build frontend
-RUN npm install && \
-    npm install -g typescript vite
+# Install dependencies
+RUN npm install
 
 # Copy frontend source and build
 COPY frontend/ ./
-RUN npm run build && \
-    chmod -R 755 dist/
+RUN npm run build
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -22,52 +20,18 @@ WORKDIR /app
 
 # Install debugging tools
 RUN apt-get update && \
-    apt-get install -y curl tree && \
+    apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Set up frontend directory
+# Create directories and set permissions
 RUN mkdir -p /app/dist && \
+    chown -R nobody:nogroup /app/dist && \
     chmod -R 755 /app/dist
 
-# Set environment variables
-ENV FRONTEND_PATH=/app/dist \
-    PYTHONPATH=/app/backend \
-    NODE_ENV=production
-
-# Copy frontend build with verification
+# Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
-
-RUN echo "=== Verifying frontend files ===" && \
-    echo "Directory structure:" && \
-    tree /app/dist && \
-    echo "\nFile permissions:" && \
-    find /app/dist -type f -exec ls -l {} \; && \
-    echo "\nIndex.html contents:" && \
-    cat /app/dist/index.html && \
-    echo "\nVerifying assets:" && \
-    ls -la /app/dist/assets/ && \
-    echo "\nSetting correct permissions:" && \
-    chmod -R 755 /app/dist && \
-    chown -R root:root /app/dist && \
-    echo "\nVerifying build info:" && \
-    cat /app/dist/build-info.txt && \
-    echo "\nVerifying final structure:" && \
-    ls -la /app && \
-    echo "\nVerifying Python path:" && \
-    python3 -c "import sys; print('\n'.join(sys.path))" && \
-    echo "\nVerifying environment:" && \
-    env | grep -E "FRONTEND_PATH|PYTHONPATH|NODE_ENV" && \
-    echo "\nVerifying static files access:" && \
-    { test -f /app/dist/index.html && echo "index.html is accessible"; } && \
-    { test -d /app/dist/assets && echo "assets directory is accessible"; } && \
-    { test -r /app/dist/index.html && echo "index.html is readable"; } && \
-    echo "\nFinal verification of all paths:" && \
-    echo "FRONTEND_PATH contents:" && \
-    ls -la ${FRONTEND_PATH} && \
-    echo "\nPYTHONPATH contents:" && \
-    ls -la ${PYTHONPATH} && \
-    echo "\nFull directory tree:" && \
-    tree /app
+RUN chown -R nobody:nogroup /app/dist && \
+    chmod -R 755 /app/dist
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
@@ -78,21 +42,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV PYTHONPATH=/app/backend \
     PORT=8080 \
     FRONTEND_PATH=/app/dist \
-    NODE_ENV=production
+    NODE_ENV=production \
+    LOG_LEVEL=debug
 
-# Verify final setup
-RUN echo "=== Final Verification ===" && \
-    echo "Environment:" && \
-    env | grep -E "FRONTEND_PATH|PORT|PYTHONPATH" && \
-    echo "\nDirectory structure:" && \
-    tree /app && \
-    echo "\nFile permissions:" && \
-    find /app -type f -exec ls -l {} \; && \
-    echo "\nFrontend path test:" && \
-    test -d "${FRONTEND_PATH}" && \
-    test -f "${FRONTEND_PATH}/index.html" && \
-    test -d "${FRONTEND_PATH}/assets" && \
-    echo "All frontend path tests passed"
+# Switch to non-root user
+USER nobody
 
 # Expose port
 EXPOSE 8080
@@ -101,20 +55,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Start application with debug output
-CMD echo "=== Pre-start Verification ===" && \
-    echo "Environment variables:" && \
-    env | grep -E "FRONTEND_PATH|PYTHONPATH|NODE_ENV" && \
-    echo "\nDirectory structure:" && \
-    tree /app && \
-    echo "\nFrontend directory contents:" && \
-    ls -la ${FRONTEND_PATH} && \
-    echo "\nVerifying index.html:" && \
-    cat ${FRONTEND_PATH}/index.html && \
-    echo "\nVerifying assets:" && \
-    ls -la ${FRONTEND_PATH}/assets && \
-    echo "\nVerifying permissions:" && \
-    find ${FRONTEND_PATH} -type f -exec ls -l {} \; && \
-    echo "\nStarting server with increased logging..." && \
-    cd /app && \
-    PYTHONPATH=/app/backend LOG_LEVEL=debug uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --log-level debug --reload
+# Start application
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug"]
