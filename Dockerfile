@@ -18,25 +18,30 @@ COPY backend/ ./
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install debugging tools
+# Install required packages
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl libcap2-bin && \
     rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN adduser --system --group --no-create-home appuser
 
 # Create directories and set permissions
 RUN mkdir -p /app/dist && \
-    chown -R nobody:nogroup /app/dist && \
+    chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
-RUN chown -R nobody:nogroup /app/dist && \
+RUN chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    chown -R appuser:appuser /app/backend && \
+    chmod -R 755 /app/backend
 
 # Set environment variables
 ENV PYTHONPATH=/app/backend \
@@ -45,8 +50,11 @@ ENV PYTHONPATH=/app/backend \
     NODE_ENV=production \
     LOG_LEVEL=debug
 
+# Grant capability to bind to privileged ports
+RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/python3.12
+
 # Switch to non-root user
-USER nobody
+USER appuser
 
 # Expose port
 EXPOSE 8080
