@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import ApiService from '@services/api';
+import ApiService from '../services/api';
 
 interface WebSocketHook {
   sendMessage: (message: any) => void;

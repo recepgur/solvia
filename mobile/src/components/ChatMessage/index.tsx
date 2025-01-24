@@ -6,8 +6,8 @@ interface ChatMessageProps {
   message: string;
   timestamp: number;
   isSender: boolean;
-  mediaUrl?: string | undefined;
-  mediaType?: string | undefined;
+  mediaUrl?: string;
+  mediaType?: string;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, timestamp, isSender, mediaUrl, mediaType }) => {
@@ -60,20 +60,33 @@ const styles = StyleSheet.create({
   },
   senderContainer: {
     alignSelf: 'flex-end',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.messageSent,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    marginLeft: '20%', // Add space on the left for better layout
   },
   receiverContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.border,
+    backgroundColor: theme.colors.messageReceived,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    marginRight: '20%', // Add space on the right for better layout
   },
   messageText: {
     fontSize: theme.typography.body.fontSize,
+    lineHeight: 20,
   },
   senderText: {
-    color: theme.colors.background,
+    color: theme.colors.messageText,
   },
   receiverText: {
-    color: theme.colors.text,
+    color: theme.colors.messageText,
   },
   timestamp: {
     fontSize: theme.typography.caption.fontSize,
@@ -86,10 +99,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   senderTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: theme.colors.messageTimestamp,
   },
   receiverTimestamp: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.messageTimestamp,
   },
 });
 

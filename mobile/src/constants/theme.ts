@@ -1,14 +1,19 @@
 export const theme = {
   colors: {
-    primary: '#007AFF',
-    secondary: '#5856D6',
+    primary: '#075E54',        // WhatsApp primary green
+    secondary: '#128C7E',      // WhatsApp secondary green
     background: '#FFFFFF',
     text: '#000000',
-    textSecondary: '#666666',
+    textSecondary: '#667781',  // WhatsApp secondary text
     border: '#E5E5EA',
     error: '#FF3B30',
     success: '#34C759',
     warning: '#FF9500',
+    messageSent: '#E7FFDB',    // WhatsApp sent message bubble
+    messageReceived: '#FFFFFF', // WhatsApp received message bubble
+    messageText: '#000000',    // Message text color
+    messageTimestamp: '#667781', // Message timestamp color
+    chatBackground: '#E4DDD6',  // WhatsApp chat background
   },
   spacing: {
     xs: 4,

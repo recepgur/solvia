@@ -3,36 +3,29 @@ from typing import List, Optional
 from datetime import datetime
 import json
 
-from app.schemas.message import MessageCreate, Message, MediaType
 from app.core.solana import SolanaManager
 from app.core.ipfs import IPFSManager
-from app.core.encryption import EncryptionManager
 from .messages import get_current_wallet, security
 
 router = APIRouter()
-
-# Initialize core services
 solana = SolanaManager()
 ipfs = IPFSManager()
-encryption = EncryptionManager()
 
-@router.post("/create",
-            summary="Create a new group",
-            description="Create a new group chat with initial members")
+@router.post("/create")
 async def create_group(
     name: str,
     members: List[str],
     wallet: str = Depends(get_current_wallet)
 ):
+    """Create a new group"""
     try:
         group_data = {
             "name": name,
-            "creator": wallet,
-            "members": [wallet] + members,
-            "created_at": datetime.now().isoformat()
+            "members": [wallet, *members],
+            "created_at": datetime.now().isoformat(),
+            "created_by": wallet
         }
         
-        # Store group data on IPFS
         group_json = json.dumps(group_data)
         group_hash = await ipfs.upload_message(group_json)
         
@@ -42,69 +35,48 @@ async def create_group(
         # Store group reference on Solana
         tx_signature = await solana.store_message_hash(
             sender=wallet,
-            receiver=wallet,  # Group creator is the owner
+            receiver=wallet,
             message_hash=group_hash
         )
         
         return {
-            "group_id": group_hash,
+            "group_hash": group_hash,
+            "signature": tx_signature,
             "name": name,
             "members": group_data["members"],
-            "created_at": group_data["created_at"],
-            "signature": tx_signature
+            "created_at": group_data["created_at"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/{group_id}/message",
-            response_model=Message,
-            summary="Send a group message",
-            description="Send a message to a group chat")
-async def send_group_message(
-    group_id: str,
-    message: MessageCreate,
-    wallet: str = Depends(get_current_wallet)
-):
+@router.get("/list")
+async def get_groups(wallet: str = Depends(get_current_wallet)):
+    """Get groups for a wallet"""
     try:
-        # Verify group membership
-        group_data = await ipfs.get_message(group_id)
-        if not group_data:
-            raise HTTPException(status_code=404, detail="Group not found")
+        messages = await solana.get_message_history(wallet)
         
-        group = json.loads(group_data)
-        if wallet not in group["members"]:
-            raise HTTPException(status_code=403, detail="Not a group member")
+        groups = []
+        for msg in messages:
+            if msg["sender"] != msg["receiver"]:
+                continue
+            
+            group_json = await ipfs.get_message(msg["message_hash"])
+            if not group_json:
+                continue
+            
+            try:
+                group_data = json.loads(group_json)
+                if wallet in group_data.get("members", []):
+                    groups.append({
+                        "id": msg["message_hash"],
+                        "name": group_data["name"],
+                        "members": group_data["members"],
+                        "created_at": group_data["created_at"],
+                        "created_by": group_data["created_by"]
+                    })
+            except:
+                continue
         
-        # Generate encryption key for the message
-        encryption_key = encryption.generate_key()
-        
-        # Encrypt the message content
-        encrypted_content, key = encryption.encrypt_message(message.content, encryption_key)
-        
-        # Upload encrypted content to IPFS
-        message_hash = await ipfs.upload_message(encrypted_content)
-        if not message_hash:
-            raise HTTPException(status_code=500, detail="Failed to upload message")
-        
-        # Store message hash on Solana
-        tx_signature = await solana.store_message_hash(
-            sender=wallet,
-            receiver=group_id,  # Use group_id as receiver
-            message_hash=message_hash
-        )
-        
-        return {
-            "id": f"msg_{datetime.now().timestamp()}",
-            "content": message.content,
-            "sender_id": wallet,
-            "receiver_id": group_id,
-            "timestamp": datetime.now(),
-            "is_encrypted": True,
-            "media_url": message.media_url,
-            "media_type": message.media_type,
-            "message_hash": message_hash,
-            "signature": tx_signature,
-            "group_id": group_id
-        }
+        return groups
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -12,10 +12,25 @@ class WalletManager {
 
   async connectWallet(): Promise<string> {
     try {
+      // Check if we're in a web environment
+      if (typeof window === 'undefined') {
+        throw new Error('Wallet connection is only available in web environment');
+      }
+
       // @ts-ignore
       const provider = window.phantom?.solana;
       
-      if (provider?.isPhantom) {
+      if (!provider) {
+        throw new Error(
+          'Phantom wallet not found. Please install Phantom wallet from https://phantom.app'
+        );
+      }
+
+      if (!provider.isPhantom) {
+        throw new Error('Invalid wallet provider. Please use Phantom wallet');
+      }
+
+      try {
         const response = await provider.connect();
         const publicKey = response.publicKey.toString();
         
@@ -27,8 +42,17 @@ class WalletManager {
         );
 
         return publicKey;
-      } else {
-        throw new Error('Phantom wallet not found');
+      } catch (connectionError: any) {
+        // Handle specific connection errors
+        if (connectionError.code === 4001) {
+          throw new Error('Wallet connection rejected by user');
+        } else if (connectionError.code === -32002) {
+          throw new Error('Wallet connection request already pending');
+        } else if (connectionError.message) {
+          throw new Error(`Wallet connection failed: ${connectionError.message}`);
+        } else {
+          throw new Error('Failed to connect to wallet');
+        }
       }
     } catch (error) {
       console.error('Wallet connection error:', error);

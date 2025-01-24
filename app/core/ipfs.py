@@ -1,6 +1,5 @@
 from aioipfs import AsyncIPFS
-from typing import Optional, Tuple
-import aiohttp
+from typing import Optional
 import json
 
 class IPFSManager:
@@ -33,15 +32,4 @@ class IPFSManager:
                 return content.decode()
         except Exception as e:
             print(f"IPFS message retrieval error: {e}")
-            return None
-    
-    async def get_file(self, ipfs_hash: str) -> Optional[bytes]:
-        """Get a file from IPFS"""
-        try:
-            content = bytearray()
-            async for chunk in self.client.cat(ipfs_hash):
-                content.extend(chunk)
-            return bytes(content)
-        except Exception as e:
-            print(f"IPFS file retrieval error: {e}")
             return None

@@ -6,11 +6,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import json
 import uvicorn
 
-from .api.v1.api import api_router
-from .core.solana import SolanaManager
-from .core.ipfs import IPFSManager
-from .core.encryption import EncryptionManager
-from .core.webrtc import WebRTCSignaling
+from app.api.v1.api import api_router
+from app.core.solana import SolanaManager
+from app.core.ipfs import IPFSManager
+from app.core.encryption import EncryptionManager
+from app.core.webrtc import WebRTCSignaling
 
 # Initialize core services
 solana = SolanaManager()
