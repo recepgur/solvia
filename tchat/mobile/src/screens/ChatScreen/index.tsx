@@ -98,24 +98,6 @@ export default function ChatScreen() {
         media_type: mediaType
       };
 
-      // TODO: Send message to backend
-      setMessages(prev => [...prev, message]);
-
-    try {
-      // Encrypt message content
-      const { encrypted, key } = await EncryptionService.encryptMessage(content);
-
-      const message: Message = {
-        id: Date.now().toString(),
-        content: encrypted,
-        sender_id: wallet,
-        receiver_id: 'global', // TODO: Replace with actual receiver ID
-        timestamp: Date.now(),
-        encryption_key: key,
-        media_url: undefined,
-        media_type: undefined
-      };
-
       // Send message to backend
       await ApiService.sendMessage(message);
       setMessages(prev => [...prev, message]);
@@ -127,18 +109,27 @@ export default function ChatScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.callButton}
-          onPress={() => navigation.navigate('Call', { userId: 'test-user', isVideo: true })}
-        >
-          <Text style={styles.callButtonText}>Video Call</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.callButton}
-          onPress={() => navigation.navigate('Call', { userId: 'test-user', isVideo: false })}
-        >
-          <Text style={styles.callButtonText}>Voice Call</Text>
-        </TouchableOpacity>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>U</Text>
+        </View>
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerName}>User Name</Text>
+          <Text style={styles.headerStatus}>online</Text>
+        </View>
+        <View style={styles.callButtonsContainer}>
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() => navigation.navigate('Call', { userId: 'test-user', isVideo: false })}
+          >
+            <Text style={styles.callButtonText}>📞</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() => navigation.navigate('Call', { userId: 'test-user', isVideo: true })}
+          >
+            <Text style={styles.callButtonText}>📹</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>

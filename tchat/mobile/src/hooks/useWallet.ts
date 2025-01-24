@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import WalletManager from '@utils/wallet';
+import WalletManager from '../utils/wallet';
 
 export function useWallet() {
   const [wallet, setWallet] = useState<string | null>(null);

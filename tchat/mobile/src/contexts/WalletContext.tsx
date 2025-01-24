@@ -13,7 +13,7 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
-export function WalletProvider({ children }: { children: React.ReactNode }) {
+export function WalletProvider({ children }: { children: React.ReactNode | ((props: { wallet: string | null; loading: boolean }) => React.ReactNode) }) {
   const [wallet, setWallet] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +25,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const address = await walletManager.connectWallet();
       setWallet(address);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Wallet connection error:', error);
-      setError('Failed to connect wallet');
+      // Use the specific error message from WalletManager if available
+      setError(error.message || 'Failed to connect wallet');
+      
+      // Auto-retry if the error was due to a pending request
+      if (error.message?.includes('request already pending')) {
+        setTimeout(() => {
+          connect();
+        }, 1000);
+      }
     } finally {
       setLoading(false);
     }
@@ -49,18 +57,20 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     connect();
   }, []);
 
+  const contextValue = {
+    wallet,
+    loading,
+    error,
+    connect,
+    disconnect,
+    signMessage,
+  };
+
   return (
-    <WalletContext.Provider
-      value={{
-        wallet,
-        loading,
-        error,
-        connect,
-        disconnect,
-        signMessage,
-      }}
-    >
-      {children}
+    <WalletContext.Provider value={contextValue}>
+      {typeof children === 'function'
+        ? children({ wallet, loading })
+        : children}
     </WalletContext.Provider>
   );
 }

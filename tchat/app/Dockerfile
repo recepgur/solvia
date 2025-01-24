@@ -1,14 +1,25 @@
-FROM python:3.12-slim
+# Build stage
+FROM python:3.12 AS builder
 
 WORKDIR /app
 
 RUN pip install poetry
-RUN poetry config virtualenvs.create false
+RUN poetry config virtualenvs.in-project true
+
+COPY pyproject.toml ./
+RUN poetry install --no-dev
 
 COPY . .
 
-RUN poetry install --no-dev --no-root
+# Runtime stage
+FROM python:3.12-slim
 
-ENV PYTHONPATH=/app
+WORKDIR /app
 
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY --from=builder /app /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

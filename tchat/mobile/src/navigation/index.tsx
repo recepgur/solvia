@@ -1,22 +1,15 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { TouchableOpacity, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import ChatScreen from '../screens/ChatScreen';
-import CallScreen from '../screens/CallScreen';
-import GroupScreen from '../screens/GroupScreen';
+import LoginScreen from '../screens/LoginScreen';
 import { theme } from '../constants/theme';
 import { WalletProvider } from '../contexts/WalletContext';
+import { RootStackParamList } from '../types/navigation';
+import { AuthenticatedStack } from './AuthenticatedStack';
 
-export type RootStackParamList = {
-  Chat: undefined;
-  Status: undefined;
-  Settings: undefined;
-  Call: { userId: string; isVideo: boolean };
-  Group: undefined;
-};
+// RootStackParamList is now imported from types/navigation
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -38,47 +31,31 @@ export default function Navigation() {
     <SafeAreaProvider>
       <NavigationContainer theme={navigationTheme}>
         <WalletProvider>
-          <Stack.Navigator
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: theme.colors.primary,
-            },
-            headerTintColor: theme.colors.background,
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        >
-          <Stack.Screen
-            name="Chat"
-            component={ChatScreen}
-            options={({ navigation }) => ({
-              title: 'TChat',
-              headerRight: () => (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Group')}
-                  style={{ marginRight: theme.spacing.md }}
-                >
-                  <Text style={{ color: theme.colors.background }}>Groups</Text>
-                </TouchableOpacity>
-              ),
-            })}
-          />
-          <Stack.Screen
-            name="Group"
-            component={GroupScreen}
-            options={{ title: 'Groups' }}
-          />
-          <Stack.Screen
-            name="Call"
-            component={CallScreen}
-            options={{ 
-              title: 'Call',
-              headerShown: false 
-            }}
-          />
-        </Stack.Navigator>
-      </WalletProvider>
-    </NavigationContainer>
+          {({ wallet, loading }) => (
+            <Stack.Navigator
+              screenOptions={{
+                headerStyle: {
+                  backgroundColor: theme.colors.primary,
+                },
+                headerTintColor: theme.colors.background,
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
+              }}
+            >
+              {!wallet ? (
+                <Stack.Screen
+                  name="Login"
+                  component={LoginScreen}
+                  options={{ headerShown: false }}
+                />
+              ) : (
+                <AuthenticatedStack Stack={Stack} />
+              )}
+            </Stack.Navigator>
+          )}
+        </WalletProvider>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

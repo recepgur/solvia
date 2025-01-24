@@ -1,6 +1,5 @@
 from typing import Dict, Optional
 import json
-import asyncio
 from fastapi import WebSocket
 
 class WebRTCSignaling:
@@ -19,7 +18,6 @@ class WebRTCSignaling:
         if client_id in self.connections:
             del self.connections[client_id]
         if client_id in self.peers:
-            # Notify all peers about disconnection
             peers = self.peers[client_id]
             del self.peers[client_id]
             for peer_id in peers:
