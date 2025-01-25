@@ -8,7 +8,16 @@ RUN corepack enable && \
 
 # Copy frontend source and build
 COPY frontend/ ./
-RUN yarn build
+RUN echo "Frontend directory contents:" && \
+    ls -la && \
+    echo "\nInstalling dependencies..." && \
+    yarn install --frozen-lockfile && \
+    echo "\nBuilding frontend..." && \
+    yarn build && \
+    echo "\nFrontend build output:" && \
+    ls -la dist/ && \
+    echo "\nIndex.html contents:" && \
+    cat dist/index.html
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -32,10 +41,17 @@ RUN mkdir -p /app/dist && \
     chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist
 
-# Copy frontend build
+# Copy frontend build and verify
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
-RUN chown -R appuser:appuser /app/dist && \
-    chmod -R 755 /app/dist
+RUN echo "Verifying frontend files in final image:" && \
+    ls -la /app/dist/ && \
+    echo "\nVerifying index.html exists and is readable:" && \
+    cat /app/dist/index.html && \
+    echo "\nSetting permissions..." && \
+    chown -R appuser:appuser /app/dist && \
+    chmod -R 755 /app/dist && \
+    echo "\nFinal permissions:" && \
+    ls -la /app/dist/
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
