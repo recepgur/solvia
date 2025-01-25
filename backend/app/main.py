@@ -464,7 +464,12 @@ async def debug_request_middleware(request: Request, call_next):
     # Don't try to access response.body for streaming responses
     return response
 
-# Configure frontend first if available
+# First mount API router
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
+print("DEBUG: Successfully mounted API router")
+
+# Then configure frontend if available
 if frontend_path:
     try:
         print("\nDEBUG: Frontend path:", frontend_path)
