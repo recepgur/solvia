@@ -46,9 +46,10 @@ RUN mkdir -p /app/dist && \
     chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist
 
-# Copy frontend build and verify
+# Copy frontend build and verification scripts
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
 COPY scripts/check_env.py /app/scripts/check_env.py
+COPY scripts/check_paths.py /app/scripts/check_paths.py
 
 RUN echo "Verifying frontend files in final image:" && \
     ls -la /app/dist/ && \
