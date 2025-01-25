@@ -436,47 +436,71 @@ print("\nDEBUG: Including API router")
 app.include_router(api_router)
 
 # Configure frontend if available
-if frontend_path and os.path.exists(frontend_path):
+if frontend_path:
     try:
-        print("\nDEBUG: Frontend directory contents:")
-        for root, dirs, files in os.walk(frontend_path):
-            print(f"\nDirectory: {root}")
-            print("Files:", files)
-            print("Subdirectories:", dirs)
+        print("\nDEBUG: Frontend path:", frontend_path)
+        print("DEBUG: Frontend path exists:", os.path.exists(frontend_path))
+        
+        if os.path.exists(frontend_path):
+            print("\nDEBUG: Frontend directory contents:")
+            for root, dirs, files in os.walk(frontend_path):
+                print(f"\nDirectory: {root}")
+                print("Files:", files)
+                print("Subdirectories:", dirs)
 
-        # Verify index.html exists
-        index_path = os.path.join(frontend_path, "index.html")
-        if not os.path.exists(index_path):
-            print(f"\nERROR: index.html not found at {index_path}")
-            print(f"Directory contents: {os.listdir(frontend_path)}")
-            raise RuntimeError("index.html not found in frontend path")
+            # Verify index.html exists
+            index_path = os.path.join(frontend_path, "index.html")
+            assets_path = os.path.join(frontend_path, "assets")
+            
+            if not os.path.exists(index_path):
+                print(f"\nERROR: index.html not found at {index_path}")
+                print(f"Directory contents: {os.listdir(frontend_path)}")
+                raise RuntimeError("index.html not found in frontend path")
 
-        print("\nDEBUG: Mounting frontend with SPAStaticFiles")
-        app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
-        print("\nDEBUG: Successfully configured frontend serving")
+            print("\nDEBUG: Current routes before mounting:")
+            for route in app.routes:
+                print(f"  {route}")
 
-        # Print mounted routes for debugging
-        print("\nDEBUG: Final route configuration:")
-        routes = []
-        for route in app.routes:
-            if isinstance(route, APIRoute):
-                routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
+            # First mount assets directory separately
+            if os.path.exists(assets_path):
+                print("\nDEBUG: Mounting assets directory")
+                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+                print("DEBUG: Successfully mounted assets directory")
             else:
-                routes.append(f"  Mount: {str(route)}")
-        routes.sort()
-        print("\n".join(routes))
+                print("\nWARNING: Assets directory not found at", assets_path)
 
-        print("\nDEBUG: Static files configuration:")
-        print(f"Static files directory: {frontend_path}")
-        print(f"Index path exists: {os.path.exists(index_path)}")
-        print(f"Directory contents:")
-        print("\n".join(f"  {f}" for f in os.listdir(frontend_path)))
+            # Then mount the SPA handler for all other routes
+            print("\nDEBUG: Mounting SPA handler")
+            static_files = SPAStaticFiles(directory=frontend_path, html=True)
+            app.mount("/", static_files, name="spa")
+            print("\nDEBUG: Successfully mounted SPA handler")
+
+            # Print mounted routes for debugging
+            print("\nDEBUG: Final route configuration:")
+            routes = []
+            for route in app.routes:
+                if isinstance(route, APIRoute):
+                    routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
+                else:
+                    routes.append(f"  Mount: {str(route)}")
+            routes.sort()
+            print("\n".join(routes))
+
+            print("\nDEBUG: Static files configuration:")
+            print(f"Static files directory: {frontend_path}")
+            print(f"Index path exists: {os.path.exists(index_path)}")
+            print(f"Directory contents:")
+            print("\n".join(f"  {f}" for f in os.listdir(frontend_path)))
+        else:
+            print(f"\nERROR: Frontend path {frontend_path} does not exist")
+            print("DEBUG: Current working directory:", os.getcwd())
+            print("DEBUG: Directory contents:", os.listdir("."))
     except Exception as e:
         print(f"\nERROR: Failed to configure frontend: {str(e)}")
         import traceback
         print(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise
 else:
-    print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
+    print("\nWARNING: FRONTEND_PATH not set")
 
 # End of application setup
