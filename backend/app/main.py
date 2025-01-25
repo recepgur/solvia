@@ -148,6 +148,15 @@ class SPAStaticFiles(StaticFiles):
             print(f"DEBUG: Directory: {str(self.directory)}")
             print(f"DEBUG: HTML mode: {self.html}")
             print(f"DEBUG: Scope base_url: {scope.get('root_path', '')}")
+            print(f"DEBUG: Method: {scope.get('method', 'UNKNOWN')}")
+            
+            # For root path, always serve index.html
+            if path == "" or path == "/":
+                print("DEBUG: Root path detected, serving index.html")
+                index_path = os.path.join(str(self.directory), 'index.html')
+                if os.path.exists(index_path):
+                    print(f"DEBUG: Serving index.html from: {index_path}")
+                    return FileResponse(index_path, media_type='text/html')
             
             # Strip leading slash for consistency
             path = path.lstrip('/')
@@ -180,26 +189,17 @@ class SPAStaticFiles(StaticFiles):
                 except Exception as ex:
                     print(f"DEBUG: Error serving static file: {str(ex)}")
             
-            # For root path or any non-asset path, serve index.html
-            print(f"DEBUG: Serving index.html for path: {path}")
+            # For any other path, serve index.html (SPA routing)
+            print(f"DEBUG: Non-asset path detected, serving index.html for client-side routing")
             index_path = os.path.join(str(self.directory), 'index.html')
-            print(f"DEBUG: Looking for index.html at: {index_path}")
-            
             if os.path.exists(index_path):
-                print(f"DEBUG: index.html found at: {index_path}")
+                print(f"DEBUG: Serving index.html from: {index_path}")
                 return FileResponse(index_path, media_type='text/html')
             
             print("DEBUG: index.html not found!")
             print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
+            raise HTTPException(status_code=404, detail="index.html not found")
             
-            # Try serving from root directory as fallback
-            root_index = os.path.join(str(self.directory), '..', 'index.html')
-            if os.path.exists(root_index):
-                print(f"DEBUG: Found index.html in root directory: {root_index}")
-                return FileResponse(root_index, media_type='text/html')
-            
-            # If we get here, something went wrong
-            raise HTTPException(status_code=404, detail="File not found")
         except Exception as e:
             print(f"DEBUG: Error in SPAStaticFiles.get_response: {str(e)}")
             if isinstance(e, HTTPException):
@@ -465,7 +465,12 @@ async def debug_request_middleware(request: Request, call_next):
     # Don't try to access response.body for streaming responses
     return response
 
-# Configure frontend and API routes
+# First mount API router to ensure API routes take precedence
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
+print("DEBUG: Successfully mounted API router")
+
+# Configure frontend routes if frontend path is set
 if frontend_path:
     try:
         print("\nDEBUG: Frontend path:", frontend_path)
@@ -490,11 +495,6 @@ if frontend_path:
             print("\nDEBUG: Current routes before mounting static files:")
             for route in app.routes:
                 print(f"  {route}")
-
-            # First mount API router to ensure API routes take precedence
-            print("\nDEBUG: Including API router")
-            app.include_router(api_router, prefix="/api")
-            print("DEBUG: Successfully mounted API router")
 
             print("\nDEBUG: Routes after mounting API router:")
             for route in app.routes:
