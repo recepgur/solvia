@@ -470,15 +470,6 @@ print("\nDEBUG: Including API router")
 app.include_router(api_router)
 print("DEBUG: Successfully mounted API router")
 
-# Print all registered routes for debugging
-print("\nDEBUG: Current routes before mounting API router:")
-for route in app.routes:
-    print(f"  {str(route)}")
-
-# Mount API router
-print("\nDEBUG: Including API router")
-app.include_router(api_router)
-
 print("\nDEBUG: Routes after mounting API router:")
 for route in app.routes:
     print(f"  {str(route)}")
@@ -519,14 +510,15 @@ if frontend_path:
 
             # Finally mount the SPA handler for all other routes
             print("\nDEBUG: Mounting SPA handler")
-            static_files = SPAStaticFiles(directory=frontend_path, html=True)
-            app.mount("/", static_files, name="spa")
-            print("\nDEBUG: Successfully mounted SPA handler")
-
-            # Finally mount the API router
-            print("\nDEBUG: Including API router")
-            app.include_router(api_router)
-            print("DEBUG: Successfully mounted API router")
+            try:
+                static_files = SPAStaticFiles(directory=frontend_path, html=True)
+                app.mount("/", static_files, name="spa")
+                print("DEBUG: Successfully mounted SPA handler")
+            except Exception as e:
+                print(f"ERROR: Failed to mount SPA handler: {str(e)}")
+                import traceback
+                print(f"Stack trace: {traceback.format_exc()}")
+                raise
 
             # Print mounted routes for debugging
             print("\nDEBUG: Final route configuration:")
@@ -534,16 +526,22 @@ if frontend_path:
             for route in app.routes:
                 if isinstance(route, APIRoute):
                     routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
+                elif isinstance(route, Mount):
+                    routes.append(f"  Mount: {str(route)} -> {getattr(route, 'directory', 'N/A')}")
                 else:
-                    routes.append(f"  Mount: {str(route)}")
+                    routes.append(f"  Other: {str(route)}")
             routes.sort()
             print("\n".join(routes))
 
             print("\nDEBUG: Static files configuration:")
             print(f"Static files directory: {frontend_path}")
             print(f"Index path exists: {os.path.exists(index_path)}")
+            print(f"Assets path exists: {os.path.exists(assets_path)}")
             print(f"Directory contents:")
-            print("\n".join(f"  {f}" for f in os.listdir(frontend_path)))
+            for root, dirs, files in os.walk(frontend_path):
+                print(f"\nDirectory: {root}")
+                print("Files:", files)
+                print("Subdirectories:", dirs)
         else:
             print(f"\nERROR: Frontend path {frontend_path} does not exist")
             print("DEBUG: Current working directory:", os.getcwd())
