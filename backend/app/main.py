@@ -394,59 +394,50 @@ print(f"\nDEBUG: Environment variables:")
 print(f"FRONTEND_PATH: {frontend_path}")
 print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
 
-# Configure startup event
-@app.on_event("startup")
-async def startup_event():
-    print("\n=== Application Startup ===")
-    print(f"Environment variables:")
-    print(f"FRONTEND_PATH: {frontend_path}")
-    print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
-    print(f"PORT: {os.getenv('PORT')}")
-    print(f"LOG_LEVEL: {os.getenv('LOG_LEVEL')}")
-    
-    # First configure frontend if available
-    if frontend_path and os.path.exists(frontend_path):
-        try:
-            print("\nDEBUG: Frontend directory contents:")
-            for root, dirs, files in os.walk(frontend_path):
-                print(f"\nDirectory: {root}")
-                print("Files:", files)
-                print("Subdirectories:", dirs)
+# First include the API router
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
 
-            # Verify index.html exists
-            index_path = os.path.join(frontend_path, "index.html")
-            if not os.path.exists(index_path):
-                raise RuntimeError("index.html not found in frontend path")
+# Configure frontend if available
+if frontend_path and os.path.exists(frontend_path):
+    try:
+        print("\nDEBUG: Frontend directory contents:")
+        for root, dirs, files in os.walk(frontend_path):
+            print(f"\nDirectory: {root}")
+            print("Files:", files)
+            print("Subdirectories:", dirs)
 
-            print("\nDEBUG: Mounting frontend directory")
-            app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
-            print("\nDEBUG: Successfully configured frontend serving")
-        except Exception as e:
-            print(f"\nERROR: Failed to configure frontend: {str(e)}")
-            import traceback
-            print(f"DEBUG: Traceback: {traceback.format_exc()}")
-            raise
-    else:
-        print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
-    
-    # Then include the API router
-    print("\nDEBUG: Including API router")
-    app.include_router(api_router)
-    
-    # Print final configuration
-    print("\nDEBUG: Final route configuration:")
-    routes = []
-    for route in app.routes:
-        if isinstance(route, APIRoute):
-            routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
-        else:
-            routes.append(f"  Mount: {str(route)}")
-    routes.sort()
-    print("\n".join(routes))
-    
-    if frontend_path and os.path.exists(frontend_path):
+        # Verify index.html exists
+        index_path = os.path.join(frontend_path, "index.html")
+        if not os.path.exists(index_path):
+            print(f"\nERROR: index.html not found at {index_path}")
+            print(f"Directory contents: {os.listdir(frontend_path)}")
+            raise RuntimeError("index.html not found in frontend path")
+
+        print("\nDEBUG: Mounting frontend with SPAStaticFiles")
+        app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
+        print("\nDEBUG: Successfully configured frontend serving")
+
+        # Print mounted routes for debugging
+        print("\nDEBUG: Final route configuration:")
+        routes = []
+        for route in app.routes:
+            if isinstance(route, APIRoute):
+                routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
+            else:
+                routes.append(f"  Mount: {str(route)}")
+        routes.sort()
+        print("\n".join(routes))
+
         print("\nDEBUG: Static files configuration:")
         print(f"Static files directory: {frontend_path}")
         print(f"Index path exists: {os.path.exists(index_path)}")
         print(f"Directory contents:")
         print("\n".join(f"  {f}" for f in os.listdir(frontend_path)))
+    except Exception as e:
+        print(f"\nERROR: Failed to configure frontend: {str(e)}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
+        raise
+else:
+    print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
