@@ -62,6 +62,29 @@ async def debug_middleware(request, call_next):
 async def healthz():
     return {"status": "ok"}
 
+@app.get("/api/debug/env")
+async def debug_env():
+    """Debug endpoint to check environment variables and static file configuration"""
+    frontend_path = os.getenv("FRONTEND_PATH", "")
+    debug_info = {
+        "environment": {
+            "FRONTEND_PATH": frontend_path,
+            "PYTHONPATH": os.getenv("PYTHONPATH"),
+            "PORT": os.getenv("PORT"),
+            "PWD": os.getcwd(),
+        },
+        "static_files": {
+            "frontend_path_exists": os.path.exists(frontend_path),
+            "frontend_path_contents": os.listdir(frontend_path) if os.path.exists(frontend_path) else [],
+            "index_html_exists": os.path.exists(os.path.join(frontend_path, "index.html")) if frontend_path else False,
+            "assets_dir_exists": os.path.exists(os.path.join(frontend_path, "assets")) if frontend_path else False,
+        },
+        "routes": [
+            str(route) for route in app.routes
+        ]
+    }
+    return debug_info
+
 # In-memory storage
 listings: List[Listing] = []
 user_preferences: Dict[str, Dict[str, SwipeAction]] = {}
@@ -125,50 +148,35 @@ class SPAStaticFiles(StaticFiles):
             if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
                 try:
                     print(f"DEBUG: Attempting to serve static file: {path}")
-                    response = await super().get_response(path, scope)
-                    print(f"DEBUG: Successfully served static file: {path}")
-                    return response
-                except HTTPException as ex:
-                    print(f"DEBUG: Static file not found: {path}")
-                    raise
+                    full_path = os.path.join(str(self.directory), path)
+                    if os.path.exists(full_path):
+                        print(f"DEBUG: Static file found at: {full_path}")
+                        return FileResponse(full_path)
+                    print(f"DEBUG: Static file not found at: {full_path}")
+                    print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
+                    raise HTTPException(status_code=404, detail="File not found")
+                except Exception as ex:
+                    print(f"DEBUG: Error serving static file: {str(ex)}")
+                    raise HTTPException(status_code=404, detail="File not found")
             
             # For root path or any other path, serve index.html
             print(f"DEBUG: Serving index.html for path: {path}")
             try:
-                base_dir = str(self.directory) if self.directory else ""
-                if not base_dir:
-                    print("DEBUG: No directory configured!")
-                    raise HTTPException(status_code=500, detail="Static files directory not configured")
-                    
-                index_path = os.path.join(base_dir, 'index.html')
-                print(f"DEBUG: Checking index.html at: {index_path}")
-                print(f"DEBUG: Base directory exists: {os.path.exists(base_dir)}")
-                print(f"DEBUG: Base directory contents: {os.listdir(base_dir) if os.path.exists(base_dir) else 'N/A'}")
+                index_path = os.path.join(str(self.directory), 'index.html')
+                print(f"DEBUG: Looking for index.html at: {index_path}")
                 
                 if os.path.exists(index_path):
-                    print("DEBUG: index.html found, serving")
-                    try:
-                        return FileResponse(
-                            index_path,
-                            media_type='text/html',
-                            status_code=200
-                        )
-                    except Exception as e:
-                        print(f"DEBUG: Error serving index.html: {str(e)}")
-                        raise
-                else:
-                    print("DEBUG: index.html not found!")
-                    print(f"DEBUG: Directory contents: {os.listdir(base_dir)}")
-                    raise HTTPException(status_code=404, detail=f"index.html not found in {base_dir}")
+                    print(f"DEBUG: index.html found at: {index_path}")
+                    return FileResponse(index_path, media_type='text/html')
+                
+                print("DEBUG: index.html not found!")
+                print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
+                raise HTTPException(status_code=404, detail="index.html not found")
             except Exception as e:
                 print(f"DEBUG: Error serving index.html: {str(e)}")
-                print(f"DEBUG: Error type: {type(e)}")
-                raise
+                raise HTTPException(status_code=500, detail="Error serving index.html")
         except Exception as e:
             print(f"DEBUG: Unhandled error in SPAStaticFiles.get_response: {str(e)}")
-            print(f"DEBUG: Error type: {type(e)}")
-            import traceback
-            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             raise
 
 # Auth endpoints
