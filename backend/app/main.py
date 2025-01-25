@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.routing import APIRoute
+from fastapi.routing import Mount
 import os
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import List, Optional, Dict
@@ -468,6 +469,19 @@ async def debug_request_middleware(request: Request, call_next):
 print("\nDEBUG: Including API router")
 app.include_router(api_router)
 print("DEBUG: Successfully mounted API router")
+
+# Print all registered routes for debugging
+print("\nDEBUG: Current routes before mounting API router:")
+for route in app.routes:
+    print(f"  {str(route)}")
+
+# Mount API router
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
+
+print("\nDEBUG: Routes after mounting API router:")
+for route in app.routes:
+    print(f"  {str(route)}")
 
 # Then configure frontend if available
 if frontend_path:
