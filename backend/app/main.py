@@ -62,7 +62,7 @@ async def debug_middleware(request, call_next):
 async def healthz():
     return {"status": "ok"}
 
-@app.get("/api/debug/env")
+@api_router.get("/debug/env")
 async def debug_env():
     """Debug endpoint to check environment variables and static file configuration"""
     frontend_path = os.getenv("FRONTEND_PATH", "")
