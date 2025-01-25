@@ -154,8 +154,8 @@ class SPAStaticFiles(StaticFiles):
             
             # Handle API routes
             if path.startswith('api/'):
-                print("DEBUG: API path detected, raising 404 to let API router handle it")
-                raise HTTPException(status_code=404, detail="Not Found")
+                print("DEBUG: API path detected, forwarding to API router")
+                return await super().get_response(path, scope)
             
             # For static assets, try to serve directly
             if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
@@ -446,7 +446,7 @@ async def debug_request_middleware(request: Request, call_next):
     print(f"\nDEBUG: Response details:")
     print(f"Status: {response.status_code}")
     print(f"Headers: {response.headers}")
-    print(f"Body type: {type(response.body)}")
+    # Don't try to access response.body for streaming responses
     return response
 
 # Configure frontend first if available
