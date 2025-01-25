@@ -86,5 +86,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:8080/healthz || exit 1
 
+# Switch to appuser for security
+USER appuser
+
 # Start application with increased logging
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug", "--reload"]
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug"]
