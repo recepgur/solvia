@@ -467,91 +467,25 @@ async def debug_request_middleware(request: Request, call_next):
 
 # First mount API router to ensure API routes take precedence
 print("\nDEBUG: Including API router")
-app.include_router(api_router)
+app.include_router(api_router, prefix="/api")
 print("DEBUG: Successfully mounted API router")
 
-# Configure frontend routes if frontend path is set
-if frontend_path:
-    try:
-        print("\nDEBUG: Frontend path:", frontend_path)
-        print("DEBUG: Frontend path exists:", os.path.exists(frontend_path))
-        
-        if os.path.exists(frontend_path):
-            print("\nDEBUG: Frontend directory contents:")
-            for root, dirs, files in os.walk(frontend_path):
-                print(f"\nDirectory: {root}")
-                print("Files:", files)
-                print("Subdirectories:", dirs)
+# Mount static files handler
+if frontend_path and os.path.exists(frontend_path):
+    print("\nDEBUG: Mounting static files handler")
+    app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
 
-            # Verify index.html exists
-            index_path = os.path.join(frontend_path, "index.html")
-            assets_path = os.path.join(frontend_path, "assets")
-            
-            if not os.path.exists(index_path):
-                print(f"\nERROR: index.html not found at {index_path}")
-                print(f"Directory contents: {os.listdir(frontend_path)}")
-                raise RuntimeError("index.html not found in frontend path")
-
-            print("\nDEBUG: Current routes before mounting static files:")
-            for route in app.routes:
-                print(f"  {route}")
-
-            print("\nDEBUG: Routes after mounting API router:")
-            for route in app.routes:
-                print(f"  {str(route)}")
-
-            # Then mount assets directory
-            if os.path.exists(assets_path):
-                print("\nDEBUG: Mounting assets directory")
-                app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-                print("DEBUG: Successfully mounted assets directory")
-            else:
-                print("\nWARNING: Assets directory not found at", assets_path)
-
-            # Finally mount the SPA handler for all other routes
-            print("\nDEBUG: Mounting SPA handler")
-            try:
-                static_files = SPAStaticFiles(directory=frontend_path, html=True)
-                app.mount("/", static_files, name="spa")
-                print("DEBUG: Successfully mounted SPA handler")
-            except Exception as e:
-                print(f"ERROR: Failed to mount SPA handler: {str(e)}")
-                import traceback
-                print(f"Stack trace: {traceback.format_exc()}")
-                raise
-
-            # Print mounted routes for debugging
-            print("\nDEBUG: Final route configuration:")
-            routes = []
-            for route in app.routes:
-                if isinstance(route, APIRoute):
-                    routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
-                elif isinstance(route, Mount):
-                    routes.append(f"  Mount: {str(route)} -> {getattr(route, 'directory', 'N/A')}")
-                else:
-                    routes.append(f"  Other: {str(route)}")
-            routes.sort()
-            print("\n".join(routes))
-
-            print("\nDEBUG: Static files configuration:")
-            print(f"Static files directory: {frontend_path}")
-            print(f"Index path exists: {os.path.exists(index_path)}")
-            print(f"Assets path exists: {os.path.exists(assets_path)}")
-            print(f"Directory contents:")
-            for root, dirs, files in os.walk(frontend_path):
-                print(f"\nDirectory: {root}")
-                print("Files:", files)
-                print("Subdirectories:", dirs)
-        else:
-            print(f"\nERROR: Frontend path {frontend_path} does not exist")
-            print("DEBUG: Current working directory:", os.getcwd())
-            print("DEBUG: Directory contents:", os.listdir("."))
-    except Exception as e:
-        print(f"\nERROR: Failed to configure frontend: {str(e)}")
-        import traceback
-        print(f"DEBUG: Traceback: {traceback.format_exc()}")
-        raise
-else:
-    print("\nWARNING: FRONTEND_PATH not set")
+# Print debug information about routes
+print("\nDEBUG: Final route configuration:")
+routes = []
+for route in app.routes:
+    if isinstance(route, APIRoute):
+        routes.append(f"  API: {route.path} [{','.join(route.methods)}]")
+    elif isinstance(route, Mount):
+        routes.append(f"  Mount: {str(route)} -> {getattr(route, 'directory', 'N/A')}")
+    else:
+        routes.append(f"  Other: {str(route)}")
+routes.sort()
+print("\n".join(routes))
 
 # End of application setup
