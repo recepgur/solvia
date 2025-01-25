@@ -29,14 +29,15 @@ from app.auth import (
 
 from fastapi import APIRouter
 
-# Create API router
-api_router = APIRouter(prefix="/api", tags=["api"])
+# Create API router (without prefix, will be added in mount)
+api_router = APIRouter(tags=["api"])
 
 # Create main app
 app = FastAPI(
     title="Solvia API",
     description="Multi-category marketplace API",
-    version="1.0.0"
+    version="1.0.0",
+    debug=True  # Enable debug mode
 )
 
 # Enable CORS
@@ -467,22 +468,33 @@ async def debug_request_middleware(request: Request, call_next):
 
 # First mount API router to ensure API routes take precedence
 print("\nDEBUG: Including API router")
-app.include_router(api_router)  # Remove prefix as it's already included in the router
+print(f"DEBUG: API router routes before mounting:")
+for route in api_router.routes:
+    print(f"  {route}")
+
+app.include_router(api_router, prefix="/api")  # Add prefix back as it's needed
 print("DEBUG: Successfully mounted API router")
 
 # Configure static file serving
 if frontend_path and os.path.exists(frontend_path):
-    print("\nDEBUG: Configuring static files")
-    assets_path = os.path.join(frontend_path, "assets")
+    print(f"\nDEBUG: Configuring static files")
+    print(f"DEBUG: Frontend path: {frontend_path}")
+    print(f"DEBUG: Frontend path exists: {os.path.exists(frontend_path)}")
+    print(f"DEBUG: Frontend directory contents: {os.listdir(frontend_path)}")
     
-    # First mount assets directory if it exists
-    if os.path.exists(assets_path):
-        print("DEBUG: Mounting assets directory")
-        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
-    
-    # Then mount the SPA handler for all other routes
+    # Mount the SPA handler for all non-API routes
     print("DEBUG: Mounting SPA handler")
     app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="spa")
+    print("DEBUG: Successfully mounted SPA handler")
+    
+    # Verify index.html exists and is readable
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        print(f"DEBUG: index.html found at {index_path}")
+        with open(index_path, 'r') as f:
+            print("DEBUG: First 100 chars of index.html:", f.read(100))
+    else:
+        print("DEBUG: WARNING - index.html not found!")
 
 # Print debug information about routes
 print("\nDEBUG: Final route configuration:")
