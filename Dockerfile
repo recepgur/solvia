@@ -16,7 +16,10 @@ RUN echo "Frontend directory contents:" && \
     yarn build && \
     echo "\nFrontend build output:" && \
     ls -la dist/ && \
-    find dist -type f -exec echo "File: {}" \; -exec cat {} \; && \
+    echo "\nDist directory tree:" && \
+    find dist -type f -ls && \
+    echo "\nIndex.html contents:" && \
+    cat dist/index.html && \
     echo "\nVerifying static files:" && \
     test -f dist/index.html || (echo "ERROR: index.html not found" && exit 1) && \
     test -d dist/assets || (echo "ERROR: assets directory not found" && exit 1)
@@ -32,7 +35,7 @@ WORKDIR /app
 
 # Install required packages
 RUN apt-get update && \
-    apt-get install -y curl libcap2-bin && \
+    apt-get install -y curl tree && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -49,10 +52,10 @@ COPY scripts/check_env.py /app/scripts/check_env.py
 
 RUN echo "Verifying frontend files in final image:" && \
     ls -la /app/dist/ && \
+    echo "\nDirectory tree:" && \
+    tree /app/dist && \
     echo "\nVerifying index.html exists and is readable:" && \
     cat /app/dist/index.html && \
-    echo "\nVerifying static files:" && \
-    find /app/dist -type f -exec echo "File: {}" \; -exec cat {} \; && \
     echo "\nSetting permissions..." && \
     chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist && \
@@ -73,13 +76,8 @@ ENV PYTHONPATH=/app/backend \
     PORT=8080 \
     FRONTEND_PATH=/app/dist \
     NODE_ENV=production \
-    LOG_LEVEL=debug
-
-# Grant capability to bind to privileged ports
-RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/python3.12
-
-# Switch to non-root user
-USER appuser
+    LOG_LEVEL=debug \
+    STATIC_FILES_DEBUG=true
 
 # Expose port
 EXPOSE 8080
@@ -88,5 +86,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Start application
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug"]
+# Start application with increased logging
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug", "--reload"]
