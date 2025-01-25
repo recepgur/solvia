@@ -53,37 +53,52 @@ async def debug_middleware(request, call_next):
     print(f"\nDEBUG: Request to {request.url.path}")
     print(f"DEBUG: Method: {request.method}")
     print(f"DEBUG: Headers: {request.headers}")
+    print(f"DEBUG: Query params: {request.query_params}")
+    print(f"DEBUG: Current working directory: {os.getcwd()}")
+    print(f"DEBUG: FRONTEND_PATH: {os.getenv('FRONTEND_PATH')}")
+    print(f"DEBUG: Frontend path exists: {os.path.exists(os.getenv('FRONTEND_PATH', ''))}")
+    if os.path.exists(os.getenv('FRONTEND_PATH', '')):
+        print(f"DEBUG: Frontend directory contents: {os.listdir(os.getenv('FRONTEND_PATH', ''))}")
     response = await call_next(request)
     print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: Response headers: {response.headers}")
     return response
+
+# Debug endpoint before any other routes
+# Debug endpoint before any other routes
+@app.get("/debug/env")
+async def debug_env():
+    """Debug endpoint to check application status"""
+    debug_info = {
+        "status": "running",
+        "api_version": "1.0.0",
+        "static_files": {
+            "configured": bool(os.getenv("FRONTEND_PATH")),
+            "assets_available": os.path.exists(os.path.join(os.getenv("FRONTEND_PATH", ""), "assets")),
+        },
+        "routes": [
+            {
+                "path": str(route),
+                "name": getattr(route, "name", None),
+                "methods": getattr(route, "methods", []),
+            }
+            for route in app.routes
+        ],
+        "api_routes": [
+            {
+                "path": str(route),
+                "name": getattr(route, "name", None),
+                "methods": getattr(route, "methods", []),
+            }
+            for route in api_router.routes
+        ]
+    }
+    return debug_info
 
 # Health check endpoint
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
-
-@api_router.get("/debug/env")
-async def debug_env():
-    """Debug endpoint to check environment variables and static file configuration"""
-    frontend_path = os.getenv("FRONTEND_PATH", "")
-    debug_info = {
-        "environment": {
-            "FRONTEND_PATH": frontend_path,
-            "PYTHONPATH": os.getenv("PYTHONPATH"),
-            "PORT": os.getenv("PORT"),
-            "PWD": os.getcwd(),
-        },
-        "static_files": {
-            "frontend_path_exists": os.path.exists(frontend_path),
-            "frontend_path_contents": os.listdir(frontend_path) if os.path.exists(frontend_path) else [],
-            "index_html_exists": os.path.exists(os.path.join(frontend_path, "index.html")) if frontend_path else False,
-            "assets_dir_exists": os.path.exists(os.path.join(frontend_path, "assets")) if frontend_path else False,
-        },
-        "routes": [
-            str(route) for route in app.routes
-        ]
-    }
-    return debug_info
 
 # In-memory storage
 listings: List[Listing] = []
@@ -128,13 +143,13 @@ async def general_exception_handler(request, exc):
 # Custom StaticFiles class that always returns index.html for 404s
 class SPAStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
-        print(f"\nDEBUG: SPAStaticFiles.get_response called")
-        print(f"DEBUG: Requested path: {path}")
-        print(f"DEBUG: Directory: {str(self.directory)}")
-        print(f"DEBUG: HTML mode: {self.html}")
-        print(f"DEBUG: Scope base_url: {scope.get('root_path', '')}")
-        
         try:
+            print(f"\nDEBUG: SPAStaticFiles.get_response called")
+            print(f"DEBUG: Requested path: {path}")
+            print(f"DEBUG: Directory: {str(self.directory)}")
+            print(f"DEBUG: HTML mode: {self.html}")
+            print(f"DEBUG: Scope base_url: {scope.get('root_path', '')}")
+            
             # Strip leading slash for consistency
             path = path.lstrip('/')
             print(f"DEBUG: Normalized path: {path}")
@@ -142,7 +157,7 @@ class SPAStaticFiles(StaticFiles):
             # Handle API routes
             if path.startswith('api/'):
                 print("DEBUG: API path detected, forwarding to API router")
-                raise HTTPException(status_code=404, detail="Not Found")
+                return await super().get_response(path, scope)
             
             # For static assets, try to serve directly
             if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
@@ -154,30 +169,28 @@ class SPAStaticFiles(StaticFiles):
                         return FileResponse(full_path)
                     print(f"DEBUG: Static file not found at: {full_path}")
                     print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
-                    raise HTTPException(status_code=404, detail="File not found")
                 except Exception as ex:
                     print(f"DEBUG: Error serving static file: {str(ex)}")
-                    raise HTTPException(status_code=404, detail="File not found")
             
             # For root path or any other path, serve index.html
             print(f"DEBUG: Serving index.html for path: {path}")
-            try:
-                index_path = os.path.join(str(self.directory), 'index.html')
-                print(f"DEBUG: Looking for index.html at: {index_path}")
-                
-                if os.path.exists(index_path):
-                    print(f"DEBUG: index.html found at: {index_path}")
-                    return FileResponse(index_path, media_type='text/html')
-                
-                print("DEBUG: index.html not found!")
-                print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
-                raise HTTPException(status_code=404, detail="index.html not found")
-            except Exception as e:
-                print(f"DEBUG: Error serving index.html: {str(e)}")
-                raise HTTPException(status_code=500, detail="Error serving index.html")
+            index_path = os.path.join(str(self.directory), 'index.html')
+            print(f"DEBUG: Looking for index.html at: {index_path}")
+            
+            if os.path.exists(index_path):
+                print(f"DEBUG: index.html found at: {index_path}")
+                return FileResponse(index_path, media_type='text/html')
+            
+            print("DEBUG: index.html not found!")
+            print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
+            
+            # If we get here, something went wrong
+            raise HTTPException(status_code=404, detail="File not found")
         except Exception as e:
-            print(f"DEBUG: Unhandled error in SPAStaticFiles.get_response: {str(e)}")
-            raise
+            print(f"DEBUG: Error in SPAStaticFiles.get_response: {str(e)}")
+            if isinstance(e, HTTPException):
+                raise e
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=User)
@@ -423,19 +436,27 @@ async def debug_request_middleware(request: Request, call_next):
     print(f"Client: {request.client}")
     print(f"Base URL: {request.base_url}")
     print(f"Path params: {request.path_params}")
+    print(f"Query params: {request.query_params}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"FRONTEND_PATH: {os.getenv('FRONTEND_PATH')}")
+    print(f"Frontend path exists: {os.path.exists(os.getenv('FRONTEND_PATH', ''))}")
+    if os.path.exists(os.getenv('FRONTEND_PATH', '')):
+        print(f"Frontend directory contents: {os.listdir(os.getenv('FRONTEND_PATH', ''))}")
     
     response = await call_next(request)
     
     print(f"\nDEBUG: Response details:")
     print(f"Status: {response.status_code}")
     print(f"Headers: {response.headers}")
+    print(f"Body type: {type(response.body)}")
     return response
 
-# Include API router first
+# First mount API router
 print("\nDEBUG: Including API router")
 app.include_router(api_router)
+print("DEBUG: Successfully mounted API router")
 
-# Configure frontend if available
+# Then configure frontend if available
 if frontend_path:
     try:
         print("\nDEBUG: Frontend path:", frontend_path)
@@ -457,7 +478,7 @@ if frontend_path:
                 print(f"Directory contents: {os.listdir(frontend_path)}")
                 raise RuntimeError("index.html not found in frontend path")
 
-            print("\nDEBUG: Current routes before mounting:")
+            print("\nDEBUG: Current routes before mounting static files:")
             for route in app.routes:
                 print(f"  {route}")
 
@@ -469,7 +490,7 @@ if frontend_path:
             else:
                 print("\nWARNING: Assets directory not found at", assets_path)
 
-            # Then mount the SPA handler for all other routes
+            # Finally mount the SPA handler for all other routes
             print("\nDEBUG: Mounting SPA handler")
             static_files = SPAStaticFiles(directory=frontend_path, html=True)
             app.mount("/", static_files, name="spa")
