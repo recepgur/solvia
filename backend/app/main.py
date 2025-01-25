@@ -403,6 +403,25 @@ frontend_path = os.getenv("FRONTEND_PATH", "")
 print(f"\nDEBUG: Environment variables:")
 print(f"FRONTEND_PATH: {frontend_path}")
 print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
+print(f"Current working directory: {os.getcwd()}")
+
+# Add detailed request logging middleware
+@app.middleware("http")
+async def debug_request_middleware(request: Request, call_next):
+    print(f"\nDEBUG: Request details:")
+    print(f"Method: {request.method}")
+    print(f"URL: {request.url}")
+    print(f"Headers: {request.headers}")
+    print(f"Client: {request.client}")
+    print(f"Base URL: {request.base_url}")
+    print(f"Path params: {request.path_params}")
+    
+    response = await call_next(request)
+    
+    print(f"\nDEBUG: Response details:")
+    print(f"Status: {response.status_code}")
+    print(f"Headers: {response.headers}")
+    return response
 
 # Include API router first
 print("\nDEBUG: Including API router")
