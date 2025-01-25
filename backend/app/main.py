@@ -148,11 +148,13 @@ class SPAStaticFiles(StaticFiles):
                 if os.path.exists(index_path):
                     print("DEBUG: index.html found, serving")
                     try:
-                        response = await super().get_response('index.html', scope)
-                        print(f"DEBUG: Successfully got response for index.html: {response.status_code}")
-                        return response
+                        return FileResponse(
+                            index_path,
+                            media_type='text/html',
+                            status_code=200
+                        )
                     except Exception as e:
-                        print(f"DEBUG: Error getting response for index.html: {str(e)}")
+                        print(f"DEBUG: Error serving index.html: {str(e)}")
                         raise
                 else:
                     print("DEBUG: index.html not found!")
