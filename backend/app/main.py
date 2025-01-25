@@ -133,7 +133,7 @@ class SPAStaticFiles(StaticFiles):
                     raise
             
             # For root path or any other path, serve index.html
-            print("DEBUG: Serving index.html for path: {path}")
+            print(f"DEBUG: Serving index.html for path: {path}")
             try:
                 base_dir = str(self.directory) if self.directory else ""
                 if not base_dir:
@@ -142,14 +142,22 @@ class SPAStaticFiles(StaticFiles):
                     
                 index_path = os.path.join(base_dir, 'index.html')
                 print(f"DEBUG: Checking index.html at: {index_path}")
+                print(f"DEBUG: Base directory exists: {os.path.exists(base_dir)}")
+                print(f"DEBUG: Base directory contents: {os.listdir(base_dir) if os.path.exists(base_dir) else 'N/A'}")
                 
                 if os.path.exists(index_path):
                     print("DEBUG: index.html found, serving")
-                    return await super().get_response('index.html', scope)
+                    try:
+                        response = await super().get_response('index.html', scope)
+                        print(f"DEBUG: Successfully got response for index.html: {response.status_code}")
+                        return response
+                    except Exception as e:
+                        print(f"DEBUG: Error getting response for index.html: {str(e)}")
+                        raise
                 else:
                     print("DEBUG: index.html not found!")
                     print(f"DEBUG: Directory contents: {os.listdir(base_dir)}")
-                    raise HTTPException(status_code=404, detail="index.html not found")
+                    raise HTTPException(status_code=404, detail=f"index.html not found in {base_dir}")
             except Exception as e:
                 print(f"DEBUG: Error serving index.html: {str(e)}")
                 print(f"DEBUG: Error type: {type(e)}")
