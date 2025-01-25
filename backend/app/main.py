@@ -64,17 +64,23 @@ async def debug_middleware(request, call_next):
     print(f"DEBUG: Response headers: {response.headers}")
     return response
 
-# Debug endpoint before any other routes
-# Debug endpoint before any other routes
-@app.get("/debug/env")
+# Debug endpoint
+@api_router.get("/debug/env")
 async def debug_env():
-    """Debug endpoint to check application status"""
+    """Debug endpoint to check environment and application status"""
+    frontend_path = os.getenv("FRONTEND_PATH", "")
     debug_info = {
-        "status": "running",
-        "api_version": "1.0.0",
+        "environment": {
+            "FRONTEND_PATH": frontend_path,
+            "PYTHONPATH": os.getenv("PYTHONPATH"),
+            "PORT": os.getenv("PORT"),
+            "PWD": os.getcwd(),
+        },
         "static_files": {
-            "configured": bool(os.getenv("FRONTEND_PATH")),
-            "assets_available": os.path.exists(os.path.join(os.getenv("FRONTEND_PATH", ""), "assets")),
+            "frontend_path_exists": os.path.exists(frontend_path),
+            "frontend_path_contents": os.listdir(frontend_path) if os.path.exists(frontend_path) else [],
+            "index_html_exists": os.path.exists(os.path.join(frontend_path, "index.html")) if frontend_path else False,
+            "assets_dir_exists": os.path.exists(os.path.join(frontend_path, "assets")) if frontend_path else False,
         },
         "routes": [
             {
@@ -83,14 +89,6 @@ async def debug_env():
                 "methods": getattr(route, "methods", []),
             }
             for route in app.routes
-        ],
-        "api_routes": [
-            {
-                "path": str(route),
-                "name": getattr(route, "name", None),
-                "methods": getattr(route, "methods", []),
-            }
-            for route in api_router.routes
         ]
     }
     return debug_info
@@ -451,12 +449,7 @@ async def debug_request_middleware(request: Request, call_next):
     print(f"Body type: {type(response.body)}")
     return response
 
-# First mount API router
-print("\nDEBUG: Including API router")
-app.include_router(api_router)
-print("DEBUG: Successfully mounted API router")
-
-# Then configure frontend if available
+# Configure frontend first if available
 if frontend_path:
     try:
         print("\nDEBUG: Frontend path:", frontend_path)
@@ -495,6 +488,11 @@ if frontend_path:
             static_files = SPAStaticFiles(directory=frontend_path, html=True)
             app.mount("/", static_files, name="spa")
             print("\nDEBUG: Successfully mounted SPA handler")
+
+            # Finally mount the API router
+            print("\nDEBUG: Including API router")
+            app.include_router(api_router)
+            print("DEBUG: Successfully mounted API router")
 
             # Print mounted routes for debugging
             print("\nDEBUG: Final route configuration:")
