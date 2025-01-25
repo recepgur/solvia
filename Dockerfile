@@ -1,13 +1,14 @@
 FROM node:18 AS frontend-builder
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
+COPY frontend/package.json frontend/yarn.lock ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies using yarn
+RUN corepack enable && \
+    yarn install --frozen-lockfile
 
 # Copy frontend source and build
 COPY frontend/ ./
-RUN npm run build
+RUN yarn build
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
