@@ -404,22 +404,9 @@ print(f"\nDEBUG: Environment variables:")
 print(f"FRONTEND_PATH: {frontend_path}")
 print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
 
-# Get frontend path from environment
-frontend_path = os.getenv("FRONTEND_PATH", "")
-print(f"\nDEBUG: Environment variables:")
-print(f"FRONTEND_PATH: {frontend_path}")
-print(f"PYTHONPATH: {os.getenv('PYTHONPATH')}")
-
-# List all files in the frontend path for debugging
-if frontend_path and os.path.exists(frontend_path):
-    print("\nDEBUG: Listing all files in frontend path:")
-    for root, dirs, files in os.walk(frontend_path):
-        print(f"\nDirectory: {root}")
-        for f in files:
-            print(f"  File: {f}")
-            if f == 'index.html':
-                with open(os.path.join(root, f), 'r') as file:
-                    print(f"  index.html contents: {file.read()[:200]}...")
+# Include API router first
+print("\nDEBUG: Including API router")
+app.include_router(api_router)
 
 # Configure frontend if available
 if frontend_path and os.path.exists(frontend_path):
@@ -465,6 +452,4 @@ if frontend_path and os.path.exists(frontend_path):
 else:
     print("\nWARNING: FRONTEND_PATH not set or directory does not exist")
 
-# Include API router after static files
-print("\nDEBUG: Including API router")
-app.include_router(api_router)
+# End of application setup
