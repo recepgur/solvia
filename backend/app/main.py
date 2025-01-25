@@ -465,16 +465,7 @@ async def debug_request_middleware(request: Request, call_next):
     # Don't try to access response.body for streaming responses
     return response
 
-# First mount API router
-print("\nDEBUG: Including API router")
-app.include_router(api_router)
-print("DEBUG: Successfully mounted API router")
-
-print("\nDEBUG: Routes after mounting API router:")
-for route in app.routes:
-    print(f"  {str(route)}")
-
-# Then configure frontend if available
+# Configure frontend and API routes
 if frontend_path:
     try:
         print("\nDEBUG: Frontend path:", frontend_path)
@@ -500,7 +491,16 @@ if frontend_path:
             for route in app.routes:
                 print(f"  {route}")
 
-            # First mount assets directory separately
+            # First mount API router to ensure API routes take precedence
+            print("\nDEBUG: Including API router")
+            app.include_router(api_router, prefix="/api")
+            print("DEBUG: Successfully mounted API router")
+
+            print("\nDEBUG: Routes after mounting API router:")
+            for route in app.routes:
+                print(f"  {str(route)}")
+
+            # Then mount assets directory
             if os.path.exists(assets_path):
                 print("\nDEBUG: Mounting assets directory")
                 app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
