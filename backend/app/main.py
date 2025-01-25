@@ -156,8 +156,8 @@ class SPAStaticFiles(StaticFiles):
             
             # Handle API routes
             if path.startswith('api/'):
-                print("DEBUG: API path detected, forwarding to API router")
-                return await super().get_response(path, scope)
+                print("DEBUG: API path detected, raising 404 to let API router handle it")
+                raise HTTPException(status_code=404, detail="Not Found")
             
             # For static assets, try to serve directly
             if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
