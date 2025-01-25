@@ -467,13 +467,22 @@ async def debug_request_middleware(request: Request, call_next):
 
 # First mount API router to ensure API routes take precedence
 print("\nDEBUG: Including API router")
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router)  # Remove prefix as it's already included in the router
 print("DEBUG: Successfully mounted API router")
 
-# Mount static files handler
+# Configure static file serving
 if frontend_path and os.path.exists(frontend_path):
-    print("\nDEBUG: Mounting static files handler")
-    app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="static")
+    print("\nDEBUG: Configuring static files")
+    assets_path = os.path.join(frontend_path, "assets")
+    
+    # First mount assets directory if it exists
+    if os.path.exists(assets_path):
+        print("DEBUG: Mounting assets directory")
+        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+    
+    # Then mount the SPA handler for all other routes
+    print("DEBUG: Mounting SPA handler")
+    app.mount("/", SPAStaticFiles(directory=frontend_path, html=True), name="spa")
 
 # Print debug information about routes
 print("\nDEBUG: Final route configuration:")
