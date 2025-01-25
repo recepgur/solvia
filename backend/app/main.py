@@ -161,16 +161,25 @@ class SPAStaticFiles(StaticFiles):
             if path.startswith('assets/') or path in ['favicon.ico', 'robots.txt']:
                 try:
                     print(f"DEBUG: Attempting to serve static file: {path}")
+                    # Try in current directory
                     full_path = os.path.join(str(self.directory), path)
                     if os.path.exists(full_path):
                         print(f"DEBUG: Static file found at: {full_path}")
                         return FileResponse(full_path)
+                    
+                    # Try in assets subdirectory
+                    assets_path = os.path.join(str(self.directory), 'assets', path.replace('assets/', ''))
+                    if os.path.exists(assets_path):
+                        print(f"DEBUG: Static file found in assets directory: {assets_path}")
+                        return FileResponse(assets_path)
+                    
                     print(f"DEBUG: Static file not found at: {full_path}")
+                    print(f"DEBUG: Static file not found at: {assets_path}")
                     print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
                 except Exception as ex:
                     print(f"DEBUG: Error serving static file: {str(ex)}")
             
-            # For root path or any other path, serve index.html
+            # For root path or any non-asset path, serve index.html
             print(f"DEBUG: Serving index.html for path: {path}")
             index_path = os.path.join(str(self.directory), 'index.html')
             print(f"DEBUG: Looking for index.html at: {index_path}")
@@ -181,6 +190,12 @@ class SPAStaticFiles(StaticFiles):
             
             print("DEBUG: index.html not found!")
             print(f"DEBUG: Directory contents: {os.listdir(str(self.directory))}")
+            
+            # Try serving from root directory as fallback
+            root_index = os.path.join(str(self.directory), '..', 'index.html')
+            if os.path.exists(root_index):
+                print(f"DEBUG: Found index.html in root directory: {root_index}")
+                return FileResponse(root_index, media_type='text/html')
             
             # If we get here, something went wrong
             raise HTTPException(status_code=404, detail="File not found")
