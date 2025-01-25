@@ -16,8 +16,10 @@ RUN echo "Frontend directory contents:" && \
     yarn build && \
     echo "\nFrontend build output:" && \
     ls -la dist/ && \
-    echo "\nIndex.html contents:" && \
-    cat dist/index.html
+    find dist -type f -exec echo "File: {}" \; -exec cat {} \; && \
+    echo "\nVerifying static files:" && \
+    test -f dist/index.html || (echo "ERROR: index.html not found" && exit 1) && \
+    test -d dist/assets || (echo "ERROR: assets directory not found" && exit 1)
 
 FROM python:3.12-slim AS backend-builder
 WORKDIR /app/backend
@@ -43,15 +45,21 @@ RUN mkdir -p /app/dist && \
 
 # Copy frontend build and verify
 COPY --from=frontend-builder /app/frontend/dist/ /app/dist/
+COPY scripts/check_env.py /app/scripts/check_env.py
+
 RUN echo "Verifying frontend files in final image:" && \
     ls -la /app/dist/ && \
     echo "\nVerifying index.html exists and is readable:" && \
     cat /app/dist/index.html && \
+    echo "\nVerifying static files:" && \
+    find /app/dist -type f -exec echo "File: {}" \; -exec cat {} \; && \
     echo "\nSetting permissions..." && \
     chown -R appuser:appuser /app/dist && \
     chmod -R 755 /app/dist && \
     echo "\nFinal permissions:" && \
-    ls -la /app/dist/
+    ls -la /app/dist/ && \
+    echo "\nRunning environment check:" && \
+    FRONTEND_PATH=/app/dist python3 /app/scripts/check_env.py
 
 # Copy backend and install dependencies
 COPY --from=backend-builder /app/backend /app/backend
