@@ -123,13 +123,57 @@ class MarketDataService:
             raise ValueError(f"Could not fetch current price for {symbol}")
     
     @staticmethod
-    async def get_latest_news(symbol: str) -> Optional[str]:
+    async def get_latest_news(symbol: str, limit: int = 5) -> List[Dict[str, str]]:
         mock_news = {
-            "THYAO": "Türk Hava Yolları yeni uçak siparişi verdi. Filo genişletme planları olumlu karşılandı.",
-            "GARAN": "Garanti Bankası güçlü finansal sonuçlar açıkladı. Karlılık beklentilerin üzerinde.",
-            "ASELS": "Aselsan yeni savunma projeleri için anlaşma imzaladı."
+            "THYAO": [
+                {"text": "Türk Hava Yolları yeni uçak siparişi verdi. Filo genişletme planları olumlu karşılandı."},
+                {"text": "THY'nin yolcu sayısı geçen yıla göre %15 arttı."}
+            ],
+            "GARAN": [
+                {"text": "Garanti Bankası güçlü finansal sonuçlar açıkladı. Karlılık beklentilerin üzerinde."},
+                {"text": "Garanti'nin dijital bankacılık kullanıcı sayısı 10 milyonu aştı."}
+            ],
+            "ASELS": [
+                {"text": "Aselsan yeni savunma projeleri için anlaşma imzaladı."},
+                {"text": "Aselsan'ın ihracat rakamları rekor kırdı."}
+            ]
         }
-        return mock_news.get(symbol.upper())
+        news_list = mock_news.get(symbol.upper(), [])
+        return news_list[:limit]
+        
+    @staticmethod
+    async def get_historical_volumes(symbol: str, days: int = 30) -> List[float]:
+        try:
+            logger.info(f"Fetching historical volumes for {symbol}")
+            base_volume = 1000000  # Base volume of 1M
+            return [base_volume * (1 + np.random.normal(0, 0.3)) for _ in range(days)]
+        except Exception as e:
+            logger.error(f"Error fetching historical volumes for {symbol}: {str(e)}")
+            return []
+            
+    @staticmethod
+    async def get_sector(symbol: str) -> str:
+        sector_map = {
+            "THYAO": "Transportation",
+            "GARAN": "Banking",
+            "ASELS": "Defense",
+            "KCHOL": "Holding",
+            "AKBNK": "Banking",
+            "EREGL": "Steel",
+            "BIMAS": "Retail",
+            "TUPRS": "Energy",
+            "YKBNK": "Banking",
+            "SISE": "Industrial"
+        }
+        return sector_map.get(symbol.upper(), "Other")
+        
+    @staticmethod
+    async def get_available_symbols() -> List[str]:
+        return ["THYAO", "GARAN", "ASELS", "KCHOL", "AKBNK", "EREGL", "BIMAS", "TUPRS", "YKBNK", "SISE"]
+        
+    @staticmethod
+    async def get_watchlist() -> List[str]:
+        return await MarketDataService.get_available_symbols()
     @staticmethod
     async def search_assets(query: str, type: Optional[AssetType] = None) -> List[Asset]:
         try:
