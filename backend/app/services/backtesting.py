@@ -97,9 +97,10 @@ class BacktestingService:
                             if asset.symbol == symbol:
                                 old_value = asset.total_value
                                 asset.current_price = market_data['price']
-                                asset.total_value = asset.quantity * asset.current_price
-                                asset.profit_loss = asset.total_value - (asset.quantity * asset.purchase_price)
-                                result.returns.append((asset.total_value - old_value) / old_value)
+                                new_value = float(asset.quantity or 0) * float(market_data['price'])
+                                asset.total_value = new_value
+                                asset.profit_loss = new_value - (float(asset.quantity or 0) * float(asset.purchase_price or 0))
+                                result.returns.append((new_value - float(old_value or 0)) / float(old_value or 1))
                     
                     # Run trading cycle
                     trades = await trading_service.run_trading_cycle("backtest")
@@ -108,7 +109,7 @@ class BacktestingService:
                         result.trades.append(trade)
                     
                     # Record portfolio state
-                    portfolio.total_value = sum(asset.total_value for asset in portfolio.assets)
+                    portfolio.total_value = sum(float(asset.total_value or 0) for asset in portfolio.assets)
                     result.portfolio_values.append(portfolio.total_value)
                     result.dates.append(current_date)
                 

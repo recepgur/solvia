@@ -8,8 +8,8 @@ from ..services.portfolio import PortfolioService
 from ..models.model_manager import ModelManager
 
 def calculate_technical_indicators(prices: List[float]) -> Dict[str, float]:
-    prices = np.array(prices)
-    returns = np.diff(prices) / prices[:-1]
+    prices_array = np.array(prices)
+    returns = np.diff(prices_array) / prices_array[:-1]
     
     sma_5 = np.mean(prices[-5:])
     sma_20 = np.mean(prices[-20:])

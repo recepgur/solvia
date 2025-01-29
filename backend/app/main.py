@@ -7,7 +7,10 @@ from .features import PricePrediction, NewsAnalysis, Alert
 import numpy as np
 from .services.predictions import PredictionService
 from .services.alerts import AlertService
-from .routers import portfolio, market_data, predictions, news, alerts, training, feedback, autonomous
+from .routers import (
+    portfolio, market_data, predictions, news,
+    alerts, training, feedback, autonomous
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
