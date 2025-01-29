@@ -7,7 +7,13 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def test_endpoint(method, url, data=None):
+import pytest
+
+@pytest.fixture
+def base_url():
+    return "http://localhost:8050"
+
+def make_request(method, url, data=None):
     try:
         logger.info(f"Testing {method} {url}")
         if method == "GET":
@@ -26,19 +32,15 @@ def test_endpoint(method, url, data=None):
         logger.error(f"Error: {str(e)}")
         return False
 
-def run_tests():
-    base_url = "http://localhost:8050"
-    failures = 0
+def test_api_endpoints(base_url):
     
     # Test health check
     logger.info("\n=== Testing Health Check ===")
-    if not test_endpoint("GET", f"{base_url}/healthz"):
-        failures += 1
+    assert make_request("GET", f"{base_url}/healthz"), "Health check failed"
     
     # Test market data search
     logger.info("\n=== Testing Market Data Search ===")
-    if not test_endpoint("GET", f"{base_url}/market-data/search?query=THY"):
-        failures += 1
+    assert make_request("GET", f"{base_url}/market-data/search?query=THY"), "Market data search failed"
     
     # Test portfolio creation
     logger.info("\n=== Testing Portfolio ===")
@@ -49,21 +51,18 @@ def run_tests():
         "risk_score": 0.5,
         "last_updated": datetime.now().isoformat()
     }
-    if not test_endpoint("POST", f"{base_url}/portfolio", portfolio_data):
-        failures += 1
+    assert make_request("POST", f"{base_url}/portfolio", portfolio_data), "Portfolio creation failed"
     
     # Test price prediction
     logger.info("\n=== Testing Price Prediction ===")
-    if not test_endpoint("GET", f"{base_url}/predictions/price/THYAO"):
-        failures += 1
+    assert make_request("GET", f"{base_url}/predictions/price/THYAO"), "Price prediction failed"
     
     # Test news sentiment analysis
     logger.info("\n=== Testing News Sentiment Analysis ===")
     news_data = {
         "text": "THYAO ve GARAN hisseleri güçlü finansal sonuçlar açıkladı. Şirketlerin karlılığı beklentilerin üzerinde gerçekleşti."
     }
-    if not test_endpoint("POST", f"{base_url}/news/analyze", news_data):
-        failures += 1
+    assert make_request("POST", f"{base_url}/news/analyze", news_data), "News sentiment analysis failed"
 
     # Test price alerts
     logger.info("\n=== Testing Price Alerts ===")
@@ -74,13 +73,11 @@ def run_tests():
         "condition": "above",
         "is_active": True
     }
-    if not test_endpoint("POST", f"{base_url}/alerts", alert_data):
-        failures += 1
+    assert make_request("POST", f"{base_url}/alerts", alert_data), "Price alert creation failed"
 
     # Test risk analysis
     logger.info("\n=== Testing Risk Analysis ===")
-    if not test_endpoint("GET", f"{base_url}/portfolio/test_user/risk"):
-        failures += 1
+    assert make_request("GET", f"{base_url}/portfolio/test_user/risk"), "Risk analysis failed"
     
     # Test model validation
     logger.info("\n=== Testing Model Cross-Validation ===")
@@ -102,8 +99,7 @@ def run_tests():
             "labels": [1, -1, 1, -1, 1, -1, -1, 1, -1, 1]
         }
     }
-    if not test_endpoint("POST", f"{base_url}/training/validate", validation_data):
-        failures += 1
+    assert make_request("POST", f"{base_url}/training/validate", validation_data), "Model validation failed"
     
     # Test feedback submission
     logger.info("\n=== Testing Feedback Submission ===")
@@ -114,23 +110,22 @@ def run_tests():
         "comment": "Fiyat tahminleri oldukça doğru",
         "timestamp": datetime.now().isoformat()
     }
-    if not test_endpoint("POST", f"{base_url}/feedback", feedback_data):
-        failures += 1
+    assert make_request("POST", f"{base_url}/feedback", feedback_data), "Feedback submission failed"
         
     # Test autonomous trading
     logger.info("\n=== Testing Autonomous Trading ===")
-    if not test_endpoint("POST", f"{base_url}/autonomous/trade", {
+    # Test autonomous trading
+    logger.info("\n=== Testing Autonomous Trading ===")
+    assert make_request("POST", f"{base_url}/autonomous/trade", {
         "user_id": "test_user"
-    }):
-        failures += 1
-        
-    if not test_endpoint("POST", f"{base_url}/autonomous/rebalance", {
+    }), "Autonomous trading failed"
+    
+    assert make_request("POST", f"{base_url}/autonomous/rebalance", {
         "user_id": "test_user",
         "target_weights": {"THYAO": 0.4, "GARAN": 0.3, "ASELS": 0.3}
-    }):
-        failures += 1
-        
-    if not test_endpoint("POST", f"{base_url}/autonomous/backtest", {
+    }), "Portfolio rebalancing failed"
+    
+    assert make_request("POST", f"{base_url}/autonomous/backtest", {
         "symbols": ["THYAO", "GARAN", "ASELS"],
         "start_date": datetime.now().isoformat(),
         "end_date": (datetime.now() + timedelta(days=30)).isoformat(),
@@ -140,16 +135,6 @@ def run_tests():
             "stop_loss_threshold": 0.05,
             "max_volatility": 0.4
         }
-    }):
-        failures += 1
+    }), "Backtesting failed"
     
-    return failures
-
-if __name__ == "__main__":
-    logger.info("Starting tests...")
-    failures = run_tests()
-    if failures > 0:
-        logger.error(f"Tests completed with {failures} failures")
-        exit(1)
-    else:
-        logger.info("All tests passed successfully!")
+    logger.info("All tests passed successfully!")

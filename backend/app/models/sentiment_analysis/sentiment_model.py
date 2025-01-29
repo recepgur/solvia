@@ -844,18 +844,12 @@ class SentimentAnalysisModel:
                 mean_probs = np.mean(predictions, axis=0)[0]
                 uncertainty = np.std(predictions, axis=0)[0]
                 
-                # Apply attention mechanism
-                attention_scores = self.attention(outputs.last_hidden_state).squeeze()
-                weighted_output = outputs.last_hidden_state * attention_scores.unsqueeze(-1)
-                context_vector = torch.mean(weighted_output, dim=1)
-                
                 # Calculate final sentiment scores with uncertainty
                 sentiment_scores = {
                     "positive": float(mean_probs[2]),
                     "neutral": float(mean_probs[1]),
                     "negative": float(mean_probs[0]),
-                    "uncertainty": float(np.mean(uncertainty)),
-                    "attention_score": float(torch.mean(attention_scores).item())
+                    "uncertainty": float(np.mean(uncertainty))
                 }
                 
                 # Add market context influence

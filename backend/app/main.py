@@ -7,6 +7,7 @@ from .features import PricePrediction, NewsAnalysis, Alert
 import numpy as np
 from .services.predictions import PredictionService
 from .services.alerts import AlertService
+from .models.model_manager import ModelManager
 from .routers import (
     portfolio, market_data, predictions, news,
     alerts, training, feedback, autonomous
@@ -14,6 +15,14 @@ from .routers import (
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Initialize models with fallback to simple predictions if loading fails
+try:
+    model_manager = ModelManager()
+    model_manager.initialize_models()
+    logger.info("Models initialized successfully")
+except Exception as e:
+    logger.warning(f"Failed to initialize models: {e}. Using fallback predictions.")
 
 app = FastAPI()
 

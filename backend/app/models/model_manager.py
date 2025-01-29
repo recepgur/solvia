@@ -65,6 +65,22 @@ class ModelManager:
     def get_sentiment_model(self) -> SentimentAnalysisModel:
         return self.sentiment_model
         
+    def initialize_models(self) -> None:
+        """Initialize all models."""
+        try:
+            # Initialize price prediction model
+            self.price_model = PricePredictionModel(
+                model_path=str(self.price_model_path / "model.pt") if (self.price_model_path / "model.pt").exists() else None
+            )
+            
+            # Initialize sentiment analysis model
+            self.sentiment_model = SentimentAnalysisModel(
+                model_path=str(self.sentiment_model_path) if (self.sentiment_model_path / "pytorch_model.bin").exists() else None
+            )
+        except Exception as e:
+            logger.error(f"Error initializing models: {str(e)}")
+            raise
+        
     def cross_validate_price_model(self, prices: List[float], n_splits: int = 3) -> Dict[str, float]:
         """Cross validate price prediction model using time series split."""
         from sklearn.model_selection import TimeSeriesSplit

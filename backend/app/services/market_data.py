@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 import logging
+import numpy as np
 from ..features import Asset, AssetType
 
 logger = logging.getLogger(__name__)
